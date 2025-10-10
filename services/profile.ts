@@ -14,22 +14,22 @@ type ProfileResponse = {
   };
 };
 
+const BASE_URL = process.env.EXPO_PUBLIC_BASE_URL!;
+
 export async function getProfile(token: string) {
   try {
-    const response = await fetch(
-      `https://4315e57d4ac1.ngrok-free.app/api/v1/fundlock/profile`,
-      {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          // Add authentication header if needed
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
+    const response = await fetch(`${BASE_URL}/api/v1/fundlock/profile`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    });
 
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      const error: any = new Error(`HTTP error! status: ${response.status}`);
+      error.status = response.status;
+      throw error;
     }
 
     const result: ProfileResponse = await response.json();

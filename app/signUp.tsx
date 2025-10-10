@@ -1,4 +1,5 @@
 import { AuthPageGuard } from "@/components/RouteGuard";
+import { authActions } from "@/lib/authContext";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { LinearGradient } from "expo-linear-gradient";
@@ -34,10 +35,10 @@ const schema = yup.object().shape({
     .required("Last name is required"),
   password: yup
     .string()
-    .min(8, "Password must be at least 8 characters")
-    .matches(/[A-Z]/, "Password must contain at least one uppercase letter")
-    .matches(/[a-z]/, "Password must contain at least one lowercase letter")
-    .matches(/[0-9]/, "Password must contain at least one number")
+    // .min(8, "Password must be at least 8 characters")
+    // .matches(/[A-Z]/, "Password must contain at least one uppercase letter")
+    // .matches(/[a-z]/, "Password must contain at least one lowercase letter")
+    // .matches(/[0-9]/, "Password must contain at least one number")
     .required("Password is required"),
   pin: yup
     .string()
@@ -61,14 +62,25 @@ export default function SignUp() {
     formState: { errors, isSubmitting, isValid },
   } = useForm<signUpFormData>({
     resolver: yupResolver(schema),
-    mode: "onBlur", // Validate on blur
+    mode: "onChange",
+    defaultValues: {
+      email: "",
+      password: "",
+      firstName: "",
+      lastName: "",
+      phoneNumber: "",
+      pin: "",
+    },
   });
 
   const onSubmit = async (data: signUpFormData) => {
     try {
-      // Handle form submission here
-      console.log("Form data:", data);
-      Alert.alert("Success", "Account created successfully!");
+      const response = await authActions.signUp(data);
+      if (response) {
+        router.replace("/signIn?registered=true");
+      } else {
+        Alert.alert("Error", "Something went wrong");
+      }
     } catch (error) {
       console.error(error);
       Alert.alert("Error", "Failed to create account. Please try again.");
@@ -318,12 +330,12 @@ export default function SignUp() {
                   mode="contained"
                   onPress={handleSubmit(onSubmit)}
                   loading={isSubmitting}
-                  disabled={isSubmitting || !isValid} // Disable if submitting or form is invalid
+                  disabled={isSubmitting || !isValid}
                   style={[
                     styles.submitButton,
-                    (!isValid || isSubmitting) && styles.disabledButton, // Add disabled styling
+                    (!isValid || isSubmitting) && styles.disabledButton,
                   ]}
-                  buttonColor={isValid && !isSubmitting ? "#09A674" : "#A0A0A0"} // Change color when disabled
+                  buttonColor={isValid && !isSubmitting ? "#09A674" : "#A0A0A0"}
                 >
                   Create Account
                 </Button>
