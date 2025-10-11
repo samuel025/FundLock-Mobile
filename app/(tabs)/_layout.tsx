@@ -5,7 +5,7 @@ export default function RootLayout() {
   return (
     <AuthGuard>
       <Tabs>
-        <Tabs.Screen name="index" />
+        <Tabs.Screen name="index" options={{ headerShown: false }} />
       </Tabs>
     </AuthGuard>
   );

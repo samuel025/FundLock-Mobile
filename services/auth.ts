@@ -1,8 +1,8 @@
 import { SignInFormData } from "@/app/signIn";
 import { signUpFormData } from "@/app/signUp";
+import { API } from "@/lib/api";
 import { LoginResponse } from "@/types/Response";
-
-const BASE_URL = process.env.EXPO_PUBLIC_BASE_URL!;
+import axios, { AxiosError } from "axios";
 
 type UserData = {
   id: number;
@@ -30,30 +30,38 @@ type ErrorResponse = {
 
 export async function loginUser(data: SignInFormData): Promise<LoginResponse> {
   try {
-    const response = await fetch(`${BASE_URL}/api/v1/fundlock/login`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        email: data.email,
-        password: data.password,
-      }),
+    const response = await API.post<LoginResponse>("/api/v1/fundlock/login", {
+      email: data.email,
+      password: data.password,
     });
 
-    if (!response.ok) {
-      const errorData: ErrorResponse = await response.json();
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      const axiosError = error as AxiosError<ErrorResponse>;
+
+      // Network error (no response from server)
+      if (!axiosError.response) {
+        const customError: any = new Error(
+          "Network error. Please check your internet connection and try again."
+        );
+        customError.status = 0;
+        throw customError;
+      }
+
+      // Server responded with an error
       const errorMessage =
-        errorData.message || `HTTP error! status: ${response.status}`;
-      const error: any = new Error(errorMessage);
-      error.status = response.status;
-      throw error;
+        axiosError.response?.data?.message ||
+        axiosError.response?.data?.data?.error ||
+        "An error occurred during login";
+
+      const customError: any = new Error(errorMessage);
+      customError.status = axiosError.response?.status;
+      throw customError;
     }
 
-    const result: LoginResponse = await response.json();
-    return result;
-  } catch (error) {
-    throw error;
+    // Non-Axios error
+    throw new Error("An unexpected error occurred. Please try again.");
   }
 }
 
@@ -61,34 +69,46 @@ export async function signUpUser(
   data: signUpFormData
 ): Promise<SignUpResponse> {
   try {
-    const response = await fetch(`${BASE_URL}/api/v1/fundlock/register`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
+    const response = await API.post<SignUpResponse>(
+      "/api/v1/fundlock/register",
+      {
         email: data.email,
         password: data.password,
         firstName: data.firstName,
         lastName: data.lastName,
         pin: data.pin,
         phoneNumber: data.phoneNumber,
-      }),
-    });
+      }
+    );
 
-    if (!response.ok) {
-      const errorData: ErrorResponse = await response.json();
-      const error: any = new Error(
-        errorData.message || `HTTP error! status: ${response.status}`
-      );
-      error.status = response.status;
-      throw error;
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      const axiosError = error as AxiosError<ErrorResponse>;
+
+      // Network error (no response from server)
+      if (!axiosError.response) {
+        console.error("Network error during sign up");
+        const customError: any = new Error(
+          "Network error. Please check your internet connection and try again."
+        );
+        customError.status = 0;
+        throw customError;
+      }
+
+      // Server responded with an error
+      const errorMessage =
+        axiosError.response?.data?.message ||
+        axiosError.response?.data?.data?.error ||
+        "An error occurred during sign up";
+
+      console.error("Sign up failed:", errorMessage);
+      const customError: any = new Error(errorMessage);
+      customError.status = axiosError.response?.status;
+      throw customError;
     }
 
-    const result: SignUpResponse = await response.json();
-    return result;
-  } catch (error) {
     console.error("Sign up failed:", error);
-    throw error;
+    throw new Error("An unexpected error occurred. Please try again.");
   }
 }

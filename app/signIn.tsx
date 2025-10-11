@@ -1,9 +1,13 @@
 import { AuthPageGuard } from "@/components/RouteGuard";
 import { authActions } from "@/lib/authContext";
+import { useAuthStore } from "@/lib/useAuthStore";
+import { loginUser } from "@/services/auth";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import { yupResolver } from "@hookform/resolvers/yup";
+import { useMutation } from "@tanstack/react-query";
 import { LinearGradient } from "expo-linear-gradient";
 import { router, useLocalSearchParams } from "expo-router";
+import * as SecureStore from "expo-secure-store";
 import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import {
@@ -38,7 +42,7 @@ export default function SignIn() {
   useEffect(() => {
     if (registered === "true") {
       setShowSuccessMessage(true);
-      // Auto-hide success message after 10 seconds
+
       const timer = setTimeout(() => {
         setShowSuccessMessage(false);
       }, 10000);
@@ -49,7 +53,7 @@ export default function SignIn() {
   const {
     control,
     handleSubmit,
-    formState: { errors, isSubmitting, isValid },
+    formState: { errors, isValid },
   } = useForm<SignInFormData>({
     resolver: yupResolver(schema),
     mode: "onChange",
@@ -59,20 +63,34 @@ export default function SignIn() {
     },
   });
 
-  const onSubmit = async (data: SignInFormData) => {
-    try {
-      setSignInError(null);
-      setShowSuccessMessage(false); // Hide success message when attempting to sign in
-      const response = await authActions.signIn(data.email, data.password);
+  // TanStack Query mutation for sign in
+  const signInMutation = useMutation({
+    mutationFn: loginUser,
+    onSuccess: async (data) => {
+      const { accessToken, refreshToken } = data.data.loginResponse;
 
-      if (response.success) {
-        router.replace("/(tabs)");
-      } else {
-        setSignInError(response.error || "Invalid email or password");
-      }
-    } catch (error) {
-      setSignInError("Failed to sign in. Please try again.");
-    }
+      // Store tokens in SecureStore
+      await SecureStore.setItemAsync("auth_token", accessToken);
+      await SecureStore.setItemAsync("refresh_token", refreshToken);
+
+      // Update Zustand store
+      const { setTokens } = useAuthStore.getState();
+      setTokens(accessToken, refreshToken);
+
+      // Fetch and cache user data
+      await authActions.getUser();
+
+      router.replace("/(tabs)");
+    },
+    onError: (error: any) => {
+      setSignInError(error.message || "Invalid email or password");
+    },
+  });
+
+  const onSubmit = async (data: SignInFormData) => {
+    setSignInError(null);
+    setShowSuccessMessage(false);
+    signInMutation.mutate(data);
   };
 
   return (
@@ -211,13 +229,16 @@ export default function SignIn() {
                 <Button
                   mode="contained"
                   onPress={handleSubmit(onSubmit)}
-                  loading={isSubmitting}
-                  disabled={isSubmitting || !isValid}
+                  loading={signInMutation.isPending}
+                  disabled={signInMutation.isPending || !isValid}
                   style={[
                     styles.submitButton,
-                    (!isValid || isSubmitting) && styles.disabledButton,
+                    (!isValid || signInMutation.isPending) &&
+                      styles.disabledButton,
                   ]}
-                  buttonColor={isValid && !isSubmitting ? "#09A674" : "#A0A0A0"}
+                  buttonColor={
+                    isValid && !signInMutation.isPending ? "#09A674" : "#A0A0A0"
+                  }
                 >
                   Sign In
                 </Button>

@@ -1,4 +1,4 @@
-import { useAuthStore } from "@/lib/authContext";
+import { useAuthStore } from "@/lib/useAuthStore";
 import { Redirect } from "expo-router";
 import { ActivityIndicator, View } from "react-native";
 

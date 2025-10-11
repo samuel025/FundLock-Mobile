@@ -4,34 +4,13 @@ import { loginUser, signUpUser } from "@/services/auth";
 import { getProfile } from "@/services/profile";
 import { User } from "@/types/userType";
 import * as SecureStore from "expo-secure-store";
-import { create } from "zustand";
+import { useAuthStore } from "./useAuthStore";
 
 const TOKEN_KEY = "auth_token";
 const REFRESH_TOKEN_KEY = "refresh_token";
 const USER_DATA_KEY = "user_data";
 
-interface AuthState {
-  user: User | null;
-  isLoadingUser: boolean;
-  accessToken: string | null;
-  refreshToken: string | null;
-  setUser: (user: User | null) => void;
-  setIsLoadingUser: (loading: boolean) => void;
-  setTokens: (accessToken: string | null, refreshToken: string | null) => void;
-}
-
-export const useAuthStore = create<AuthState>((set) => ({
-  user: null,
-  isLoadingUser: false,
-  accessToken: null,
-  refreshToken: null,
-  setUser: (user) => set({ user }),
-  setIsLoadingUser: (loading) => set({ isLoadingUser: loading }),
-  setTokens: (accessToken, refreshToken) => set({ accessToken, refreshToken }),
-}));
-
 export const authActions = {
-  // Initialize auth state from SecureStore on app start
   initializeAuth: async () => {
     const { setIsLoadingUser, setTokens, setUser } = useAuthStore.getState();
     try {
@@ -51,7 +30,7 @@ export const authActions = {
 
         try {
           // Try to fetch fresh user data
-          await authActions.getUser(accessToken);
+          await authActions.getUser();
         } catch (error: any) {
           // Only clear auth on 401 (unauthorized) - token is invalid
           if (error?.status === 401) {
@@ -73,11 +52,11 @@ export const authActions = {
     }
   },
 
-  getUser: async (token: string) => {
+  getUser: async () => {
     const { setUser, setIsLoadingUser } = useAuthStore.getState();
     try {
       setIsLoadingUser(true);
-      const response = await getProfile(token);
+      const response = await getProfile();
       const userData: User = {
         id: response.data.Profile.id.toString(),
         email: response.data.Profile.email,
@@ -111,7 +90,7 @@ export const authActions = {
       await SecureStore.setItemAsync(REFRESH_TOKEN_KEY, refreshToken);
 
       setTokens(accessToken, refreshToken);
-      await authActions.getUser(accessToken);
+      await authActions.getUser();
 
       return { success: true, data: response };
     } catch (error: any) {
@@ -136,9 +115,8 @@ export const authActions = {
   signUp: async (data: signUpFormData) => {
     try {
       return await signUpUser(data);
-    } catch (error) {
-      console.error("Signup error:", error);
-      return null;
+    } catch (error: any) {
+      return { success: false, error: error.message || "Failed to sign in" };
     }
   },
 };
