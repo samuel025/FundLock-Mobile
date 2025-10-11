@@ -95,10 +95,7 @@ export default function SignIn() {
 
   return (
     <AuthPageGuard>
-      <LinearGradient
-        colors={["#35ae84ff", "#09A674"]}
-        style={styles.container}
-      >
+      <LinearGradient colors={["#1B263B", "#0D1B2A"]} style={styles.container}>
         <KeyboardAvoidingView
           behavior={Platform.OS === "ios" ? "padding" : "height"}
           style={styles.container}
@@ -111,7 +108,7 @@ export default function SignIn() {
           >
             <View style={styles.body}>
               <View style={styles.box}>
-                <FontAwesome name="lock" size={45} color="#09A674" />
+                <FontAwesome name="lock" size={45} color="#FFD700" />
               </View>
               <View style={styles.titleTextContainer}>
                 <Text style={styles.titleText}>FundLock</Text>
@@ -128,7 +125,7 @@ export default function SignIn() {
                     <FontAwesome
                       name="check-circle"
                       size={18}
-                      color="#059669"
+                      color="#333333"
                     />
                     <Text style={styles.successMessage}>
                       Account created successfully! Please log in with your new
@@ -237,7 +234,7 @@ export default function SignIn() {
                       styles.disabledButton,
                   ]}
                   buttonColor={
-                    isValid && !signInMutation.isPending ? "#09A674" : "#A0A0A0"
+                    isValid && !signInMutation.isPending ? "#38B2AC" : "#8B9DC3" // teal
                   }
                 >
                   Sign In
@@ -248,7 +245,7 @@ export default function SignIn() {
                       margin: 10,
                       textAlign: "center",
                       fontSize: 14,
-                      color: "#09A674",
+                      color: "#38B2AC", // teal
                       fontWeight: "bold",
                     }}
                   >
@@ -286,30 +283,34 @@ const styles = StyleSheet.create({
     height: 100,
     justifyContent: "center",
     alignItems: "center",
-    shadowColor: "#000",
+    shadowColor: "#000000",
     shadowOffset: {
       width: 0,
-      height: 2,
+      height: 4,
     },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
+    shadowOpacity: 0.15,
+    shadowRadius: 5,
+    elevation: 8,
     marginBottom: 20,
+    borderWidth: 1,
+    borderColor: "#38B2AC", // teal
   },
   formBox: {
     backgroundColor: "white",
     borderRadius: 40,
     padding: 20,
     width: "100%",
-    shadowColor: "#000",
+    shadowColor: "#000000",
     shadowOffset: {
       width: 0,
       height: 8,
     },
-    shadowOpacity: 0.3,
-    shadowRadius: 10,
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
     elevation: 15,
     margin: 30,
+    borderWidth: 1,
+    borderColor: "rgba(56, 178, 172, 0.18)", // teal
   },
   titleText: {
     fontWeight: "700",
@@ -359,9 +360,9 @@ const styles = StyleSheet.create({
   successContainer: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#D1FAE5",
+    backgroundColor: "#E8F4F8",
     borderLeftWidth: 4,
-    borderLeftColor: "#059669",
+    borderLeftColor: "#38B2AC", // teal
     borderRadius: 8,
     padding: 12,
     marginBottom: 20,
@@ -369,7 +370,7 @@ const styles = StyleSheet.create({
   },
   successMessage: {
     flex: 1,
-    color: "#059669",
+    color: "#38B2AC", // teal
     fontSize: 14,
     fontWeight: "500",
   },
@@ -377,6 +378,14 @@ const styles = StyleSheet.create({
     marginTop: 20,
     paddingVertical: 8,
     borderRadius: 15,
+    shadowColor: "#38B2AC", // teal
+    shadowOffset: {
+      width: 0,
+      height: 3,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 8,
   },
   disabledButton: {
     opacity: 0.6,
