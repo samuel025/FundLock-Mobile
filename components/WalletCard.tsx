@@ -4,14 +4,14 @@ import { StyleSheet, Text, View } from "react-native";
 
 interface WalletCardProps {
   totalBalance: string;
-  availableBalance: string;
+  totalRedeemed: string;
   lockedBalance: string;
 }
 
 export default function WalletCard({
-  totalBalance = "₦1000",
-  availableBalance = "500.00",
-  lockedBalance = "500.00",
+  totalBalance,
+  totalRedeemed,
+  lockedBalance,
 }: WalletCardProps) {
   return (
     <View style={styles.mainSubWalletDetailsBox}>
@@ -28,8 +28,8 @@ export default function WalletCard({
       <View style={styles.walletBlock}>
         <View style={styles.subWalletDetailsBox}>
           <View style={styles.balanceDetails}>
-            <Text style={[styles.textFeintSub]}>Available</Text>
-            <Text style={styles.textSub}>{availableBalance}</Text>
+            <Text style={[styles.textFeintSub]}>Redeemed</Text>
+            <Text style={styles.textSub}>{totalRedeemed}</Text>
           </View>
         </View>
 

@@ -1,6 +1,6 @@
 import { SignInFormData } from "@/app/signIn";
 import { signUpFormData } from "@/app/signUp";
-import { loginUser, signUpUser } from "@/services/auth";
+import { loginUser, refreshAccessToken, signUpUser } from "@/services/auth";
 import { getProfile } from "@/services/profile";
 import { User } from "@/types/userType";
 import * as SecureStore from "expo-secure-store";
@@ -22,26 +22,44 @@ export const authActions = {
       if (accessToken) {
         setTokens(accessToken, refreshToken);
 
-        // Load cached user data first
         if (cachedUserData) {
           const userData: User = JSON.parse(cachedUserData);
           setUser(userData);
         }
 
         try {
-          // Try to fetch fresh user data
           await authActions.getUser();
         } catch (error: any) {
-          // Only clear auth on 401 (unauthorized) - token is invalid
           if (error?.status === 401) {
-            console.error("Token expired or invalid, signing out");
-            await authActions.signOut();
+            // Token expired, try refresh if available
+            if (refreshToken) {
+              try {
+                const tokens = await refreshAccessToken(refreshToken);
+                await SecureStore.setItemAsync(TOKEN_KEY, tokens.accessToken);
+                await SecureStore.setItemAsync(
+                  REFRESH_TOKEN_KEY,
+                  tokens.refreshToken
+                );
+                setTokens(tokens.accessToken, tokens.refreshToken);
+
+                // Try getting user again with new token
+                await authActions.getUser();
+              } catch (refreshError) {
+                console.error(
+                  "Failed to refresh token, signing out:",
+                  refreshError
+                );
+                await authActions.signOut();
+              }
+            } else {
+              console.error("Token expired and no refresh token available");
+              await authActions.signOut();
+            }
           } else {
             console.error(
               "Failed to fetch user profile, using cached data:",
               error
             );
-            // User is already set from cache, so no redirect will happen
           }
         }
       }
@@ -49,6 +67,25 @@ export const authActions = {
       console.error("Failed to initialize auth:", error);
     } finally {
       setIsLoadingUser(false);
+    }
+  },
+
+  refreshToken: async () => {
+    const { refreshToken, setTokens } = useAuthStore.getState();
+    if (!refreshToken) {
+      throw new Error("No refresh token available");
+    }
+
+    try {
+      const tokens = await refreshAccessToken(refreshToken);
+      await SecureStore.setItemAsync(TOKEN_KEY, tokens.accessToken);
+      await SecureStore.setItemAsync(REFRESH_TOKEN_KEY, tokens.refreshToken);
+      setTokens(tokens.accessToken, tokens.refreshToken);
+      return tokens;
+    } catch (error) {
+      console.error("Token refresh failed:", error);
+      await authActions.signOut();
+      throw error;
     }
   },
 
@@ -65,7 +102,6 @@ export const authActions = {
         phone_number: response.data.Profile.phoneNumber,
       };
 
-      // Cache user data in SecureStore
       await SecureStore.setItemAsync(USER_DATA_KEY, JSON.stringify(userData));
 
       setUser(userData);

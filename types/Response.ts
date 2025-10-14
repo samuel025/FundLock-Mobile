@@ -1,5 +1,3 @@
-import { User } from "./userType";
-
 export interface AuthResponse {
   status: string;
   message: string;
@@ -21,13 +19,3 @@ export type LoginResponse = {
     };
   };
 };
-
-export interface AuthState {
-  user: User | null;
-  isLoadingUser: boolean;
-  accessToken: string | null;
-  refreshToken: string | null;
-  setUser: (user: User | null) => void;
-  setIsLoadingUser: (loading: boolean) => void;
-  setTokens: (accessToken: string | null, refreshToken: string | null) => void;
-}

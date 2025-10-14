@@ -7,7 +7,6 @@ export default function RootLayout() {
   const [queryClient] = useState(() => new QueryClient());
 
   useEffect(() => {
-    // Initialize auth state from SecureStore when app starts
     authActions.initializeAuth();
   }, []);
 

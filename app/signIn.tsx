@@ -63,7 +63,6 @@ export default function SignIn() {
     },
   });
 
-  // TanStack Query mutation for sign in
   const signInMutation = useMutation({
     mutationFn: loginUser,
     onSuccess: async (data) => {
@@ -73,13 +72,11 @@ export default function SignIn() {
       await SecureStore.setItemAsync("auth_token", accessToken);
       await SecureStore.setItemAsync("refresh_token", refreshToken);
 
-      // Update Zustand store
       const { setTokens } = useAuthStore.getState();
       setTokens(accessToken, refreshToken);
 
       // Fetch and cache user data
       await authActions.getUser();
-
       router.replace("/(tabs)");
     },
     onError: (error: any) => {
