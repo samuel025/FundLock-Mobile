@@ -1,1 +1,475 @@
-export default function Index() {}
+import SpendingInsights from "@/components/SpendingInsights";
+import { useWallet } from "@/hooks/useWallet";
+import { authActions } from "@/lib/authContext";
+import { useAuthStore } from "@/lib/useAuthStore";
+import {
+  Poppins_400Regular,
+  Poppins_500Medium,
+  Poppins_600SemiBold,
+  Poppins_700Bold,
+  useFonts,
+} from "@expo-google-fonts/poppins";
+import { Ionicons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
+import { router } from "expo-router";
+import { useState } from "react";
+import {
+  Dimensions,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
+
+const { width } = Dimensions.get("window");
+
+export default function Index() {
+  const user = useAuthStore((state) => state.user);
+  const isLoadingUser = useAuthStore((state) => state.isLoadingUser);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const {
+    balance,
+    totalLockedAmount,
+    totalRedeemedAmount,
+    isLoadingWallet,
+    transactions,
+    fetchWalletData,
+  } = useWallet();
+
+  let [fontsLoaded] = useFonts({
+    Poppins_400Regular,
+    Poppins_500Medium,
+    Poppins_600SemiBold,
+    Poppins_700Bold,
+  });
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    try {
+      await authActions.getUser();
+      fetchWalletData();
+    } catch (error) {
+      console.error("Failed to refresh user data:", error);
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
+  if (!fontsLoaded || (isLoadingUser && !user)) {
+    return (
+      <View style={styles.loadingContainer}>
+        <Text style={styles.loadingText}>Loading...</Text>
+      </View>
+    );
+  }
+
+  const recentTransactions = transactions?.slice(0, 3) || [];
+
+  return (
+    <LinearGradient colors={["#F8F9FA", "#E9ECEF"]} style={styles.container}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={["#38B2AC"]}
+            tintColor="#38B2AC"
+          />
+        }
+      >
+        {/* Header */}
+        <View style={styles.header}>
+          <View>
+            <Text style={styles.greeting}>Good Morning</Text>
+            <Text style={styles.userName}>{user?.firstName}</Text>
+          </View>
+          <TouchableOpacity style={styles.profileButton}>
+            <LinearGradient
+              colors={["#38B2AC", "#2C9A8F"]}
+              style={styles.profileGradient}
+            >
+              <Ionicons name="person" size={24} color="#FFFFFF" />
+            </LinearGradient>
+          </TouchableOpacity>
+        </View>
+
+        {/* Balance Overview Card */}
+        <View style={styles.balanceCard}>
+          <LinearGradient
+            colors={["#1B263B", "#415A77"]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.balanceGradient}
+          >
+            <View style={styles.balanceHeader}>
+              <View>
+                <Text style={styles.balanceLabel}>Total Balance</Text>
+                <Text style={styles.balanceAmount}>₦{balance || "0.00"}</Text>
+              </View>
+              <TouchableOpacity style={styles.eyeButton}>
+                <Ionicons
+                  name="eye-outline"
+                  size={20}
+                  color="rgba(255,255,255,0.8)"
+                />
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.balanceStats}>
+              <View style={styles.balanceStat}>
+                <View style={styles.statIcon}>
+                  <Ionicons name="lock-closed" size={16} color="#38B2AC" />
+                </View>
+                <View>
+                  <Text style={styles.statLabel}>Locked</Text>
+                  <Text style={styles.statValue}>
+                    ₦{totalLockedAmount || "0.00"}
+                  </Text>
+                </View>
+              </View>
+
+              <View style={styles.statDivider} />
+
+              <View style={styles.balanceStat}>
+                <View style={[styles.statIcon, { backgroundColor: "#E0E7FF" }]}>
+                  <Ionicons name="checkmark-circle" size={16} color="#4F46E5" />
+                </View>
+                <View>
+                  <Text style={styles.statLabel}>Redeemed</Text>
+                  <Text style={styles.statValue}>
+                    ₦{totalRedeemedAmount || "0.00"}
+                  </Text>
+                </View>
+              </View>
+            </View>
+          </LinearGradient>
+        </View>
+
+        {/* Quick Actions */}
+        <View style={styles.quickActions}>
+          <Text style={styles.sectionTitle}>Quick Actions</Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+            <TouchableOpacity
+              style={styles.actionCard}
+              onPress={() => router.push("/wallet")}
+            >
+              <View style={[styles.actionIcon, { backgroundColor: "#E7F6F2" }]}>
+                <Ionicons name="wallet" size={24} color="#38B2AC" />
+              </View>
+              <Text style={styles.actionText}>My Wallet</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.actionCard}>
+              <View style={[styles.actionIcon, { backgroundColor: "#FEE2E2" }]}>
+                <Ionicons name="lock-closed" size={24} color="#DC2626" />
+              </View>
+              <Text style={styles.actionText}>Lock Funds</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.actionCard}>
+              <View style={[styles.actionIcon, { backgroundColor: "#E0E7FF" }]}>
+                <Ionicons name="trending-up" size={24} color="#4F46E5" />
+              </View>
+              <Text style={styles.actionText}>Analytics</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.actionCard}>
+              <View style={[styles.actionIcon, { backgroundColor: "#FEF3C7" }]}>
+                <Ionicons name="settings" size={24} color="#D97706" />
+              </View>
+              <Text style={styles.actionText}>Settings</Text>
+            </TouchableOpacity>
+          </ScrollView>
+        </View>
+
+        {/* Spending Insights */}
+        <SpendingInsights transactions={recentTransactions} />
+
+        {/* Recent Activity */}
+        <View style={styles.recentActivity}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Recent Activity</Text>
+            <TouchableOpacity onPress={() => router.push("/wallet")}>
+              <Text style={styles.viewAll}>View All</Text>
+            </TouchableOpacity>
+          </View>
+
+          {recentTransactions.length > 0 ? (
+            recentTransactions.map((transaction, index) => (
+              <View key={index} style={styles.activityItem}>
+                <View
+                  style={[
+                    styles.activityIcon,
+                    {
+                      backgroundColor:
+                        transaction.entryType === "CREDIT"
+                          ? "#E7F6F2"
+                          : "#FEE2E2",
+                    },
+                  ]}
+                >
+                  <Ionicons
+                    name={
+                      transaction.entryType === "CREDIT"
+                        ? "arrow-down"
+                        : "arrow-up"
+                    }
+                    size={20}
+                    color={
+                      transaction.entryType === "CREDIT" ? "#38B2AC" : "#DC2626"
+                    }
+                  />
+                </View>
+                <View style={styles.activityDetails}>
+                  <Text style={styles.activityName}>
+                    {transaction.recipientName || "Unknown"}
+                  </Text>
+                  <Text style={styles.activityDate}>
+                    {new Date(transaction.createdAt).toLocaleDateString()}
+                  </Text>
+                </View>
+                <Text
+                  style={[
+                    styles.activityAmount,
+                    {
+                      color:
+                        transaction.entryType === "CREDIT"
+                          ? "#38B2AC"
+                          : "#DC2626",
+                    },
+                  ]}
+                >
+                  {transaction.entryType === "CREDIT" ? "+" : "-"}₦
+                  {transaction.amount}
+                </Text>
+              </View>
+            ))
+          ) : (
+            <View style={styles.emptyState}>
+              <Ionicons
+                name="document-text-outline"
+                size={48}
+                color="#CED4DA"
+              />
+              <Text style={styles.emptyText}>No recent activity</Text>
+            </View>
+          )}
+        </View>
+      </ScrollView>
+    </LinearGradient>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#F8F9FA",
+  },
+  loadingText: {
+    fontSize: 16,
+    color: "#415A77",
+    fontFamily: "Poppins_500Medium",
+  },
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: 20,
+    paddingTop: 60,
+    paddingBottom: 24,
+  },
+  greeting: {
+    fontSize: 14,
+    fontFamily: "Poppins_400Regular",
+    color: "#778DA9",
+  },
+  userName: {
+    fontSize: 24,
+    fontFamily: "Poppins_700Bold",
+    color: "#1B263B",
+    marginTop: 4,
+  },
+  profileButton: {
+    borderRadius: 20,
+    overflow: "hidden",
+  },
+  profileGradient: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  balanceCard: {
+    marginHorizontal: 20,
+    marginBottom: 24,
+    borderRadius: 24,
+    overflow: "hidden",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.15,
+    shadowRadius: 16,
+    elevation: 8,
+  },
+  balanceGradient: {
+    padding: 24,
+  },
+  balanceHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    marginBottom: 24,
+  },
+  balanceLabel: {
+    fontSize: 14,
+    color: "rgba(255,255,255,0.7)",
+    fontFamily: "Poppins_400Regular",
+    marginBottom: 8,
+  },
+  balanceAmount: {
+    fontSize: 36,
+    color: "#FFFFFF",
+    fontFamily: "Poppins_700Bold",
+  },
+  eyeButton: {
+    padding: 8,
+  },
+  balanceStats: {
+    flexDirection: "row",
+    backgroundColor: "rgba(255,255,255,0.1)",
+    borderRadius: 16,
+    padding: 16,
+  },
+  balanceStat: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  statIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: "#E7F6F2",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  statLabel: {
+    fontSize: 12,
+    color: "rgba(255,255,255,0.7)",
+    fontFamily: "Poppins_400Regular",
+  },
+  statValue: {
+    fontSize: 16,
+    color: "#FFFFFF",
+    fontFamily: "Poppins_600SemiBold",
+  },
+  statDivider: {
+    width: 1,
+    backgroundColor: "rgba(255,255,255,0.2)",
+    marginHorizontal: 16,
+  },
+  quickActions: {
+    marginBottom: 24,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontFamily: "Poppins_700Bold",
+    color: "#1B263B",
+    paddingHorizontal: 20,
+    marginBottom: 16,
+  },
+  actionCard: {
+    width: 100,
+    alignItems: "center",
+    marginLeft: 20,
+  },
+  actionIcon: {
+    width: 64,
+    height: 64,
+    borderRadius: 20,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  actionText: {
+    fontSize: 12,
+    fontFamily: "Poppins_500Medium",
+    color: "#415A77",
+    textAlign: "center",
+  },
+  recentActivity: {
+    paddingHorizontal: 20,
+    marginTop: 8,
+    paddingBottom: 30,
+  },
+  sectionHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 16,
+  },
+  viewAll: {
+    fontSize: 14,
+    fontFamily: "Poppins_600SemiBold",
+    color: "#38B2AC",
+  },
+  activityItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#FFFFFF",
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 12,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  activityIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  activityDetails: {
+    flex: 1,
+    marginLeft: 12,
+  },
+  activityName: {
+    fontSize: 15,
+    fontFamily: "Poppins_600SemiBold",
+    color: "#1B263B",
+  },
+  activityDate: {
+    fontSize: 12,
+    fontFamily: "Poppins_400Regular",
+    color: "#778DA9",
+    marginTop: 2,
+  },
+  activityAmount: {
+    fontSize: 16,
+    fontFamily: "Poppins_600SemiBold",
+  },
+  emptyState: {
+    alignItems: "center",
+    paddingVertical: 40,
+  },
+  emptyText: {
+    marginTop: 12,
+    fontSize: 14,
+    fontFamily: "Poppins_500Medium",
+    color: "#778DA9",
+  },
+});

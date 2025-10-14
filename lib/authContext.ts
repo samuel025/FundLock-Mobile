@@ -1,7 +1,8 @@
 import { SignInFormData } from "@/app/signIn";
 import { signUpFormData } from "@/app/signUp";
-import { loginUser, refreshAccessToken, signUpUser } from "@/services/auth";
+import { loginUser, signUpUser } from "@/services/auth";
 import { getProfile } from "@/services/profile";
+import { refreshAccessToken } from "@/services/refreshToken";
 import { User } from "@/types/userType";
 import * as SecureStore from "expo-secure-store";
 import { useAuthStore } from "./useAuthStore";
@@ -152,7 +153,7 @@ export const authActions = {
     try {
       return await signUpUser(data);
     } catch (error: any) {
-      return { success: false, error: error.message || "Failed to sign in" };
+      throw new Error(error.message || "Failed to sign up");
     }
   },
 };

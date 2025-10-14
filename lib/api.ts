@@ -1,8 +1,10 @@
 import { useAuthStore } from "@/lib/useAuthStore";
-import { refreshAccessToken } from "@/services/auth";
+import { refreshAccessToken } from "@/services/refreshToken";
 import axios, { AxiosResponse } from "axios";
 import { router } from "expo-router";
 import * as SecureStore from "expo-secure-store";
+
+const REFRESH_TOKEN_KEY = "refresh_token";
 
 export const API = axios.create({
   baseURL: process.env.EXPO_PUBLIC_BASE_URL,
@@ -61,7 +63,7 @@ API.interceptors.response.use(
 
     try {
       // Get current refresh token
-      const { refreshToken } = useAuthStore.getState();
+      const refreshToken = await SecureStore.getItemAsync(REFRESH_TOKEN_KEY);
 
       if (!refreshToken) {
         throw new Error("No refresh token available");

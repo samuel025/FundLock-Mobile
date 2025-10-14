@@ -7,17 +7,17 @@ export default function RootLayout() {
     <AuthGuard>
       <Tabs
         screenOptions={{
-          tabBarActiveTintColor: "#38B2AC", // teal color matching your theme
+          tabBarActiveTintColor: "#38B2AC",
           tabBarInactiveTintColor: "#8B9DC3",
           tabBarStyle: {
-            backgroundColor: "#1B263B", // dark background
+            backgroundColor: "#1B263B",
             borderTopWidth: 1,
-            borderTopColor: "rgba(56, 178, 172, 0.25)", // teal border
+            borderTopColor: "rgba(56, 178, 172, 0.25)",
             paddingBottom: 5,
             paddingTop: 5,
             height: 60,
           },
-      
+
           tabBarLabelStyle: {
             fontSize: 10,
           },

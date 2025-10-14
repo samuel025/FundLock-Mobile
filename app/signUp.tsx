@@ -1,13 +1,14 @@
 import { AuthPageGuard } from "@/components/RouteGuard";
 import { authActions } from "@/lib/authContext";
-import FontAwesome from "@expo/vector-icons/FontAwesome";
+import { Ionicons } from "@expo/vector-icons";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import {
   Alert,
+  Animated,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -16,7 +17,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { Button, TextInput } from "react-native-paper";
+import { TextInput } from "react-native-paper";
 import * as yup from "yup";
 
 // Validation schema
@@ -33,13 +34,7 @@ const schema = yup.object().shape({
     .string()
     .min(2, "Last name must be at least 2 characters")
     .required("Last name is required"),
-  password: yup
-    .string()
-    // .min(8, "Password must be at least 8 characters")
-    // .matches(/[A-Z]/, "Password must contain at least one uppercase letter")
-    // .matches(/[a-z]/, "Password must contain at least one lowercase letter")
-    // .matches(/[0-9]/, "Password must contain at least one number")
-    .required("Password is required"),
+  password: yup.string().required("Password is required"),
   pin: yup
     .string()
     .matches(/^\d{4}$/, "PIN must be exactly 4 digits")
@@ -55,6 +50,15 @@ export type signUpFormData = yup.InferType<typeof schema>;
 export default function SignUp() {
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [showPin, setShowPin] = useState<boolean>(false);
+  const fadeAnim = new Animated.Value(0);
+
+  useEffect(() => {
+    Animated.timing(fadeAnim, {
+      toValue: 1,
+      duration: 800,
+      useNativeDriver: true,
+    }).start();
+  });
 
   const {
     control,
@@ -75,219 +79,164 @@ export default function SignUp() {
 
   const onSubmit = async (data: signUpFormData) => {
     try {
-      const response = await authActions.signUp(data);
-      if (response) {
-        router.replace("/signIn?registered=true");
-      } else {
-        Alert.alert("Error", "Something went wrong");
-      }
-    } catch (error) {
-      console.error(error);
-      Alert.alert("Error", "Failed to create account. Please try again.");
+      await authActions.signUp(data);
+      router.replace("/signIn?registered=true");
+    } catch (error: any) {
+      console.error("Sign up error:", error);
+      Alert.alert(
+        "Error",
+        error.message || "Failed to create account. Please try again."
+      );
     }
   };
 
   return (
     <AuthPageGuard>
-      <LinearGradient colors={["#1B263B", "#0D1B2A"]} style={styles.container}>
+      <LinearGradient
+        colors={["#0D1B2A", "#1B263B", "#415A77"]}
+        style={styles.container}
+      >
         <KeyboardAvoidingView
           behavior={Platform.OS === "ios" ? "padding" : "height"}
           style={styles.container}
-          keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
         >
           <ScrollView
             contentContainerStyle={styles.scrollContainer}
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
           >
-            <View style={styles.body}>
-              <View style={styles.box}>
-                <FontAwesome name="lock" size={35} color="#FFD700" />
-              </View>
-              <View style={styles.titleTextContainer}>
-                <Text style={styles.titleText}>FundLock</Text>
-                <Text style={styles.subTitleText}>
-                  Financial Discipline Made Simple
+            <Animated.View style={[styles.content, { opacity: fadeAnim }]}>
+              {/* Logo Section */}
+              <View style={styles.logoContainer}>
+                <LinearGradient
+                  colors={["#38B2AC", "#2C9A8F"]}
+                  style={styles.logoCircle}
+                >
+                  <Ionicons name="lock-closed" size={32} color="#FFFFFF" />
+                </LinearGradient>
+                <Text style={styles.brandName}>Join FundLock</Text>
+                <Text style={styles.tagline}>
+                  Start your journey to financial discipline
                 </Text>
               </View>
 
-              <View style={styles.formBox}>
-                <Text style={styles.signUpText}>Register</Text>
+              {/* Form Card */}
+              <View style={styles.formCard}>
+                <Text style={styles.formTitle}>Create Account</Text>
+                <Text style={styles.formSubtitle}>
+                  Fill in your details to get started
+                </Text>
+
+                <View style={styles.formRow}>
+                  <Controller
+                    control={control}
+                    name="firstName"
+                    render={({ field: { onChange, onBlur, value } }) => (
+                      <View style={[styles.inputContainer, styles.halfWidth]}>
+                        <TextInput
+                          label="First Name"
+                          autoCapitalize="words"
+                          placeholder="John"
+                          mode="outlined"
+                          value={value}
+                          onChangeText={onChange}
+                          onBlur={onBlur}
+                          error={!!errors.firstName}
+                          theme={{
+                            roundness: 12,
+                            colors: {
+                              primary: "#38B2AC",
+                              outline: errors.firstName ? "#DC2626" : "#E9ECEF",
+                            },
+                          }}
+                          style={styles.input}
+                          outlineStyle={styles.inputOutline}
+                        />
+                        {errors.firstName && (
+                          <Text style={styles.inputError}>
+                            {errors.firstName.message}
+                          </Text>
+                        )}
+                      </View>
+                    )}
+                  />
+
+                  <Controller
+                    control={control}
+                    name="lastName"
+                    render={({ field: { onChange, onBlur, value } }) => (
+                      <View style={[styles.inputContainer, styles.halfWidth]}>
+                        <TextInput
+                          label="Last Name"
+                          autoCapitalize="words"
+                          placeholder="Doe"
+                          mode="outlined"
+                          value={value}
+                          onChangeText={onChange}
+                          onBlur={onBlur}
+                          error={!!errors.lastName}
+                          theme={{
+                            roundness: 12,
+                            colors: {
+                              primary: "#38B2AC",
+                              outline: errors.lastName ? "#DC2626" : "#E9ECEF",
+                            },
+                          }}
+                          style={styles.input}
+                          outlineStyle={styles.inputOutline}
+                        />
+                        {errors.lastName && (
+                          <Text style={styles.inputError}>
+                            {errors.lastName.message}
+                          </Text>
+                        )}
+                      </View>
+                    )}
+                  />
+                </View>
 
                 <Controller
                   control={control}
                   name="email"
                   render={({ field: { onChange, onBlur, value } }) => (
-                    <>
+                    <View style={styles.inputContainer}>
                       <TextInput
                         label="Email"
                         autoCapitalize="none"
                         keyboardType="email-address"
-                        placeholder="Email Address"
+                        placeholder="[email protected]"
                         mode="outlined"
                         value={value}
                         onChangeText={onChange}
                         onBlur={onBlur}
                         error={!!errors.email}
+                        left={
+                          <TextInput.Icon
+                            icon={() => (
+                              <Ionicons
+                                name="mail-outline"
+                                size={20}
+                                color="#778DA9"
+                              />
+                            )}
+                          />
+                        }
                         theme={{
-                          roundness: 15,
+                          roundness: 12,
                           colors: {
-                            outline: "transparent",
+                            primary: "#38B2AC",
+                            outline: errors.email ? "#DC2626" : "#E9ECEF",
                           },
                         }}
-                        style={styles.textInput}
+                        style={styles.input}
+                        outlineStyle={styles.inputOutline}
                       />
                       {errors.email && (
-                        <Text style={styles.errorText}>
+                        <Text style={styles.inputError}>
                           {errors.email.message}
                         </Text>
                       )}
-                    </>
-                  )}
-                />
-
-                <Controller
-                  control={control}
-                  name="firstName"
-                  render={({ field: { onChange, onBlur, value } }) => (
-                    <>
-                      <TextInput
-                        label="First Name"
-                        autoCapitalize="words"
-                        keyboardType="default"
-                        placeholder="First Name"
-                        mode="outlined"
-                        value={value}
-                        onChangeText={onChange}
-                        onBlur={onBlur}
-                        error={!!errors.firstName}
-                        theme={{
-                          roundness: 15,
-                          colors: {
-                            outline: "transparent",
-                          },
-                        }}
-                        style={styles.textInput}
-                      />
-                      {errors.firstName && (
-                        <Text style={styles.errorText}>
-                          {errors.firstName.message}
-                        </Text>
-                      )}
-                    </>
-                  )}
-                />
-
-                <Controller
-                  control={control}
-                  name="lastName"
-                  render={({ field: { onChange, onBlur, value } }) => (
-                    <>
-                      <TextInput
-                        label="Last Name"
-                        autoCapitalize="words"
-                        keyboardType="default"
-                        placeholder="Last Name"
-                        mode="outlined"
-                        value={value}
-                        onChangeText={onChange}
-                        onBlur={onBlur}
-                        error={!!errors.lastName}
-                        theme={{
-                          roundness: 15,
-                          colors: {
-                            outline: "transparent",
-                          },
-                        }}
-                        style={styles.textInput}
-                      />
-                      {errors.lastName && (
-                        <Text style={styles.errorText}>
-                          {errors.lastName.message}
-                        </Text>
-                      )}
-                    </>
-                  )}
-                />
-
-                <Controller
-                  control={control}
-                  name="password"
-                  render={({ field: { onChange, onBlur, value } }) => (
-                    <>
-                      <TextInput
-                        label="Password"
-                        autoCapitalize="none"
-                        keyboardType="default"
-                        placeholder="Password"
-                        secureTextEntry={!showPassword}
-                        mode="outlined"
-                        value={value}
-                        onChangeText={onChange}
-                        onBlur={onBlur}
-                        error={!!errors.password}
-                        theme={{
-                          roundness: 15,
-                          colors: {
-                            outline: "transparent",
-                          },
-                        }}
-                        right={
-                          <TextInput.Icon
-                            icon={showPassword ? "eye-off" : "eye"}
-                            size={20}
-                            onPress={() => setShowPassword(!showPassword)}
-                          />
-                        }
-                        style={styles.textInput}
-                      />
-                      {errors.password && (
-                        <Text style={styles.errorText}>
-                          {errors.password.message}
-                        </Text>
-                      )}
-                    </>
-                  )}
-                />
-
-                <Controller
-                  control={control}
-                  name="pin"
-                  render={({ field: { onChange, onBlur, value } }) => (
-                    <>
-                      <TextInput
-                        label="PIN"
-                        autoCapitalize="none"
-                        keyboardType="numeric"
-                        placeholder="4-digit PIN"
-                        secureTextEntry={!showPin}
-                        mode="outlined"
-                        value={value}
-                        onChangeText={onChange}
-                        onBlur={onBlur}
-                        error={!!errors.pin}
-                        maxLength={4}
-                        theme={{
-                          roundness: 15,
-                          colors: {
-                            outline: "transparent",
-                          },
-                        }}
-                        right={
-                          <TextInput.Icon
-                            icon={showPin ? "eye-off" : "eye"}
-                            size={20}
-                            onPress={() => setShowPin(!showPin)}
-                          />
-                        }
-                        style={styles.textInput}
-                      />
-                      {errors.pin && (
-                        <Text style={styles.errorText}>
-                          {errors.pin.message}
-                        </Text>
-                      )}
-                    </>
+                    </View>
                   )}
                 />
 
@@ -295,62 +244,197 @@ export default function SignUp() {
                   control={control}
                   name="phoneNumber"
                   render={({ field: { onChange, onBlur, value } }) => (
-                    <>
+                    <View style={styles.inputContainer}>
                       <TextInput
                         label="Phone Number"
-                        autoCapitalize="none"
                         keyboardType="phone-pad"
-                        placeholder="Phone Number"
+                        placeholder="08012345678"
                         mode="outlined"
                         value={value}
                         onChangeText={onChange}
                         onBlur={onBlur}
                         error={!!errors.phoneNumber}
+                        left={
+                          <TextInput.Icon
+                            icon={() => (
+                              <Ionicons
+                                name="call-outline"
+                                size={20}
+                                color="#778DA9"
+                              />
+                            )}
+                          />
+                        }
                         theme={{
-                          roundness: 15,
+                          roundness: 12,
                           colors: {
-                            outline: "transparent",
+                            primary: "#38B2AC",
+                            outline: errors.phoneNumber ? "#DC2626" : "#E9ECEF",
                           },
                         }}
-                        style={styles.textInput}
+                        style={styles.input}
+                        outlineStyle={styles.inputOutline}
                       />
                       {errors.phoneNumber && (
-                        <Text style={styles.errorText}>
+                        <Text style={styles.inputError}>
                           {errors.phoneNumber.message}
                         </Text>
                       )}
-                    </>
+                    </View>
                   )}
                 />
 
-                <Button
-                  mode="contained"
-                  onPress={handleSubmit(onSubmit)}
-                  loading={isSubmitting}
-                  disabled={isSubmitting || !isValid}
+                <Controller
+                  control={control}
+                  name="password"
+                  render={({ field: { onChange, onBlur, value } }) => (
+                    <View style={styles.inputContainer}>
+                      <TextInput
+                        label="Password"
+                        autoCapitalize="none"
+                        placeholder="Enter password"
+                        secureTextEntry={!showPassword}
+                        mode="outlined"
+                        value={value}
+                        onChangeText={onChange}
+                        onBlur={onBlur}
+                        error={!!errors.password}
+                        left={
+                          <TextInput.Icon
+                            icon={() => (
+                              <Ionicons
+                                name="lock-closed-outline"
+                                size={20}
+                                color="#778DA9"
+                              />
+                            )}
+                          />
+                        }
+                        right={
+                          <TextInput.Icon
+                            icon={showPassword ? "eye-off" : "eye"}
+                            onPress={() => setShowPassword(!showPassword)}
+                          />
+                        }
+                        theme={{
+                          roundness: 12,
+                          colors: {
+                            primary: "#38B2AC",
+                            outline: errors.password ? "#DC2626" : "#E9ECEF",
+                          },
+                        }}
+                        style={styles.input}
+                        outlineStyle={styles.inputOutline}
+                      />
+                      {errors.password && (
+                        <Text style={styles.inputError}>
+                          {errors.password.message}
+                        </Text>
+                      )}
+                    </View>
+                  )}
+                />
+
+                <Controller
+                  control={control}
+                  name="pin"
+                  render={({ field: { onChange, onBlur, value } }) => (
+                    <View style={styles.inputContainer}>
+                      <TextInput
+                        label="4-Digit PIN"
+                        keyboardType="numeric"
+                        placeholder="0000"
+                        secureTextEntry={!showPin}
+                        mode="outlined"
+                        value={value}
+                        onChangeText={onChange}
+                        onBlur={onBlur}
+                        error={!!errors.pin}
+                        maxLength={4}
+                        left={
+                          <TextInput.Icon
+                            icon={() => (
+                              <Ionicons
+                                name="keypad-outline"
+                                size={20}
+                                color="#778DA9"
+                              />
+                            )}
+                          />
+                        }
+                        right={
+                          <TextInput.Icon
+                            icon={showPin ? "eye-off" : "eye"}
+                            onPress={() => setShowPin(!showPin)}
+                          />
+                        }
+                        theme={{
+                          roundness: 12,
+                          colors: {
+                            primary: "#38B2AC",
+                            outline: errors.pin ? "#DC2626" : "#E9ECEF",
+                          },
+                        }}
+                        style={styles.input}
+                        outlineStyle={styles.inputOutline}
+                      />
+                      {errors.pin && (
+                        <Text style={styles.inputError}>
+                          {errors.pin.message}
+                        </Text>
+                      )}
+                    </View>
+                  )}
+                />
+
+                <TouchableOpacity
                   style={[
-                    styles.submitButton,
-                    (!isValid || isSubmitting) && styles.disabledButton,
+                    styles.signUpButton,
+                    (!isValid || isSubmitting) && styles.signUpButtonDisabled,
                   ]}
-                  buttonColor={isValid && !isSubmitting ? "#38B2AC" : "#8B9DC3"} // teal
+                  onPress={handleSubmit(onSubmit)}
+                  disabled={isSubmitting || !isValid}
                 >
-                  Create Account
-                </Button>
-                <TouchableOpacity onPress={() => router.replace("/signIn")}>
-                  <Text
-                    style={{
-                      margin: 10,
-                      textAlign: "center",
-                      fontSize: 14,
-                      color: "#38B2AC", // teal
-                      fontWeight: "bold",
-                    }}
+                  <LinearGradient
+                    colors={
+                      isValid && !isSubmitting
+                        ? ["#38B2AC", "#2C9A8F"]
+                        : ["#8B9DC3", "#778DA9"]
+                    }
+                    style={styles.signUpButtonGradient}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
                   >
-                    Already have an account? Sign In
+                    {isSubmitting ? (
+                      <Text style={styles.signUpButtonText}>
+                        Creating Account...
+                      </Text>
+                    ) : (
+                      <>
+                        <Text style={styles.signUpButtonText}>
+                          Create Account
+                        </Text>
+                        <Ionicons
+                          name="arrow-forward"
+                          size={20}
+                          color="#FFFFFF"
+                        />
+                      </>
+                    )}
+                  </LinearGradient>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.signInLink}
+                  onPress={() => router.replace("/signIn")}
+                >
+                  <Text style={styles.signInLinkText}>
+                    Already have an account?{" "}
+                    <Text style={styles.signInLinkBold}>Sign In</Text>
                   </Text>
                 </TouchableOpacity>
               </View>
-            </View>
+            </Animated.View>
           </ScrollView>
         </KeyboardAvoidingView>
       </LinearGradient>
@@ -359,99 +443,124 @@ export default function SignUp() {
 }
 
 const styles = StyleSheet.create({
-  body: {
-    justifyContent: "center",
-    alignItems: "center",
-    paddingHorizontal: 25,
-    minHeight: "100%",
-    marginTop: 20,
-  },
   container: {
     flex: 1,
   },
   scrollContainer: {
     flexGrow: 1,
+    paddingHorizontal: 20,
+    paddingVertical: 30,
   },
-  box: {
-    backgroundColor: "white",
-    borderRadius: 40,
-    padding: 30,
+  content: {
+    flex: 1,
+  },
+  logoContainer: {
+    alignItems: "center",
     marginTop: 20,
-    width: 90,
-    height: 90,
+    marginBottom: 30,
+  },
+  logoCircle: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
     justifyContent: "center",
     alignItems: "center",
-    shadowColor: "#000000",
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.15,
-    shadowRadius: 5,
+    shadowColor: "#38B2AC",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
     elevation: 8,
-    marginBottom: 20,
-    borderWidth: 1,
-    borderColor: "#38B2AC", // teal
   },
-  formBox: {
-    backgroundColor: "white",
-    borderRadius: 40,
+  brandName: {
+    fontSize: 28,
+    fontFamily: "Poppins_700Bold",
+    color: "#FFFFFF",
+    marginTop: 12,
+  },
+  tagline: {
+    fontSize: 13,
+    fontFamily: "Poppins_400Regular",
+    color: "#8B9DC3",
+    marginTop: 4,
+  },
+  formCard: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 24,
     padding: 20,
-    width: "100%",
-    shadowColor: "#000000",
-    shadowOffset: {
-      width: 0,
-      height: 8,
-    },
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 15,
-    margin: 30,
-    borderWidth: 1,
-    borderColor: "rgba(56, 178, 172, 0.18)", // teal
+    shadowRadius: 16,
+    elevation: 8,
+    marginBottom: 30,
   },
-  titleText: {
-    fontWeight: "700",
-    fontSize: 40,
-    color: "white",
+  formTitle: {
+    fontSize: 22,
+    fontFamily: "Poppins_700Bold",
+    color: "#1B263B",
+    marginBottom: 6,
   },
-  titleTextContainer: {
+  formSubtitle: {
+    fontSize: 13,
+    fontFamily: "Poppins_400Regular",
+    color: "#778DA9",
+    marginBottom: 20,
+  },
+  formRow: {
+    flexDirection: "row",
+    gap: 12,
+  },
+  inputContainer: {
+    marginBottom: 16,
+  },
+  halfWidth: {
+    flex: 1,
+  },
+  input: {
+    backgroundColor: "#F8F9FA",
+    fontSize: 14,
+  },
+  inputOutline: {
+    borderWidth: 1.5,
+  },
+  inputError: {
+    color: "#DC2626",
+    fontSize: 11,
+    fontFamily: "Poppins_400Regular",
+    marginTop: 4,
+    marginLeft: 4,
+  },
+  signUpButton: {
+    borderRadius: 12,
+    overflow: "hidden",
+    marginTop: 8,
+    marginBottom: 16,
+  },
+  signUpButtonDisabled: {
+    opacity: 0.6,
+  },
+  signUpButtonGradient: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    paddingVertical: 16,
+    gap: 8,
+  },
+  signUpButtonText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontFamily: "Poppins_600SemiBold",
+  },
+  signInLink: {
     alignItems: "center",
   },
-  subTitleText: {
-    fontSize: 17,
-    color: "#e7e5e5ff",
+  signInLinkText: {
+    color: "#778DA9",
+    fontSize: 14,
+    fontFamily: "Poppins_400Regular",
   },
-  signUpText: {
-    fontWeight: "bold",
-    textAlign: "center",
-    fontSize: 22,
-    marginBottom: 20,
-  },
-  textInput: {
-    backgroundColor: "#F9FAFB",
-    marginBottom: 10,
-  },
-  errorText: {
-    color: "#FF6B6B",
-    fontSize: 12,
-    marginBottom: 15,
-    marginLeft: 10,
-  },
-  submitButton: {
-    marginTop: 20,
-    paddingVertical: 8,
-    borderRadius: 15,
-    shadowColor: "#38B2AC", // teal
-    shadowOffset: {
-      width: 0,
-      height: 3,
-    },
-    shadowOpacity: 0.3,
-    shadowRadius: 6,
-    elevation: 8,
-  },
-  disabledButton: {
-    opacity: 0.6,
+  signInLinkBold: {
+    color: "#38B2AC",
+    fontFamily: "Poppins_600SemiBold",
   },
 });
