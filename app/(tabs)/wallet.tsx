@@ -136,6 +136,7 @@ export default function Wallet() {
         <RecentStatistics
           totalSpent={balance || "0"}
           isLoading={isLoadingWallet}
+          transactions={transactions}
         />
 
         {/* Transactions Section */}

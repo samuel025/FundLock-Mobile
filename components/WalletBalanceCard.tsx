@@ -1,4 +1,3 @@
-import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import React from "react";
 import { StyleSheet, Text, View } from "react-native";
@@ -31,18 +30,6 @@ export default function WalletBalanceCard({
           ) : (
             <Text style={styles.balanceAmount}>₦{balance}</Text>
           )}
-        </View>
-
-        <View style={styles.cardDetails}>
-          <View style={styles.cardRow}>
-            <Ionicons
-              name="card-outline"
-              size={20}
-              color="rgba(255,255,255,0.8)"
-            />
-            <Text style={styles.cardNumber}>**** **** **** 4312</Text>
-          </View>
-          <Text style={styles.cardExpiry}>05/37</Text>
         </View>
 
         <View style={styles.statsRow}>

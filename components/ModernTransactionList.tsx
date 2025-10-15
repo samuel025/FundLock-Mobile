@@ -1,35 +1,56 @@
 import { Transaction } from "@/services/wallet";
-import { Ionicons } from "@expo/vector-icons";
-import React, { useState } from "react";
+import { Feather, Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
+import { MotiView } from "moti";
+import React from "react";
 import {
+  ActivityIndicator,
   FlatList,
-  ScrollView,
   StyleSheet,
   Text,
-  TouchableOpacity,
   View,
 } from "react-native";
 
 interface ModernTransactionListProps {
   transactions: Transaction[];
   isLoading: boolean;
+  isLoadingMore?: boolean;
+  onLoadMore?: () => void;
 }
 
 export default function ModernTransactionList({
   transactions,
   isLoading,
+  isLoadingMore = false,
+  onLoadMore,
 }: ModernTransactionListProps) {
-  const [selectedFilter, setSelectedFilter] = useState("all");
-
-  const filters = [
-    { id: "all", label: "All Suggested", icon: null },
-    { id: "travel", label: "Travel", icon: "airplane" },
-    { id: "food", label: "Food", icon: "restaurant" },
-  ];
+  // 🔹 Return different icons for each transaction type
+  const renderIcon = (type: string) => {
+    switch (type) {
+      case "DEPOSIT":
+        return <Ionicons name="arrow-down-circle" size={24} color="#38B2AC" />;
+      case "WITHDRAWAL":
+        return <Ionicons name="arrow-up-circle" size={24} color="#E53E3E" />;
+      case "LOCK":
+        return <Feather name="lock" size={22} color="#1E3A8A" />;
+      case "TRANSFER":
+        return <Ionicons name="swap-horizontal" size={24} color="#3182CE" />;
+      case "REFUND":
+        return (
+          <MaterialCommunityIcons
+            name="cash-refund"
+            size={24}
+            color="#4A5568"
+          />
+        );
+      default:
+        return <Feather name="help-circle" size={22} color="#A0AEC0" />;
+    }
+  };
 
   if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#38B2AC" />
         <Text style={styles.loadingText}>Loading transactions...</Text>
       </View>
     );
@@ -44,107 +65,102 @@ export default function ModernTransactionList({
     );
   }
 
-  return (
-    <View>
-      {/* Filter Chips */}
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        style={styles.filterContainer}
-        contentContainerStyle={styles.filterContent}
-      >
-        {filters.map((filter) => (
-          <TouchableOpacity
-            key={filter.id}
-            style={[
-              styles.filterChip,
-              selectedFilter === filter.id && styles.filterChipActive,
-            ]}
-            onPress={() => setSelectedFilter(filter.id)}
+  const renderTransaction = ({
+    item: transaction,
+    index,
+  }: {
+    item: Transaction;
+    index: number;
+  }) => (
+    <MotiView
+      from={{ opacity: 0, translateY: 12 }}
+      animate={{ opacity: 1, translateY: 0 }}
+      transition={{
+        delay: index * 50,
+        type: "timing",
+        duration: 300,
+      }}
+      style={styles.transactionCard}
+    >
+      <View style={styles.transactionLeft}>
+        <View
+          style={[
+            styles.transactionIcon,
+            {
+              backgroundColor:
+                transaction.type === "DEPOSIT"
+                  ? "#E7F6F2"
+                  : transaction.type === "WITHDRAWAL"
+                  ? "#FEE2E2"
+                  : "#E0E7FF",
+            },
+          ]}
+        >
+          <MotiView
+            from={{ scale: 0.7, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ type: "spring", damping: 10 }}
           >
-            {filter.icon && (
-              <Ionicons
-                name={filter.icon as any}
-                size={16}
-                color={selectedFilter === filter.id ? "#FFFFFF" : "#415A77"}
-              />
-            )}
-            <Text
-              style={[
-                styles.filterText,
-                selectedFilter === filter.id && styles.filterTextActive,
-              ]}
-            >
-              {filter.label}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </ScrollView>
-
-      {/* Swipe for Insights */}
-      <TouchableOpacity style={styles.insightCard}>
-        <View style={styles.insightIcon}>
-          <Ionicons name="bulb" size={24} color="#F59E0B" />
+            {renderIcon(transaction.type)}
+          </MotiView>
         </View>
-        <Text style={styles.insightText}>SWIPE FOR INSIGHTS</Text>
-        <Ionicons name="chevron-forward" size={20} color="#1B263B" />
-      </TouchableOpacity>
 
-      {/* Transaction Items - Show ALL transactions instead of just 3 */}
-      <FlatList
-        data={transactions}
-        keyExtractor={(item, index) => `${item.transactionReference}-${index}`}
-        renderItem={({ item: transaction }) => (
-          <View style={styles.transactionCard}>
-            <View style={styles.transactionLeft}>
-              <View
-                style={[
-                  styles.transactionIcon,
-                  {
-                    backgroundColor:
-                      transaction.type === "DEPOSIT"
-                        ? "#E7F6F2"
-                        : transaction.type === "WITHDRAWAL"
-                        ? "#FEE2E2"
-                        : "#E0E7FF",
-                  },
-                ]}
-              >
-                <Text style={styles.transactionEmoji}>
-                  {transaction.type === "DEPOSIT"
-                    ? "🎒"
-                    : transaction.type === "WITHDRAWAL"
-                    ? "🍔"
-                    : "💎"}
-                </Text>
-              </View>
-              <View>
-                <Text style={styles.transactionName}>
-                  {transaction.recipientName || "Unknown"}
-                </Text>
-                <Text style={styles.transactionCategory}>
-                  {transaction.type}
-                </Text>
-              </View>
-            </View>
-            <Text
-              style={[
-                styles.transactionAmount,
-                {
-                  color:
-                    transaction.entryType === "CREDIT" ? "#38B2AC" : "#1B263B",
-                },
-              ]}
-            >
-              {transaction.entryType === "CREDIT" ? "+" : "-"}₦
-              {transaction.amount}
-            </Text>
-          </View>
-        )}
-        scrollEnabled={false}
-        contentContainerStyle={styles.listContent}
-      />
-    </View>
+        <View>
+          <Text style={styles.transactionName}>
+            {transaction.type === "DEPOSIT"
+              ? "Received"
+              : transaction.type === "LOCK"
+              ? "Locked for " + transaction.recipientName
+              : transaction.type === "TRANSFER"
+              ? "Spent with " + transaction.recipientName.slice(0, 10)
+              : transaction.type === "REFUND"
+              ? "Refunded from " + transaction.recipientName
+              : "Withdrawn"}
+          </Text>
+          <Text style={styles.transactionCategory}>{transaction.type}</Text>
+        </View>
+      </View>
+
+      <MotiView
+        from={{ opacity: 0, translateX: 10 }}
+        animate={{ opacity: 1, translateX: 0 }}
+        transition={{ delay: index * 50 + 150, duration: 300 }}
+      >
+        <Text
+          style={[
+            styles.transactionAmount,
+            {
+              color: transaction.entryType === "CREDIT" ? "#38B2AC" : "#1B263B",
+            },
+          ]}
+        >
+          {transaction.entryType === "CREDIT" ? "+" : "-"}₦{transaction.amount}
+        </Text>
+      </MotiView>
+    </MotiView>
+  );
+
+  const renderFooter = () => {
+    if (!isLoadingMore) return null;
+    return (
+      <View style={styles.footerLoader}>
+        <ActivityIndicator size="small" color="#38B2AC" />
+        <Text style={styles.footerText}>Loading more...</Text>
+      </View>
+    );
+  };
+
+  return (
+    <FlatList
+      data={transactions}
+      keyExtractor={(item, index) => `${item.reference}-${index}`}
+      renderItem={renderTransaction}
+      scrollEnabled={false}
+      contentContainerStyle={styles.listContent}
+      onEndReached={onLoadMore}
+      onEndReachedThreshold={0.5}
+      ListFooterComponent={renderFooter}
+    />
   );
 }
 
@@ -156,6 +172,7 @@ const styles = StyleSheet.create({
   loadingText: {
     color: "#778DA9",
     fontFamily: "Poppins_500Medium",
+    marginTop: 12,
   },
   emptyContainer: {
     padding: 60,
@@ -166,59 +183,6 @@ const styles = StyleSheet.create({
     color: "#778DA9",
     fontFamily: "Poppins_500Medium",
     fontSize: 16,
-  },
-  filterContainer: {
-    marginBottom: 16,
-  },
-  filterContent: {
-    gap: 8,
-  },
-  filterChip: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 20,
-    backgroundColor: "#FFFFFF",
-    gap: 6,
-    borderWidth: 1,
-    borderColor: "#E9ECEF",
-  },
-  filterChipActive: {
-    backgroundColor: "#A78BFA",
-    borderColor: "#A78BFA",
-  },
-  filterText: {
-    fontSize: 14,
-    fontFamily: "Poppins_500Medium",
-    color: "#415A77",
-  },
-  filterTextActive: {
-    color: "#FFFFFF",
-  },
-  insightCard: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#1B263B",
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 16,
-  },
-  insightIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    backgroundColor: "rgba(245, 158, 11, 0.2)",
-    justifyContent: "center",
-    alignItems: "center",
-    marginRight: 12,
-  },
-  insightText: {
-    flex: 1,
-    fontSize: 14,
-    fontFamily: "Poppins_600SemiBold",
-    color: "#FFFFFF",
-    letterSpacing: 0.5,
   },
   listContent: {
     paddingBottom: 10,
@@ -249,9 +213,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  transactionEmoji: {
-    fontSize: 24,
-  },
   transactionName: {
     fontSize: 16,
     fontFamily: "Poppins_600SemiBold",
@@ -266,5 +227,17 @@ const styles = StyleSheet.create({
   transactionAmount: {
     fontSize: 16,
     fontFamily: "Poppins_600SemiBold",
+  },
+  footerLoader: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    paddingVertical: 20,
+    gap: 8,
+  },
+  footerText: {
+    color: "#778DA9",
+    fontFamily: "Poppins_500Medium",
+    fontSize: 13,
   },
 });

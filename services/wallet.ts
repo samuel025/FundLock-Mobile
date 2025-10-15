@@ -54,24 +54,23 @@ export async function getWalletDetails(): Promise<WalletDetails> {
 }
 
 export interface Transaction {
-  entryType: string;
-  createdAt: string;
-  recipientWalletNumber: string;
-  amount: number;
-  transactionReference: string;
+  id: string;
   type: string;
-  status: string;
+  createdAt: string;
+  senderWalletNumber: string;
+  receiverWalletNumber: string;
+  reference: string;
+  amount: number;
   recipientName: string;
+  transactionInitiator: string;
+  entryType: string;
 }
 
 export interface WalletData {
   currentPage: number;
-  totalElements: number;
-  hasNext: boolean;
+  totalItems: number;
   totalPages: number;
-  size: number;
-  walletNumber: string;
-  hasPrevious: boolean;
+  name: string;
   transactions: Transaction[];
 }
 
@@ -84,7 +83,7 @@ export interface WalletResponse {
 export async function getWalletTransactions(): Promise<Transaction[]> {
   try {
     const response = await API.get<ApiResponse<WalletData>>(
-      "api/v1/fundlock/wallet-transactions"
+      "api/v1/fundlock/transactions"
     );
     return response.data.data.transactions;
   } catch (error) {

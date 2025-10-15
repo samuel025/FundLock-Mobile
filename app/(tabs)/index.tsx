@@ -226,7 +226,11 @@ export default function Index() {
                 </View>
                 <View style={styles.activityDetails}>
                   <Text style={styles.activityName}>
-                    {transaction.recipientName || "Unknown"}
+                    {transaction.type === "DEPOSIT"
+                      ? "Deposit"
+                      : transaction.type === "LOCK"
+                      ? "Locked for " + transaction.recipientName
+                      : "Spent with" + " " + transaction.recipientName}
                   </Text>
                   <Text style={styles.activityDate}>
                     {new Date(transaction.createdAt).toLocaleDateString()}
