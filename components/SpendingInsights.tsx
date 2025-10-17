@@ -1,23 +1,13 @@
-import { Transaction } from "@/services/wallet";
+import { Insights } from "@/services/wallet";
 import { Ionicons } from "@expo/vector-icons";
 import React from "react";
 import { StyleSheet, Text, View } from "react-native";
 
 interface SpendingInsightsProps {
-  transactions: Transaction[];
+  insights: Insights;
 }
 
-export default function SpendingInsights({
-  transactions,
-}: SpendingInsightsProps) {
-  const totalSpent = transactions
-    .filter((t) => t.entryType === "DEBIT")
-    .reduce((sum, t) => sum + parseFloat(t.amount.toString()), 0);
-
-  const totalReceived = transactions
-    .filter((t) => t.entryType === "CREDIT")
-    .reduce((sum, t) => sum + parseFloat(t.amount.toString()), 0);
-
+export default function SpendingInsights({ insights }: SpendingInsightsProps) {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -28,8 +18,7 @@ export default function SpendingInsights({
       <View style={styles.insightCard}>
         <Ionicons name="information-circle" size={20} color="#4F46E5" />
         <Text style={styles.insightText}>
-          You&apos;ve spent ₦{totalSpent.toLocaleString()} this week.
-          That&apos;s 12% less than last week!
+          You&apos;ve spent ₦{parseFloat(insights?.spentThisWeek)} this week!.
         </Text>
       </View>
 
@@ -39,7 +28,7 @@ export default function SpendingInsights({
             <Ionicons name="arrow-up" size={20} color="#DC2626" />
           </View>
           <Text style={styles.statLabel}>Spent</Text>
-          <Text style={styles.statValue}>₦{totalSpent.toLocaleString()}</Text>
+          <Text style={styles.statValue}>₦{insights?.spentThisWeek}</Text>
         </View>
 
         <View style={styles.statBox}>
@@ -47,9 +36,7 @@ export default function SpendingInsights({
             <Ionicons name="arrow-down" size={20} color="#38B2AC" />
           </View>
           <Text style={styles.statLabel}>Received</Text>
-          <Text style={styles.statValue}>
-            ₦{totalReceived.toLocaleString()}
-          </Text>
+          <Text style={styles.statValue}>₦{insights?.receivedThisWeek}</Text>
         </View>
       </View>
     </View>

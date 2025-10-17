@@ -114,7 +114,7 @@ export default function ModernTransactionList({
               : transaction.type === "TRANSFER"
               ? "Spent with " + transaction.recipientName.slice(0, 10)
               : transaction.type === "REFUND"
-              ? "Refunded from " + transaction.recipientName
+              ? "Refunded from " + transaction.recipientName + " category"
               : "Withdrawn"}
           </Text>
           <Text style={styles.transactionCategory}>{transaction.type}</Text>

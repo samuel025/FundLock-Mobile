@@ -110,3 +110,44 @@ export async function getWalletTransactions(): Promise<Transaction[]> {
     throw new Error("An unexpected error occurred. Please try again");
   }
 }
+
+export interface Insights {
+  spentThisWeek: string;
+  receivedThisWeek: string;
+}
+
+export interface WeeklyTransactionInsight {
+  status: string;
+  message: string;
+  data: Insights;
+}
+
+export async function getWeeklyTransactionInsights(): Promise<Insights> {
+  try {
+    const response = await API.get<WeeklyTransactionInsight>(
+      "api/v1/fundlock/weekly-transactions"
+    );
+    return response.data.data;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      const axiosError = error as AxiosError<ErrorResponse>;
+      if (!axiosError.response) {
+        console.error("Network error while fetching transactions");
+        const customError: any = new Error(
+          "Network error. Please check your internet connection and try again."
+        );
+        customError.status = 0;
+        throw customError;
+      }
+
+      const errorMessage =
+        axiosError.response?.data?.message || "Failed to fetch insights";
+
+      console.error("Failed to fetch insights:", errorMessage);
+      const customError: any = new Error(errorMessage);
+      customError.status = axiosError.response?.status;
+      throw customError;
+    }
+    throw new Error("An unexpected error occurred. Please try again");
+  }
+}

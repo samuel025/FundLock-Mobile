@@ -15,51 +15,9 @@ export default function RecentStatistics({
   isLoading,
   transactions = [],
 }: RecentStatisticsProps) {
-  const now = new Date();
-
-  // Helper to check if a date is today or yesterday
-  function isSameDay(date1: Date, date2: Date) {
-    return (
-      date1.getFullYear() === date2.getFullYear() &&
-      date1.getMonth() === date2.getMonth() &&
-      date1.getDate() === date2.getDate()
-    );
-  }
-
-  // Calculate today's and yesterday's spending
-  let todaySpent = 0;
-  let yesterdaySpent = 0;
-
-  transactions.forEach((tx) => {
-    if (tx.entryType === "DEBIT") {
-      const txDate = new Date(tx.createdAt);
-      if (isSameDay(txDate, now)) {
-        todaySpent += tx.amount;
-      } else {
-        // Check if it's yesterday
-        const yesterday = new Date(now);
-        yesterday.setDate(now.getDate() - 1);
-        if (isSameDay(txDate, yesterday)) {
-          yesterdaySpent += tx.amount;
-        }
-      }
-    }
-  });
-
-  // Calculate percentage change
-  let percentChange = 0;
-  if (yesterdaySpent > 0) {
-    percentChange = ((todaySpent - yesterdaySpent) / yesterdaySpent) * 100;
-  }
-
-  // Format for display
-  const percentChangeDisplay =
-    yesterdaySpent === 0
-      ? "N/A"
-      : `${percentChange > 0 ? "+" : ""}${percentChange.toFixed(1)}%`;
-
   // Group transactions by day (or week) and sum DEBIT amounts
   const days = 7;
+  const now = new Date();
   const dailyTotals = Array(days).fill(0);
 
   transactions.forEach((tx) => {
@@ -80,16 +38,12 @@ export default function RecentStatistics({
     <View style={styles.container}>
       <View style={styles.header}>
         <View>
-          <Text style={styles.label}>Today's Spending</Text>
-          <Text style={styles.amount}>₦{todaySpent.toLocaleString()}</Text>
+          <Text style={styles.label}>Recent statistic</Text>
+          <Text style={styles.amount}>₦{totalSpent}</Text>
         </View>
         <View style={styles.trendBadge}>
-          <Ionicons
-            name={percentChange >= 0 ? "trending-up" : "trending-down"}
-            size={16}
-            color={percentChange >= 0 ? "#38B2AC" : "#DC2626"}
-          />
-          <Text style={styles.trendText}>{percentChangeDisplay}</Text>
+          <Ionicons name="trending-up" size={16} color="#38B2AC" />
+          <Text style={styles.trendText}>+12%</Text>
         </View>
       </View>
 

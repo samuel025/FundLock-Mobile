@@ -3,6 +3,8 @@ import { walletStore } from "@/lib/walletStore";
 import {
   getWalletDetails,
   getWalletTransactions,
+  getWeeklyTransactionInsights,
+  Insights,
   Transaction,
 } from "@/services/wallet";
 import { useMutation } from "@tanstack/react-query";
@@ -14,6 +16,12 @@ export function useWallet() {
   const accessToken = useAuthStore((state) => state.accessToken);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isLoadingTransactions, setIsLoadingTransactions] = useState(false);
+  const [isLoadingInsights, setIsLoadingInsights] = useState(false);
+  // default to a safe object so UI never sees `undefined`
+  const [insights, setInsights] = useState<Insights>({
+    spentThisWeek: "0",
+    receivedThisWeek: "0",
+  });
   const hasFetchedRef = useRef(false);
   const previousTokenRef = useRef<string | null>(null);
 
@@ -77,15 +85,32 @@ export function useWallet() {
     },
   });
 
+  const weeklyInsightMutation = useMutation({
+    mutationFn: getWeeklyTransactionInsights,
+    onMutate: () => {},
+    onSuccess: (data) => {
+      setInsights(data ?? { spentThisWeek: "0", receivedThisWeek: "0" });
+      setIsLoadingInsights(false);
+    },
+    onError: (error) => {
+      console.error("failed to fetch insights", error);
+      setInsights({ spentThisWeek: "0", receivedThisWeek: "0" });
+      setIsLoadingInsights(false);
+    },
+    onSettled: () => {
+      setIsLoadingInsights(false);
+    },
+  });
+
   const fetchWalletData = useCallback(() => {
     if (user && accessToken) {
       console.log("Fetching wallet data...");
       walletMutation.mutate();
       transactionsMutation.mutate();
+      weeklyInsightMutation.mutate();
     }
   }, [user, accessToken]);
 
-  // Handle focus-based fetching (tab switching)
   useFocusEffect(
     useCallback(() => {
       if (user && accessToken && !hasFetchedRef.current) {
@@ -123,6 +148,8 @@ export function useWallet() {
     isLoadingWallet,
     transactions,
     isLoadingTransactions,
+    isLoadingInsights,
+    insights,
     fetchWalletData,
   };
 }

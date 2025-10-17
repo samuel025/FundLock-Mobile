@@ -8,26 +8,31 @@ export default function RootLayout() {
       <Tabs
         screenOptions={{
           tabBarActiveTintColor: "#38B2AC",
-          tabBarInactiveTintColor: "#8B9DC3",
+          tabBarInactiveTintColor: "#94A3B8",
           tabBarStyle: {
-            backgroundColor: "#1B263B",
-            borderTopWidth: 1,
-            borderTopColor: "rgba(56, 178, 172, 0.25)",
-            paddingBottom: 5,
-            paddingTop: 5,
-            height: 60,
+            backgroundColor: "#FFFFFF",
+            borderTopWidth: 0,
+            elevation: 12,
+            shadowColor: "#000",
+            shadowOffset: { width: 0, height: -6 },
+            shadowOpacity: 0.08,
+            shadowRadius: 12,
+            height: 70,
+            paddingBottom: 8,
+            paddingTop: 8,
+            borderRadius: 16,
           },
-
           tabBarLabelStyle: {
-            fontSize: 10,
+            fontFamily: "Poppins_500Medium",
+            fontSize: 11,
           },
+          headerShown: false,
         }}
       >
         <Tabs.Screen
           name="index"
           options={{
-            headerShown: false,
-            tabBarLabel: "Home",
+            title: "Home",
             tabBarIcon: ({ color, size }) => (
               <Ionicons name="home" size={size} color={color} />
             ),
@@ -36,10 +41,36 @@ export default function RootLayout() {
         <Tabs.Screen
           name="wallet"
           options={{
-            headerShown: false,
-            tabBarLabel: "Wallet",
+            title: "Wallet",
             tabBarIcon: ({ color, size }) => (
               <Ionicons name="wallet" size={size} color={color} />
+            ),
+          }}
+        />
+        <Tabs.Screen
+          name="lock"
+          options={{
+            title: "Lock",
+            tabBarIcon: ({ color, size }) => (
+              <Ionicons name="lock-closed" size={size} color={color} />
+            ),
+          }}
+        />
+        <Tabs.Screen
+          name="spend"
+          options={{
+            title: "Spend",
+            tabBarIcon: ({ color, size }) => (
+              <Ionicons name="card" size={size} color={color} />
+            ),
+          }}
+        />
+        <Tabs.Screen
+          name="profile"
+          options={{
+            title: "Profile",
+            tabBarIcon: ({ color, size }) => (
+              <Ionicons name="person" size={size} color={color} />
             ),
           }}
         />

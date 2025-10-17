@@ -14,7 +14,6 @@ import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import { useState } from "react";
 import {
-  Dimensions,
   RefreshControl,
   ScrollView,
   StyleSheet,
@@ -22,8 +21,6 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-
-const { width } = Dimensions.get("window");
 
 export default function Index() {
   const user = useAuthStore((state) => state.user);
@@ -34,11 +31,10 @@ export default function Index() {
     balance,
     totalLockedAmount,
     totalRedeemedAmount,
-    isLoadingWallet,
     transactions,
     fetchWalletData,
+    insights,
   } = useWallet();
-
   let [fontsLoaded] = useFonts({
     Poppins_400Regular,
     Poppins_500Medium,
@@ -187,7 +183,14 @@ export default function Index() {
         </View>
 
         {/* Spending Insights */}
-        <SpendingInsights transactions={recentTransactions} />
+        <SpendingInsights
+          insights={
+            insights || {
+              spentThisWeek: "0",
+              receivedThisWeek: "0",
+            }
+          }
+        />
 
         {/* Recent Activity */}
         <View style={styles.recentActivity}>
@@ -230,7 +233,13 @@ export default function Index() {
                       ? "Deposit"
                       : transaction.type === "LOCK"
                       ? "Locked for " + transaction.recipientName
-                      : "Spent with" + " " + transaction.recipientName}
+                      : transaction.type === "TRANSFER"
+                      ? "Spent with " + transaction.recipientName.slice(0, 10)
+                      : transaction.type === "REFUND"
+                      ? "Refunded from " +
+                        transaction.recipientName +
+                        " category"
+                      : "Withdrawn"}
                   </Text>
                   <Text style={styles.activityDate}>
                     {new Date(transaction.createdAt).toLocaleDateString()}
