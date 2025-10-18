@@ -159,18 +159,24 @@ export default function Index() {
               <Text style={styles.actionText}>My Wallet</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.actionCard}>
+            <TouchableOpacity
+              style={styles.actionCard}
+              onPress={() => router.push("/lock")}
+            >
               <View style={[styles.actionIcon, { backgroundColor: "#FEE2E2" }]}>
                 <Ionicons name="lock-closed" size={24} color="#DC2626" />
               </View>
               <Text style={styles.actionText}>Lock Funds</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.actionCard}>
+            <TouchableOpacity
+              style={styles.actionCard}
+              onPress={() => router.push("/locks")}
+            >
               <View style={[styles.actionIcon, { backgroundColor: "#E0E7FF" }]}>
-                <Ionicons name="trending-up" size={24} color="#4F46E5" />
+                <Ionicons name="layers" size={24} color="#4F46E5" />
               </View>
-              <Text style={styles.actionText}>Analytics</Text>
+              <Text style={styles.actionText}>View Locks</Text>
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.actionCard}>

@@ -15,6 +15,7 @@ export function useCategory() {
       setIsCategoryLoading(true);
     },
     onSuccess: async (data) => {
+      //explain
       const list = Array.isArray(data) ? data : [];
       setCategories(list.map((c: any) => ({ id: String(c.id), name: c.name })));
       setIsCategoryLoading(false);

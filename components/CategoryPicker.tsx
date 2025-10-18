@@ -77,6 +77,7 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0,0,0,0.35)",
     justifyContent: "flex-end",
   },
+
   modal: {
     backgroundColor: "#fff",
     padding: 16,

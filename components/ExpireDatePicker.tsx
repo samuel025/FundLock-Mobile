@@ -29,6 +29,10 @@ export function ExpireDatePicker({
   return (
     <View style={styles.section}>
       <Text style={styles.sectionTitle}>Expire At</Text>
+      <Text style={styles.subtitle}>
+        Note that this will be ignored if there is an existing lock in the
+        category you choose and your money will be added to the existing lock.
+      </Text>
       <TouchableOpacity
         style={styles.datePickerButton}
         onPress={() => setShowDatePicker(true)}
@@ -79,7 +83,14 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: "Poppins_600SemiBold",
     color: "#415A77",
-    marginBottom: 8,
+    marginBottom: 1,
+  },
+  subtitle: {
+    fontSize: 13,
+    fontFamily: "Poppins_400Regular",
+    color: "#778DA9",
+    marginTop: 4,
+    marginBottom: 2,
   },
   datePickerButton: {
     flexDirection: "row",

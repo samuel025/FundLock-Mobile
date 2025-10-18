@@ -2,31 +2,30 @@ import { API } from "@/lib/api";
 import axios, { AxiosError } from "axios";
 import { ErrorResponse } from "./wallet";
 
-export interface LockRequest {
-  amountLocked: string;
-  category_id: string;
-  expiresAt: string;
+export interface DepositRequest {
+  amount: string;
   pin: string;
 }
 
-export interface Lock {
-  LockDetails: string;
-  Category: string;
+export interface authorizationURL {
+  authorization_url: string;
 }
 
-export interface LockResponse {
+export interface DepositResponse {
   status: string;
   message: string;
-  data: Lock;
+  data: authorizationURL;
 }
 
-export async function postLock(data: LockRequest): Promise<string> {
+export async function postDeposit(
+  data: DepositRequest
+): Promise<authorizationURL> {
   try {
-    const response = await API.post<LockResponse>(
-      "/api/v1/fundlock/lockfunds",
+    const response = await API.post<DepositResponse>(
+      "/api/v1/fundlock/deposit-paystack",
       data
     );
-    return response.data.message;
+    return response.data.data;
   } catch (error) {
     if (axios.isAxiosError(error)) {
       const axiosError = error as AxiosError<ErrorResponse>;

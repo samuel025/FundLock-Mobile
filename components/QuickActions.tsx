@@ -35,7 +35,7 @@ export default function QuickActions({
           <View style={[styles.actionIcon, { backgroundColor: "#E0E7FF" }]}>
             <Ionicons name="swap-horizontal" size={24} color="#4F46E5" />
           </View>
-          <Text style={styles.actionText}>Transfer</Text>
+          <Text style={styles.actionText}>Spend</Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.actionItem} onPress={onSignOut}>

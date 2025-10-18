@@ -1,0 +1,190 @@
+import {
+  Poppins_400Regular,
+  Poppins_500Medium,
+  Poppins_600SemiBold,
+  Poppins_700Bold,
+  useFonts,
+} from "@expo-google-fonts/poppins";
+import { Ionicons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
+import { useRouter } from "expo-router";
+import React from "react";
+import {
+  FlatList,
+  RefreshControl,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+
+// hide the native header so we can render a clean custom header
+export const options = { headerShown: false };
+
+export default function LocksPage() {
+  const router = useRouter();
+
+  // dummy data for now
+  const dummyLocks = [
+    {
+      Category: "Groceries",
+      amountLocked: "12500",
+      expiresAt: "2025-11-01",
+    },
+    {
+      Category: "Rent",
+      amountLocked: "85000",
+      expiresAt: "2026-01-01",
+    },
+    {
+      Category: "Vacation",
+      amountLocked: "40000",
+      expiresAt: "",
+    },
+  ];
+
+  const [locks, setLocks] = React.useState<any[]>(dummyLocks);
+  const [refreshing, setRefreshing] = React.useState(false);
+
+  let [fontsLoaded] = useFonts({
+    Poppins_400Regular,
+    Poppins_500Medium,
+    Poppins_600SemiBold,
+    Poppins_700Bold,
+  });
+
+  async function onRefresh() {
+    setRefreshing(true);
+    // simulate refresh - replace with real fetch later
+    setTimeout(() => setRefreshing(false), 700);
+  }
+
+  if (!fontsLoaded) return null;
+
+  return (
+    <LinearGradient colors={["#F8F9FA", "#E9ECEF"]} style={styles.container}>
+      <SafeAreaView edges={["top"]} style={styles.safe}>
+        <View style={styles.header}>
+          <TouchableOpacity
+            onPress={() => router.back()}
+            style={styles.backButton}
+            accessibilityLabel="Go back"
+          >
+            <Ionicons name="chevron-back" size={22} color="#1B263B" />
+          </TouchableOpacity>
+
+          <View style={styles.headerCenter}>
+            <Text style={styles.title}>My Locks</Text>
+            <Text style={styles.subtitle}>Active locked funds by category</Text>
+          </View>
+
+          <View style={styles.iconBox}>
+            <Ionicons name="lock-closed" size={26} color="#38B2AC" />
+          </View>
+        </View>
+      </SafeAreaView>
+
+      <FlatList
+        data={locks}
+        keyExtractor={(item, index) =>
+          `${item.Category ?? item.category ?? index}`
+        }
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={["#38B2AC"]}
+            tintColor="#38B2AC"
+          />
+        }
+        contentContainerStyle={locks.length ? undefined : { flex: 1 }}
+        ListEmptyComponent={
+          <View style={styles.empty}>
+            <Text style={styles.emptyText}>No active locks</Text>
+          </View>
+        }
+        renderItem={({ item }) => {
+          const category =
+            (item as any).Category ?? (item as any).category ?? "Unknown";
+          const amount = Number(
+            (item as any).amountLocked ?? (item as any).amount ?? 0
+          );
+          const expiresRaw =
+            (item as any).expiresAt ?? (item as any).expires ?? "";
+          const expires =
+            expiresRaw && expiresRaw !== ""
+              ? new Date(expiresRaw).toISOString().split("T")[0]
+              : "No expiry";
+          return (
+            <View style={styles.card}>
+              <View style={styles.left}>
+                <Text style={styles.category}>{category}</Text>
+                <Text style={styles.expires}>Expires: {expires}</Text>
+              </View>
+              <Text style={styles.amount}>₦{amount.toLocaleString()}</Text>
+            </View>
+          );
+        }}
+      />
+    </LinearGradient>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: { flex: 1, padding: 20, backgroundColor: "transparent" },
+  safe: { backgroundColor: "transparent" },
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 12,
+  },
+  backButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 10,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#FFFFFF",
+    elevation: 2,
+    marginRight: 8,
+  },
+  headerCenter: { flex: 1, paddingLeft: 4 },
+  title: { fontSize: 20, fontFamily: "Poppins_700Bold", color: "#1B263B" },
+  subtitle: {
+    fontSize: 12,
+    fontFamily: "Poppins_400Regular",
+    color: "#778DA9",
+    marginTop: 2,
+  },
+  iconBox: {
+    width: 48,
+    height: 48,
+    borderRadius: 12,
+    backgroundColor: "#fff",
+    justifyContent: "center",
+    alignItems: "center",
+    elevation: 3,
+  },
+  loading: { flex: 1, justifyContent: "center", alignItems: "center" },
+  empty: { flex: 1, justifyContent: "center", alignItems: "center" },
+  emptyText: { color: "#778DA9", fontFamily: "Poppins_500Medium" },
+  card: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    backgroundColor: "#fff",
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 12,
+    elevation: 2,
+  },
+  left: { flex: 1 },
+  category: {
+    fontFamily: "Poppins_600SemiBold",
+    color: "#1B263B",
+    fontSize: 16,
+  },
+  expires: { fontFamily: "Poppins_400Regular", color: "#778DA9", marginTop: 4 },
+  amount: { fontFamily: "Poppins_600SemiBold", color: "#1B263B", fontSize: 16 },
+});

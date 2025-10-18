@@ -53,7 +53,7 @@ export default function Wallet() {
   };
 
   const handleAddMoney = () => {
-    console.log("Add Money pressed");
+    router.push({ pathname: "/profile", params: { openDeposit: "1" } });
   };
 
   const handleWithdraw = () => {

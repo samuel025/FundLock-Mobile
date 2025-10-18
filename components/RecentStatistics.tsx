@@ -15,24 +15,53 @@ export default function RecentStatistics({
   isLoading,
   transactions = [],
 }: RecentStatisticsProps) {
-  // Group transactions by day (or week) and sum DEBIT amounts
   const days = 7;
   const now = new Date();
-  const dailyTotals = Array(days).fill(0);
+  const dailyNet = Array(days).fill(0);
 
   transactions.forEach((tx) => {
-    if (tx.entryType === "DEBIT") {
-      const txDate = new Date(tx.createdAt);
-      const diffDays = Math.floor(
-        (now.getTime() - txDate.getTime()) / (1000 * 60 * 60 * 24)
-      );
-      if (diffDays < days) {
-        dailyTotals[days - diffDays - 1] += tx.amount;
+    const txDate = new Date(tx.createdAt);
+    const diffDays = Math.floor(
+      (now.getTime() - txDate.getTime()) / (1000 * 60 * 60 * 24)
+    );
+    if (diffDays < days && diffDays >= 0) {
+      const idx = days - diffDays - 1;
+      const amt = Number(tx.amount) || 0;
+      if (tx.entryType === "CREDIT") {
+        dailyNet[idx] += amt;
+      } else {
+        dailyNet[idx] -= amt;
       }
     }
   });
 
-  const chartData = dailyTotals.map((value) => ({ value }));
+  const cumulative: number[] = [];
+  dailyNet.reduce((acc, val, i) => {
+    const next = acc + val;
+    cumulative[i] = next;
+    return next;
+  }, 0);
+
+  const minVal = Math.min(...cumulative, 0);
+  const offset = Math.abs(minVal);
+  const chartData = cumulative.map((value) => ({ value: value + offset }));
+
+  // percent display: show a dash "—" when baseline is zero (avoids misleading 100%)
+  const first = cumulative[0] ?? 0;
+  const last = cumulative[cumulative.length - 1] ?? 0;
+  let percentLabel: string = "—";
+  let isPositive = true;
+
+  if (Math.abs(first) < 1e-9) {
+    // baseline is effectively zero — show dash instead of arbitrary 100%
+    percentLabel = "—";
+    isPositive = last >= 0;
+  } else {
+    const percent = ((last - first) / Math.abs(first)) * 100;
+    const rounded = Math.round(percent * 10) / 10; // one decimal
+    percentLabel = (rounded >= 0 ? "+" : "") + rounded.toString() + "%";
+    isPositive = rounded >= 0;
+  }
 
   return (
     <View style={styles.container}>
@@ -41,9 +70,25 @@ export default function RecentStatistics({
           <Text style={styles.label}>Recent statistic</Text>
           <Text style={styles.amount}>₦{totalSpent}</Text>
         </View>
-        <View style={styles.trendBadge}>
-          <Ionicons name="trending-up" size={16} color="#38B2AC" />
-          <Text style={styles.trendText}>+12%</Text>
+        <View
+          style={[
+            styles.trendBadge,
+            { backgroundColor: isPositive ? "#E7F6F2" : "#FEE2E2" },
+          ]}
+        >
+          <Ionicons
+            name={isPositive ? "trending-up" : "trending-down"}
+            size={16}
+            color={isPositive ? "#38B2AC" : "#DC2626"}
+          />
+          <Text
+            style={[
+              styles.trendText,
+              { color: isPositive ? "#38B2AC" : "#DC2626" },
+            ]}
+          >
+            {percentLabel}
+          </Text>
         </View>
       </View>
 

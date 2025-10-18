@@ -1,3 +1,10 @@
+import { AccountActions } from "@/components/profileComponents/AccountActions";
+import { DepositModal } from "@/components/profileComponents/DepositModal";
+import { ProfileHeader } from "@/components/profileComponents/ProfileHeader";
+import { VirtualAccountModal } from "@/components/profileComponents/VirtualAccountModal";
+import { WithdrawModal } from "@/components/profileComponents/WithdrawModal";
+import { useAuthStore } from "@/lib/useAuthStore";
+import { postDeposit } from "@/services/deposit";
 import {
   Poppins_400Regular,
   Poppins_500Medium,
@@ -5,39 +12,13 @@ import {
   Poppins_700Bold,
   useFonts,
 } from "@expo-google-fonts/poppins";
-import { Ionicons } from "@expo/vector-icons";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { LinearGradient } from "expo-linear-gradient";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useMemo, useState } from "react";
-import { Controller, useForm } from "react-hook-form";
-import {
-  Alert,
-  KeyboardAvoidingView,
-  Linking,
-  Modal,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from "react-native";
-import { TextInput } from "react-native-paper";
+import { useForm } from "react-hook-form";
+import { Alert, ScrollView, StyleSheet, Text } from "react-native";
 import * as yup from "yup";
-
-const mockUser = {
-  firstName: "Jane",
-  lastName: "Doe",
-  email: "jane.doe@example.com",
-};
-
-function makeId(length = 8) {
-  const chars = "abcdefghijklmnopqrstuvwxyz0123456789";
-  let s = "";
-  for (let i = 0; i < length; i++)
-    s += chars[Math.floor(Math.random() * chars.length)];
-  return s;
-}
 
 const depositSchema = yup.object({
   amount: yup
@@ -57,6 +38,8 @@ const withdrawSchema = depositSchema;
 type DepositForm = yup.InferType<typeof depositSchema>;
 
 export default function Profile() {
+  const { openDeposit } = useLocalSearchParams();
+  const router = useRouter();
   const [depositModal, setDepositModal] = useState(false);
   const [withdrawModal, setWithdrawModal] = useState(false);
   const [virtualModal, setVirtualModal] = useState(false);
@@ -67,6 +50,8 @@ export default function Profile() {
   } | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
 
+  const user = useAuthStore((state) => state.user);
+
   let [fontsLoaded] = useFonts({
     Poppins_400Regular,
     Poppins_500Medium,
@@ -76,8 +61,8 @@ export default function Profile() {
 
   const userInitials = useMemo(
     () =>
-      `${mockUser.firstName?.charAt(0) ?? "U"}${
-        mockUser.lastName?.charAt(0) ?? ""
+      `${user?.firstName?.charAt(0) ?? "U"}${
+        user?.lastName?.charAt(0) ?? ""
       }`.toUpperCase(),
     []
   );
@@ -101,21 +86,20 @@ export default function Profile() {
     defaultValues: { amount: undefined as any, pin: "" },
   });
 
-  const generateDepositLink = (data: DepositForm) => {
+  const generateDepositLink = async (data: DepositForm) => {
     setIsGenerating(true);
-    setTimeout(() => {
-      const id = makeId(10);
-      const url = `https://paystack.com/pay/${id}`;
-      setDepositLink(url);
+    try {
+      const res = await postDeposit({
+        amount: String(data.amount),
+        pin: data.pin,
+      });
+      setDepositLink(res.authorization_url);
+    } catch (err: any) {
+      console.error("generateDepositLink error", err);
+      Alert.alert("Error", err?.message ?? "Failed to generate deposit link");
+    } finally {
       setIsGenerating(false);
-      setDepositModal(false);
-      setTimeout(() => {
-        Alert.alert("Deposit link generated", "Open link to complete payment", [
-          { text: "Open", onPress: () => Linking.openURL(url) },
-          { text: "Close", style: "cancel" },
-        ]);
-      }, 200);
-    }, 900);
+    }
   };
 
   const handleWithdraw = (data: DepositForm) => {
@@ -139,6 +123,16 @@ export default function Profile() {
     setVirtualModal(true);
   };
 
+  // if navigated with ?openDeposit=1 open the deposit modal and remove the param
+  React.useEffect(() => {
+    if (openDeposit === "1") {
+      setDepositModal(true);
+      // remove query param so refreshing/profile visits won't reopen modal
+      // replace keeps us on the same screen but clears the query
+      router.replace("/profile");
+    }
+  }, [openDeposit, router]);
+
   if (!fontsLoaded) return null;
 
   return (
@@ -148,330 +142,49 @@ export default function Profile() {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        <View style={styles.header}>
-          <View style={styles.profileInfo}>
-            <View style={styles.avatar}>
-              <Text style={styles.avatarText}>{userInitials}</Text>
-            </View>
-            <View style={{ marginLeft: 12 }}>
-              <Text style={styles.name}>
-                {mockUser.firstName} {mockUser.lastName}
-              </Text>
-              <Text style={styles.email}>{mockUser.email}</Text>
-            </View>
-          </View>
-          <TouchableOpacity style={styles.iconBox}>
-            <Ionicons name="settings-outline" size={20} color="#1B263B" />
-          </TouchableOpacity>
-        </View>
+        <ProfileHeader
+          initials={userInitials}
+          firstName={user?.firstName}
+          lastName={user?.lastName}
+          email={user?.email}
+        />
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Account Actions</Text>
-          <View style={styles.card}>
-            <TouchableOpacity
-              style={styles.row}
-              onPress={() => setDepositModal(true)}
-            >
-              <View style={[styles.actionIcon, { backgroundColor: "#E7F6F2" }]}>
-                <Ionicons name="add" size={20} color="#38B2AC" />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.rowTitle}>Deposit</Text>
-                <Text style={styles.rowSubtitle}>
-                  Generate payment link (Paystack)
-                </Text>
-              </View>
-              <Ionicons name="chevron-forward" size={20} color="#778DA9" />
-            </TouchableOpacity>
-            <View style={styles.divider} />
-            <TouchableOpacity
-              style={styles.row}
-              onPress={() => setWithdrawModal(true)}
-            >
-              <View style={[styles.actionIcon, { backgroundColor: "#FEF3C7" }]}>
-                <Ionicons name="cash-outline" size={20} color="#D97706" />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.rowTitle}>Withdraw</Text>
-                <Text style={styles.rowSubtitle}>
-                  Request money back to your bank
-                </Text>
-              </View>
-              <Ionicons name="chevron-forward" size={20} color="#778DA9" />
-            </TouchableOpacity>
-            <View style={styles.divider} />
-            <TouchableOpacity style={styles.row} onPress={handleCreateVirtual}>
-              <View style={[styles.actionIcon, { backgroundColor: "#E0E7FF" }]}>
-                <Ionicons
-                  name="document-text-outline"
-                  size={20}
-                  color="#4F46E5"
-                />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.rowTitle}>Virtual Account</Text>
-                <Text style={styles.rowSubtitle}>
-                  {virtualAccount
-                    ? "View virtual account"
-                    : "Create a virtual account"}
-                </Text>
-              </View>
-              <Ionicons name="chevron-forward" size={20} color="#778DA9" />
-            </TouchableOpacity>
-          </View>
-        </View>
+        <AccountActions
+          onDeposit={() => setDepositModal(true)}
+          onWithdraw={() => setWithdrawModal(true)}
+          onVirtual={handleCreateVirtual}
+          virtualExists={!!virtualAccount}
+        />
+
+        <DepositModal
+          visible={depositModal}
+          onClose={() => {
+            setDepositModal(false);
+            setDepositLink(null); // clear link when modal closed
+          }}
+          control={depositControl}
+          handleSubmit={handleDepositSubmit}
+          onGenerate={generateDepositLink}
+          isGenerating={isGenerating}
+          depositLink={depositLink}
+        />
+
+        <WithdrawModal
+          visible={withdrawModal}
+          onClose={() => setWithdrawModal(false)}
+          control={withdrawControl}
+          handleSubmit={handleWithdrawSubmit}
+          onWithdraw={handleWithdraw}
+        />
+
+        <VirtualAccountModal
+          visible={virtualModal}
+          onClose={() => setVirtualModal(false)}
+          virtualAccount={virtualAccount}
+          onCreate={handleCreateVirtual}
+        />
 
         <Text style={styles.version}>FundLock v1.0.0</Text>
-
-        {/* Deposit Modal */}
-        <Modal visible={depositModal} transparent animationType="slide">
-          <View style={styles.modalOverlay}>
-            <KeyboardAvoidingView
-              behavior={Platform.OS === "ios" ? "padding" : undefined}
-              keyboardVerticalOffset={100}
-            >
-              <View style={styles.modal}>
-                <Text style={styles.modalTitle}>Generate Deposit Link</Text>
-                <Controller
-                  control={depositControl}
-                  name="amount"
-                  render={({ field: { onChange, value }, fieldState }) => (
-                    <>
-                      <TextInput
-                        mode="outlined"
-                        label="Amount"
-                        value={value !== undefined ? String(value) : ""}
-                        onChangeText={(t) =>
-                          onChange(t.replace(/[^0-9.]/g, ""))
-                        }
-                        keyboardType="numeric"
-                        style={{ marginBottom: 8 }}
-                        theme={{
-                          fonts: {
-                            regular: { fontFamily: "Poppins_500Medium" },
-                          },
-                        }}
-                      />
-                      {fieldState.error && (
-                        <Text style={styles.inputError}>
-                          {fieldState.error.message}
-                        </Text>
-                      )}
-                    </>
-                  )}
-                />
-                <Controller
-                  control={depositControl}
-                  name="pin"
-                  render={({ field: { onChange, value }, fieldState }) => (
-                    <>
-                      <TextInput
-                        mode="outlined"
-                        label="4-digit PIN"
-                        value={value}
-                        onChangeText={(t) =>
-                          onChange(t.replace(/[^0-9]/g, "").slice(0, 4))
-                        }
-                        keyboardType="number-pad"
-                        secureTextEntry
-                        style={{ marginBottom: 12 }}
-                        theme={{
-                          fonts: {
-                            regular: { fontFamily: "Poppins_500Medium" },
-                          },
-                        }}
-                      />
-                      {fieldState.error && (
-                        <Text style={styles.inputError}>
-                          {fieldState.error.message}
-                        </Text>
-                      )}
-                    </>
-                  )}
-                />
-                <View style={{ flexDirection: "row", gap: 12 }}>
-                  <TouchableOpacity
-                    style={styles.modalButton}
-                    onPress={() => setDepositModal(false)}
-                  >
-                    <Text style={styles.modalButtonTextSecondary}>Cancel</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={styles.modalButtonPrimary}
-                    onPress={handleDepositSubmit(generateDepositLink)}
-                    disabled={isGenerating}
-                  >
-                    <Text style={styles.modalButtonTextPrimary}>
-                      {isGenerating ? "Generating..." : "Generate link"}
-                    </Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-            </KeyboardAvoidingView>
-          </View>
-        </Modal>
-
-        {/* Withdraw Modal */}
-        <Modal visible={withdrawModal} transparent animationType="slide">
-          <View style={styles.modalOverlay}>
-            <KeyboardAvoidingView
-              behavior={Platform.OS === "ios" ? "padding" : undefined}
-              keyboardVerticalOffset={100}
-            >
-              <View style={styles.modal}>
-                <Text style={styles.modalTitle}>Withdraw</Text>
-                <Controller
-                  control={withdrawControl}
-                  name="amount"
-                  render={({ field: { onChange, value }, fieldState }) => (
-                    <>
-                      <TextInput
-                        mode="outlined"
-                        label="Amount"
-                        value={value !== undefined ? String(value) : ""}
-                        onChangeText={(t) =>
-                          onChange(t.replace(/[^0-9.]/g, ""))
-                        }
-                        keyboardType="numeric"
-                        style={{ marginBottom: 8 }}
-                        theme={{
-                          fonts: {
-                            regular: { fontFamily: "Poppins_500Medium" },
-                          },
-                        }}
-                      />
-                      {fieldState.error && (
-                        <Text style={styles.inputError}>
-                          {fieldState.error.message}
-                        </Text>
-                      )}
-                    </>
-                  )}
-                />
-                <Controller
-                  control={withdrawControl}
-                  name="pin"
-                  render={({ field: { onChange, value }, fieldState }) => (
-                    <>
-                      <TextInput
-                        mode="outlined"
-                        label="4-digit PIN"
-                        value={value}
-                        onChangeText={(t) =>
-                          onChange(t.replace(/[^0-9]/g, "").slice(0, 4))
-                        }
-                        keyboardType="number-pad"
-                        secureTextEntry
-                        style={{ marginBottom: 12 }}
-                        theme={{
-                          fonts: {
-                            regular: { fontFamily: "Poppins_500Medium" },
-                          },
-                        }}
-                      />
-                      {fieldState.error && (
-                        <Text style={styles.inputError}>
-                          {fieldState.error.message}
-                        </Text>
-                      )}
-                    </>
-                  )}
-                />
-                <View style={{ flexDirection: "row", gap: 12 }}>
-                  <TouchableOpacity
-                    style={styles.modalButton}
-                    onPress={() => setWithdrawModal(false)}
-                  >
-                    <Text style={styles.modalButtonTextSecondary}>Cancel</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={styles.modalButtonPrimary}
-                    onPress={handleWithdrawSubmit(handleWithdraw)}
-                  >
-                    <Text style={styles.modalButtonTextPrimary}>
-                      Request Withdraw
-                    </Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-            </KeyboardAvoidingView>
-          </View>
-        </Modal>
-
-        {/* Virtual Account Modal */}
-        <Modal visible={virtualModal} transparent animationType="slide">
-          <View style={styles.modalOverlay}>
-            <KeyboardAvoidingView
-              behavior={Platform.OS === "ios" ? "padding" : undefined}
-              keyboardVerticalOffset={100}
-            >
-              <View style={styles.modal}>
-                <Text style={styles.modalTitle}>Virtual Account</Text>
-                {virtualAccount ? (
-                  <>
-                    <Text
-                      style={{
-                        fontFamily: "Poppins_500Medium",
-                        color: "#1B263B",
-                        marginBottom: 8,
-                      }}
-                    >
-                      {virtualAccount.bank}
-                    </Text>
-                    <Text
-                      style={{
-                        fontFamily: "Poppins_400Regular",
-                        color: "#415A77",
-                        marginBottom: 12,
-                      }}
-                    >
-                      Account number: {virtualAccount.accountNumber}
-                    </Text>
-                    <TouchableOpacity
-                      style={styles.modalButtonPrimary}
-                      onPress={() => {
-                        setVirtualModal(false);
-                        Alert.alert("Copied", "Account details copied");
-                      }}
-                    >
-                      <Text style={styles.modalButtonTextPrimary}>
-                        Copy / Use
-                      </Text>
-                    </TouchableOpacity>
-                  </>
-                ) : (
-                  <>
-                    <Text
-                      style={{
-                        fontFamily: "Poppins_400Regular",
-                        color: "#415A77",
-                        marginBottom: 12,
-                      }}
-                    >
-                      No virtual account yet. Create one to receive deposits.
-                    </Text>
-                    <TouchableOpacity
-                      style={styles.modalButtonPrimary}
-                      onPress={() => {
-                        handleCreateVirtual();
-                      }}
-                    >
-                      <Text style={styles.modalButtonTextPrimary}>
-                        Create Virtual Account
-                      </Text>
-                    </TouchableOpacity>
-                  </>
-                )}
-                <TouchableOpacity
-                  style={{ marginTop: 12 }}
-                  onPress={() => setVirtualModal(false)}
-                >
-                  <Text style={styles.modalCloseText}>Close</Text>
-                </TouchableOpacity>
-              </View>
-            </KeyboardAvoidingView>
-          </View>
-        </Modal>
       </ScrollView>
     </LinearGradient>
   );
@@ -480,126 +193,10 @@ export default function Profile() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   content: { padding: 20, paddingTop: 60, paddingBottom: 40 },
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 20,
-  },
-  profileInfo: { flexDirection: "row", alignItems: "center" },
-  avatar: {
-    width: 72,
-    height: 72,
-    borderRadius: 18,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "#F0FDFA",
-  },
-  avatarText: { fontFamily: "Poppins_700Bold", color: "#1B263B", fontSize: 26 },
-  name: { fontFamily: "Poppins_600SemiBold", color: "#1B263B", fontSize: 16 },
-  email: {
-    fontFamily: "Poppins_400Regular",
-    color: "#778DA9",
-    fontSize: 13,
-    marginTop: 4,
-  },
-  iconBox: {
-    width: 44,
-    height: 44,
-    borderRadius: 12,
-    backgroundColor: "#fff",
-    justifyContent: "center",
-    alignItems: "center",
-    elevation: 2,
-  },
-  section: { marginTop: 8, marginBottom: 18 },
-  sectionTitle: {
-    fontSize: 14,
-    fontFamily: "Poppins_600SemiBold",
-    color: "#415A77",
-    marginBottom: 8,
-  },
-  card: {
-    backgroundColor: "#fff",
-    borderRadius: 14,
-    padding: 8,
-    overflow: "hidden",
-    elevation: 2,
-  },
-  row: { flexDirection: "row", alignItems: "center", padding: 14 },
-  actionIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: 10,
-    justifyContent: "center",
-    alignItems: "center",
-    marginRight: 12,
-  },
-  rowTitle: {
-    fontFamily: "Poppins_600SemiBold",
-    color: "#1B263B",
-    fontSize: 15,
-  },
-  rowSubtitle: {
-    fontFamily: "Poppins_400Regular",
-    color: "#778DA9",
-    marginTop: 4,
-  },
-  divider: { height: 1, backgroundColor: "#F1F5F9", marginLeft: 72 },
   version: {
     textAlign: "center",
     color: "#9CA3AF",
     fontFamily: "Poppins_400Regular",
     marginTop: 28,
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.35)",
-    justifyContent: "flex-end",
-  },
-  modal: {
-    backgroundColor: "#fff",
-    padding: 16,
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
-  },
-  modalTitle: {
-    fontFamily: "Poppins_600SemiBold",
-    fontSize: 16,
-    marginBottom: 12,
-  },
-  modalButton: {
-    flex: 1,
-    padding: 12,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "#E9ECEF",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  modalButtonTextSecondary: {
-    fontFamily: "Poppins_600SemiBold",
-    color: "#415A77",
-  },
-  modalButtonPrimary: {
-    flex: 1,
-    padding: 12,
-    borderRadius: 12,
-    backgroundColor: "#38B2AC",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  modalButtonTextPrimary: { fontFamily: "Poppins_600SemiBold", color: "#fff" },
-  modalCloseText: {
-    color: "#38B2AC",
-    fontFamily: "Poppins_600SemiBold",
-    textAlign: "center",
-    marginTop: 8,
-  },
-  inputError: {
-    fontFamily: "Poppins_400Regular",
-    color: "#D9534F",
-    marginTop: 4,
-    fontSize: 12,
   },
 });

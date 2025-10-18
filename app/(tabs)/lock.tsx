@@ -87,7 +87,7 @@ export default function Lock() {
     Poppins_700Bold,
   });
 
-  const { control, handleSubmit, formState } = useForm<FormData>({
+  const { control, handleSubmit, formState, reset } = useForm<FormData>({
     resolver: yupResolver(schema),
     defaultValues: { amount: undefined as any, pin: "", expireAt: null as any },
     mode: "onChange",
@@ -97,8 +97,6 @@ export default function Lock() {
     () => categories.find((c) => c.id === selectedCategoryId) || null,
     [selectedCategoryId]
   );
-
-  const availableBalance = 125000;
 
   const onSubmit = (data: FormData) => {
     console.log("onSubmit called", data, selectedCategory);
@@ -127,6 +125,8 @@ export default function Lock() {
     }
     if (lockMessage) {
       setBanner({ message: lockMessage, type: "success" });
+      reset();
+      setSelectedCategoryId(null);
     }
   }, [lockError, lockMessage]);
 
@@ -431,36 +431,4 @@ const styles = StyleSheet.create({
     fontFamily: "Poppins_500Medium",
   },
   itemSeparator: { height: 1, backgroundColor: "#F1F5F9", marginLeft: 56 },
-  datePickerButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    backgroundColor: "#FFFFFF",
-    borderRadius: 12,
-    padding: 12,
-    borderWidth: 1,
-    borderColor: "#E9ECEF",
-  },
-  datePickerContent: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-  },
-  datePickerText: {
-    fontFamily: "Poppins_500Medium",
-    color: "#1B263B",
-    fontSize: 15,
-  },
-  datePickerDone: {
-    backgroundColor: "#38B2AC",
-    borderRadius: 8,
-    padding: 12,
-    alignItems: "center",
-    marginTop: 8,
-  },
-  datePickerDoneText: {
-    color: "#fff",
-    fontFamily: "Poppins_600SemiBold",
-    fontSize: 16,
-  },
 });
