@@ -194,7 +194,7 @@ export default function Index() {
         {/* Quick Actions */}
         <View style={styles.quickActions}>
           <Text style={styles.sectionTitle}>Quick Actions</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+          <View style={styles.actionsRow}>
             <TouchableOpacity
               style={styles.actionCard}
               onPress={() => router.push("/wallet")}
@@ -231,7 +231,7 @@ export default function Index() {
               </View>
               <Text style={styles.actionText}>Settings</Text>
             </TouchableOpacity>
-          </ScrollView>
+          </View>
         </View>
 
         {/* Spending Insights */}
@@ -448,10 +448,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     marginBottom: 16,
   },
+  actionsRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "flex-start",
+    alignItems: "flex-start",
+    paddingHorizontal: 20,
+  },
   actionCard: {
-    width: 100,
+    width: "30%", // three items per row, extra items wrap to next line
     alignItems: "center",
-    marginLeft: 20,
+    marginRight: "3.33%",
+    marginBottom: 12,
   },
   actionIcon: {
     width: 64,

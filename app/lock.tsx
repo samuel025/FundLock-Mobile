@@ -14,6 +14,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { LinearGradient } from "expo-linear-gradient";
+import { useRouter } from "expo-router";
 import { ScrollView } from "moti";
 import { useEffect, useMemo, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
@@ -52,6 +53,7 @@ const schema = yup.object({
 type FormData = yup.InferType<typeof schema>;
 
 export default function Lock() {
+  const router = useRouter();
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(
     null
   );
@@ -129,7 +131,6 @@ export default function Lock() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          {/* Show banner message */}
           {banner && (
             <MessageBanner
               message={banner.message}
@@ -139,7 +140,15 @@ export default function Lock() {
           )}
 
           <View style={styles.header}>
-            <View>
+            <TouchableOpacity
+              onPress={() => router.back()}
+              style={styles.backButton}
+              accessibilityLabel="Go back"
+            >
+              <Ionicons name="chevron-back" size={22} color="#1B263B" />
+            </TouchableOpacity>
+
+            <View style={styles.headerCenter}>
               <Text style={styles.title}>Lock Funds</Text>
               <Text style={styles.subtitle}>
                 Set aside money for a category
@@ -306,6 +315,17 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 20,
   },
+  backButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 10,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#FFFFFF",
+    elevation: 2,
+    marginRight: 8,
+  },
+  headerCenter: { flex: 1, paddingLeft: 4 },
   title: { fontSize: 26, fontFamily: "Poppins_700Bold", color: "#1B263B" },
   subtitle: {
     fontSize: 13,

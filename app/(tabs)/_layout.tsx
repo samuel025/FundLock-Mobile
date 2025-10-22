@@ -48,7 +48,7 @@ export default function RootLayout() {
           }}
         />
         <Tabs.Screen
-          name="lock"
+          name="locks"
           options={{
             title: "Lock",
             tabBarIcon: ({ color, size }) => (

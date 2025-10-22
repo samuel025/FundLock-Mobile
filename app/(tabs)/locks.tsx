@@ -19,7 +19,6 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-// hide the native header so we can render a clean custom header
 export const options = { headerShown: false };
 
 export default function LocksPage() {
@@ -66,14 +65,6 @@ export default function LocksPage() {
     <LinearGradient colors={["#F8F9FA", "#E9ECEF"]} style={styles.container}>
       <SafeAreaView edges={["top"]} style={styles.safe}>
         <View style={styles.header}>
-          <TouchableOpacity
-            onPress={() => router.back()}
-            style={styles.backButton}
-            accessibilityLabel="Go back"
-          >
-            <Ionicons name="chevron-back" size={22} color="#1B263B" />
-          </TouchableOpacity>
-
           <View style={styles.headerCenter}>
             <Text style={styles.title}>My Locks</Text>
             <Text style={styles.subtitle}>Active locked funds by category</Text>
@@ -84,6 +75,36 @@ export default function LocksPage() {
           </View>
         </View>
       </SafeAreaView>
+
+      {/* Lock Funds button — navigates to the lock form */}
+      <View style={styles.lockActionWrap}>
+        <TouchableOpacity
+          style={styles.lockCard}
+          onPress={() => router.push("/lock")}
+          accessibilityRole="button"
+        >
+          <View style={styles.lockCardLeft}>
+            <View style={styles.lockIcon}>
+              <Ionicons name="lock-closed" size={18} color="#fff" />
+            </View>
+            <View style={styles.lockText}>
+              <Text style={styles.lockTitle}>Lock Funds</Text>
+              <Text style={styles.lockSubtitle}>
+                Create a new locked savings
+              </Text>
+            </View>
+          </View>
+          <Ionicons name="chevron-forward" size={20} color="#2D3748" />
+        </TouchableOpacity>
+      </View>
+
+      {/* List header / separator */}
+      <View style={styles.listHeader}>
+        <Text style={styles.listHeaderTitle}>Your active locks</Text>
+        <View style={styles.countBadge}>
+          <Text style={styles.countText}>{locks.length}</Text>
+        </View>
+      </View>
 
       <FlatList
         data={locks}
@@ -187,4 +208,59 @@ const styles = StyleSheet.create({
   },
   expires: { fontFamily: "Poppins_400Regular", color: "#778DA9", marginTop: 4 },
   amount: { fontFamily: "Poppins_600SemiBold", color: "#1B263B", fontSize: 16 },
+  lockActionWrap: { paddingHorizontal: 20, marginBottom: 12 },
+  lockCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    backgroundColor: "#38B2AC",
+    paddingVertical: 16,
+    paddingHorizontal: 12,
+    borderRadius: 12,
+    elevation: 2,
+  },
+  lockCardLeft: { flexDirection: "row", alignItems: "center", flex: 1 },
+  lockIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: "#2D3748",
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 12,
+  },
+  lockText: { flex: 1 },
+  lockTitle: {
+    color: "#fff",
+    fontFamily: "Poppins_600SemiBold",
+    fontSize: 16,
+  },
+  lockSubtitle: {
+    color: "#E2E8F0",
+    fontFamily: "Poppins_400Regular",
+    fontSize: 12,
+    marginTop: 4,
+  },
+  listHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 16,
+  },
+  listHeaderTitle: {
+    fontFamily: "Poppins_600SemiBold",
+    color: "#1B263B",
+    fontSize: 18,
+  },
+  countBadge: {
+    backgroundColor: "#38B2AC",
+    borderRadius: 12,
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+  },
+  countText: {
+    color: "#fff",
+    fontFamily: "Poppins_500Medium",
+    fontSize: 14,
+  },
 });
