@@ -1,3 +1,13 @@
+import { MessageBanner } from "@/components/MessageBanner";
+import AmountSection from "@/components/spendComponents/AmountSection";
+import CategoryPicker from "@/components/spendComponents/CategoryPicker";
+import CompanyPicker from "@/components/spendComponents/CompanyPicker";
+import OutletPicker from "@/components/spendComponents/OutletPicker";
+import PinSection from "@/components/spendComponents/PinSection";
+import { useCategory } from "@/hooks/useCategory";
+import { useCompany } from "@/hooks/useCompany";
+import { useOutlet } from "@/hooks/useOutlet";
+import { useSpend } from "@/hooks/useSpend";
 import {
   Poppins_400Regular,
   Poppins_500Medium,
@@ -8,46 +18,18 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { LinearGradient } from "expo-linear-gradient";
-import React, { useMemo, useState } from "react";
-import { Controller, useForm } from "react-hook-form";
+import React, { useEffect, useRef, useState } from "react";
+import { useForm } from "react-hook-form";
 import {
-  Alert,
-  FlatList,
   KeyboardAvoidingView,
-  Modal,
   Platform,
-  Pressable,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
-import { TextInput } from "react-native-paper";
 import * as yup from "yup";
-
-const categories = [
-  { id: "food", label: "Food & Dining", icon: "restaurant", color: "#F59E0B" },
-  { id: "fuel", label: "Fuel", icon: "car", color: "#3B82F6" },
-  { id: "shopping", label: "Shopping", icon: "cart", color: "#EC4899" },
-];
-
-const vendorsByCategory: Record<string, { id: string; label: string }[]> = {
-  food: [
-    { id: "kfc", label: "KFC" },
-    { id: "dominos", label: "Dominos" },
-    { id: "localb", label: "Local Eatery" },
-  ],
-  fuel: [
-    { id: "mtn", label: "Total" },
-    { id: "oando", label: "Oando" },
-    { id: "np", label: "NP Station" },
-  ],
-  shopping: [
-    { id: "shoprite", label: "Shoprite" },
-    { id: "jumia", label: "Jumia" },
-  ],
-};
 
 const lockedAmounts: Record<string, number> = {
   food: 5000,
@@ -73,12 +55,36 @@ const schema = yup.object({
 type FormData = yup.InferType<typeof schema>;
 
 export default function Spend() {
-  const [categoryModalVisible, setCategoryModalVisible] = useState(false);
-  const [vendorModalVisible, setVendorModalVisible] = useState(false);
+  const scrollRef = useRef<any>(null);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const [selectedVendor, setSelectedVendor] = useState<string | null>(null);
-  const [showPin, setShowPin] = useState(false);
+  const [selectedCompany, setSelectedCompany] = useState<string | null>(null);
+  const [selectedOutlet, setSelectedOutlet] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [banner, setBanner] = useState<{
+    message: string;
+    type: "success" | "error" | "info";
+  } | null>(null);
+
+  const { isCategoryLoading, categories } = useCategory();
+  const { isCompanyLoading, companies, fetchCompanies } = useCompany();
+  const { isOutletLoading, outlets, fetchOutlets, clearOutlets } = useOutlet();
+  const { spendLockedFunds, spendError, spendMessage, isSpending } = useSpend();
+
+  useEffect(() => {
+    if (selectedCategory) {
+      setSelectedCompany(null);
+      setSelectedOutlet(null);
+      fetchCompanies(selectedCategory);
+      clearOutlets();
+    }
+  }, [selectedCategory, fetchCompanies, clearOutlets]);
+
+  useEffect(() => {
+    if (selectedCompany) {
+      setSelectedOutlet(null);
+      fetchOutlets(selectedCompany);
+    }
+  }, [selectedCompany, fetchOutlets]);
 
   let [fontsLoaded] = useFonts({
     Poppins_400Regular,
@@ -87,43 +93,51 @@ export default function Spend() {
     Poppins_700Bold,
   });
 
-  const { control, handleSubmit, formState } = useForm<FormData>({
+  const { control, handleSubmit, formState, reset } = useForm<FormData>({
     resolver: yupResolver(schema),
     defaultValues: { amount: undefined as any, pin: "" },
     mode: "onChange",
   });
 
-  const categoryData = useMemo(
-    () => categories.find((c) => c.id === selectedCategory) || null,
-    [selectedCategory]
-  );
-  const vendors = useMemo(
-    () => (selectedCategory ? vendorsByCategory[selectedCategory] || [] : []),
-    [selectedCategory]
-  );
+  useEffect(() => {
+    if (spendError) {
+      setBanner({ message: spendError, type: "error" });
+    }
+    if (spendMessage) {
+      setBanner({ message: spendMessage, type: "success" });
+      reset();
+    }
+  }, [spendError, spendMessage]);
+
   const availableLocked = selectedCategory
     ? lockedAmounts[selectedCategory] || 0
     : 0;
 
   const onSubmit = (data: FormData) => {
-    if (!selectedCategory) return Alert.alert("Select category");
-    if (!selectedVendor) return Alert.alert("Select vendor");
-    if (data.amount > availableLocked)
-      return Alert.alert("Amount exceeds locked funds");
-
-    setIsProcessing(true);
-    setTimeout(() => {
-      setIsProcessing(false);
-      Alert.alert(
-        "Success",
-        `₦${data.amount.toLocaleString()} spent at ${
-          vendors.find((v) => v.id === selectedVendor)?.label
-        }`
-      );
-      setSelectedCategory(null);
-      setSelectedVendor(null);
-    }, 900);
+    if (!selectedCategory) {
+      setBanner({ message: "Select a category", type: "error" });
+      return;
+    }
+    if (!selectedCompany) {
+      setBanner({ message: "Select a company", type: "error" });
+      return;
+    }
+    if (!selectedOutlet) {
+      setBanner({ message: "Select an outlet", type: "error" });
+      return;
+    }
+    spendLockedFunds({
+      amount: String(data.amount),
+      outletId: selectedOutlet, // use outlet selected
+      pin: data.pin,
+    });
   };
+
+  useEffect(() => {
+    if (banner) {
+      scrollRef.current?.scrollTo?.({ y: 0, animated: true });
+    }
+  }, [banner]);
 
   if (!fontsLoaded) return null;
 
@@ -135,10 +149,19 @@ export default function Spend() {
         keyboardVerticalOffset={100}
       >
         <ScrollView
+          ref={scrollRef}
           contentContainerStyle={[styles.content, { paddingBottom: 160 }]}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
+          {banner && (
+            <MessageBanner
+              message={banner.message}
+              type={banner.type}
+              onClose={() => setBanner(null)}
+            />
+          )}
+
           <View style={styles.header}>
             <View>
               <Text style={styles.title}>Spend Locked Funds</Text>
@@ -151,230 +174,46 @@ export default function Spend() {
             </View>
           </View>
 
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Category</Text>
-            <TouchableOpacity
-              style={styles.pickerButton}
-              onPress={() => setCategoryModalVisible(true)}
-            >
-              <Text style={styles.pickerText}>
-                {categoryData ? categoryData.label : "Select category"}
-              </Text>
-              <Ionicons name="chevron-down" size={20} color="#778DA9" />
-            </TouchableOpacity>
-
-            <Modal
-              visible={categoryModalVisible}
-              transparent
-              animationType="slide"
-            >
-              <View style={styles.modalOverlay}>
-                <KeyboardAvoidingView
-                  behavior={Platform.OS === "ios" ? "padding" : undefined}
-                  keyboardVerticalOffset={100}
-                >
-                  <View style={styles.modalLarge}>
-                    <View style={styles.modalHandle} />
-                    <Text style={styles.modalTitle}>Select Category</Text>
-                    <FlatList
-                      data={categories}
-                      keyExtractor={(i) => i.id}
-                      ItemSeparatorComponent={() => (
-                        <View style={styles.itemSeparator} />
-                      )}
-                      contentContainerStyle={{ paddingBottom: 24 }}
-                      renderItem={({ item }) => (
-                        <Pressable
-                          onPress={() => {
-                            setSelectedCategory(item.id);
-                            setCategoryModalVisible(false);
-                            setSelectedVendor(null);
-                          }}
-                          style={({ pressed }) => [
-                            styles.modalItem,
-                            pressed && { backgroundColor: "rgba(0,0,0,0.03)" },
-                          ]}
-                        >
-                          <View
-                            style={[
-                              styles.catIcon,
-                              { backgroundColor: item.color + "20" },
-                            ]}
-                          >
-                            <Ionicons
-                              name={item.icon as any}
-                              size={18}
-                              color={item.color}
-                            />
-                          </View>
-                          <Text style={styles.modalItemText}>{item.label}</Text>
-                        </Pressable>
-                      )}
-                    />
-                    <TouchableOpacity
-                      onPress={() => setCategoryModalVisible(false)}
-                      style={styles.modalClose}
-                    >
-                      <Text style={styles.modalCloseText}>Cancel</Text>
-                    </TouchableOpacity>
-                  </View>
-                </KeyboardAvoidingView>
-              </View>
-            </Modal>
-          </View>
+          <CategoryPicker
+            categories={categories ?? []}
+            selected={selectedCategory}
+            onSelect={(id) => {
+              setSelectedCategory(id);
+              setSelectedCompany(null);
+            }}
+            styles={styles}
+          />
 
           {selectedCategory && (
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Vendor</Text>
-              <TouchableOpacity
-                style={styles.pickerButton}
-                onPress={() => setVendorModalVisible(true)}
-              >
-                <Text style={styles.pickerText}>
-                  {selectedVendor
-                    ? vendors.find((v) => v.id === selectedVendor)?.label
-                    : "Select vendor"}
-                </Text>
-                <Ionicons name="chevron-down" size={20} color="#778DA9" />
-              </TouchableOpacity>
-
-              <Modal
-                visible={vendorModalVisible}
-                transparent
-                animationType="slide"
-              >
-                <View style={styles.modalOverlay}>
-                  <KeyboardAvoidingView
-                    behavior={Platform.OS === "ios" ? "padding" : undefined}
-                    keyboardVerticalOffset={100}
-                  >
-                    <View style={styles.modalLarge}>
-                      <Text style={styles.modalTitle}>Select Vendor</Text>
-                      <FlatList
-                        data={vendors}
-                        keyExtractor={(i) => i.id}
-                        contentContainerStyle={{ paddingBottom: 24 }}
-                        renderItem={({ item }) => (
-                          <Pressable
-                            onPress={() => {
-                              setSelectedVendor(item.id);
-                              setVendorModalVisible(false);
-                            }}
-                            style={({ pressed }) => [
-                              styles.modalItem,
-                              pressed && { opacity: 0.6 },
-                            ]}
-                          >
-                            <Text style={styles.modalItemText}>
-                              {item.label}
-                            </Text>
-                          </Pressable>
-                        )}
-                      />
-                      <TouchableOpacity
-                        onPress={() => setVendorModalVisible(false)}
-                        style={styles.modalClose}
-                      >
-                        <Text style={styles.modalCloseText}>Cancel</Text>
-                      </TouchableOpacity>
-                    </View>
-                  </KeyboardAvoidingView>
-                </View>
-              </Modal>
-            </View>
+            <CompanyPicker
+              companies={companies}
+              selected={selectedCompany}
+              onSelect={(id) => {
+                setSelectedCompany(id);
+                setSelectedOutlet(null);
+              }}
+              styles={styles}
+            />
           )}
 
-          {selectedVendor && (
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Amount</Text>
-              <View style={styles.inputCard}>
-                <Controller
-                  control={control}
-                  name="amount"
-                  render={({ field: { onChange, value }, fieldState }) => (
-                    <>
-                      <TextInput
-                        mode="outlined"
-                        label="Amount"
-                        value={value !== undefined ? String(value) : ""}
-                        onChangeText={(t) =>
-                          onChange(t.replace(/[^0-9.]/g, ""))
-                        }
-                        keyboardType={
-                          Platform.OS === "ios" ? "decimal-pad" : "numeric"
-                        }
-                        left={
-                          <TextInput.Icon
-                            icon={() => <Text style={styles.currency}>₦</Text>}
-                          />
-                        }
-                        outlineColor="#E2E8F0"
-                        activeOutlineColor="#38B2AC"
-                        style={styles.input}
-                        theme={{
-                          fonts: {
-                            regular: { fontFamily: "Poppins_500Medium" },
-                          },
-                        }}
-                      />
-                      {fieldState.error && (
-                        <Text style={styles.inputError}>
-                          {fieldState.error.message}
-                        </Text>
-                      )}
-                      <Text style={styles.hint}>
-                        Available locked: ₦{availableLocked.toLocaleString()}
-                      </Text>
-                    </>
-                  )}
-                />
-              </View>
-            </View>
+          {selectedCompany && (
+            <OutletPicker
+              outlets={outlets}
+              selected={selectedOutlet}
+              onSelect={(id) => setSelectedOutlet(id)}
+              styles={styles}
+            />
           )}
 
-          {selectedVendor && (
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>PIN</Text>
-              <View style={styles.inputCard}>
-                <Controller
-                  control={control}
-                  name="pin"
-                  render={({ field: { onChange, value }, fieldState }) => (
-                    <>
-                      <TextInput
-                        mode="outlined"
-                        label="4-digit PIN"
-                        value={value}
-                        onChangeText={(t) =>
-                          onChange(t.replace(/[^0-9]/g, "").slice(0, 4))
-                        }
-                        keyboardType="number-pad"
-                        secureTextEntry={!showPin}
-                        right={
-                          <TextInput.Icon
-                            icon={showPin ? "eye-off" : "eye"}
-                            onPress={() => setShowPin((s) => !s)}
-                          />
-                        }
-                        outlineColor="#E2E8F0"
-                        activeOutlineColor="#38B2AC"
-                        style={styles.input}
-                        theme={{
-                          fonts: {
-                            regular: { fontFamily: "Poppins_500Medium" },
-                          },
-                        }}
-                      />
-                      {fieldState.error && (
-                        <Text style={styles.inputError}>
-                          {fieldState.error.message}
-                        </Text>
-                      )}
-                    </>
-                  )}
-                />
-              </View>
-            </View>
+          {selectedOutlet && (
+            <>
+              <AmountSection
+                control={control}
+                availableLocked={availableLocked}
+                styles={styles}
+              />
+              <PinSection control={control} styles={styles} />
+            </>
           )}
 
           <TouchableOpacity

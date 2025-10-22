@@ -57,12 +57,9 @@ export interface Transaction {
   id: string;
   type: string;
   createdAt: string;
-  senderWalletNumber: string;
-  receiverWalletNumber: string;
   reference: string;
   amount: number;
   recipientName: string;
-  transactionInitiator: string;
   entryType: string;
 }
 

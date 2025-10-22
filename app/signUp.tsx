@@ -25,16 +25,26 @@ const schema = yup.object().shape({
   email: yup
     .string()
     .email("Please enter a valid email address")
+    .test("is-valid-email", "Please enter a valid email address", (value) =>
+      /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/i.test(value || "")
+    )
     .required("Email is required"),
   firstName: yup
     .string()
-    .min(2, "First name must be at least 2 characters")
+    .min(3, "First name must be at least 3 characters")
     .required("First name is required"),
   lastName: yup
     .string()
-    .min(2, "Last name must be at least 2 characters")
+    .min(3, "Last name must be at least 3 characters")
     .required("Last name is required"),
-  password: yup.string().required("Password is required"),
+  password: yup
+    .string()
+    .required("Password is required")
+    .matches(
+      /^(?=.*[A-Z])(?=.*\d).+$/,
+      "Password must contain at least one uppercase letter and one number"
+    )
+    .min(8, "Password must be at least 8 characters long"),
   pin: yup
     .string()
     .matches(/^\d{4}$/, "PIN must be exactly 4 digits")
@@ -42,7 +52,8 @@ const schema = yup.object().shape({
   phoneNumber: yup
     .string()
     .matches(/^[0-9]{10,15}$/, "Please enter a valid phone number")
-    .required("Phone number is required"),
+    .required("Phone number is required")
+    .min(11, "Phone number must contain 11 digits"),
 });
 
 export type signUpFormData = yup.InferType<typeof schema>;

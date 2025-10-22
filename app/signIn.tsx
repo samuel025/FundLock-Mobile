@@ -28,6 +28,9 @@ const schema = yup.object().shape({
   email: yup
     .string()
     .email("Please enter a valid email address")
+    .test("is-valid-email", "Please enter a valid email address", (value) =>
+      /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/i.test(value || "")
+    )
     .required("Email is required"),
   password: yup.string().required("Password is required"),
 });

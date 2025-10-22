@@ -1,28 +1,24 @@
-import { Categories, getCategories } from "@/services/category";
+import { categoryStore } from "@/lib/categoryStore";
+import { getCategories } from "@/services/category";
 import { useMutation } from "@tanstack/react-query";
 import { useFocusEffect } from "expo-router";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useState } from "react";
 
 export function useCategory() {
-  const [categories, setCategories] = useState<Categories[]>([]);
-  const [isCategoryLoading, setIsCategoryLoading] = useState<boolean>(false);
-
-  const hasFetchedRef = useRef(false);
+  const [isCategoryLoading, setIsCategoryLoading] = useState(false);
+  const categoryState = categoryStore();
+  const { categories } = categoryState;
 
   const categoryMutation = useMutation({
     mutationFn: getCategories,
-    onMutate: () => {
-      setIsCategoryLoading(true);
-    },
+    onMutate: () => setIsCategoryLoading(true),
     onSuccess: async (data) => {
-      //explain
+      const { setCategories } = categoryStore.getState();
       const list = Array.isArray(data) ? data : [];
       setCategories(list.map((c: any) => ({ id: String(c.id), name: c.name })));
-      setIsCategoryLoading(false);
     },
     onError: (error) => {
-      console.error("failed to fetch categories", error);
-      setIsCategoryLoading(false);
+      console.error("Failed to fetch categories", error);
     },
     onSettled: () => {
       setIsCategoryLoading(false);
@@ -35,7 +31,9 @@ export function useCategory() {
 
   useFocusEffect(
     useCallback(() => {
-      fetchCategories();
+      if ((categoryStore.getState().categories ?? []).length === 0) {
+        fetchCategories();
+      }
     }, [])
   );
 

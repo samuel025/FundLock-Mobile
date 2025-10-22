@@ -42,6 +42,52 @@ export default function Index() {
     Poppins_700Bold,
   });
 
+  // Helper functions for recent activity display
+  const getTitle = (t: any) => {
+    switch (t.type) {
+      case "DEPOSIT":
+        return "Received";
+      case "LOCK":
+        return t.recipientName ? `Locked` : "Locked";
+      case "TRANSFER":
+        return t.entryType === "CREDIT" ? "Received" : "Sent";
+      case "REFUND":
+        return "Refunded";
+      default:
+        return t.type || "Transaction";
+    }
+  };
+
+  const getRecipient = (t: any) => t.recipientName || t.reference || "";
+
+  const formatDateTime = (iso?: string) => {
+    if (!iso) return "";
+    try {
+      return new Date(iso).toLocaleString(undefined, {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+        hour: "numeric",
+        minute: "2-digit",
+        hour12: true,
+      });
+    } catch {
+      return iso;
+    }
+  };
+
+  const formatAmount = (t: any) =>
+    `${t.entryType === "CREDIT" ? "+" : "-"}₦${Number(t.amount).toLocaleString(
+      undefined,
+      {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      }
+    )}`;
+
+  const amountColor = (t: any) =>
+    t.entryType === "CREDIT" ? "#38B2AC" : "#DC2626";
+
   const onRefresh = async () => {
     setRefreshing(true);
     try {
@@ -228,42 +274,37 @@ export default function Index() {
                         : "arrow-up"
                     }
                     size={20}
-                    color={
-                      transaction.entryType === "CREDIT" ? "#38B2AC" : "#DC2626"
-                    }
+                    color={amountColor(transaction)}
                   />
                 </View>
                 <View style={styles.activityDetails}>
-                  <Text style={styles.activityName}>
-                    {transaction.type === "DEPOSIT"
-                      ? "Deposit"
-                      : transaction.type === "LOCK"
-                      ? "Locked for " + transaction.recipientName
-                      : transaction.type === "TRANSFER"
-                      ? "Spent with " + transaction.recipientName.slice(0, 10)
-                      : transaction.type === "REFUND"
-                      ? "Refunded from " +
-                        transaction.recipientName +
-                        " category"
-                      : "Withdrawn"}
-                  </Text>
+                  <View style={styles.activityTitleRow}>
+                    <Text
+                      style={styles.activityLabel}
+                      numberOfLines={1}
+                      ellipsizeMode="tail"
+                    >
+                      {getTitle(transaction)}
+                    </Text>
+                    <Text
+                      style={styles.activityRecipient}
+                      numberOfLines={1}
+                      ellipsizeMode="tail"
+                    >
+                      {getRecipient(transaction)}
+                    </Text>
+                  </View>
                   <Text style={styles.activityDate}>
-                    {new Date(transaction.createdAt).toLocaleDateString()}
+                    {formatDateTime(transaction.createdAt)}
                   </Text>
                 </View>
                 <Text
                   style={[
                     styles.activityAmount,
-                    {
-                      color:
-                        transaction.entryType === "CREDIT"
-                          ? "#38B2AC"
-                          : "#DC2626",
-                    },
+                    { color: amountColor(transaction) },
                   ]}
                 >
-                  {transaction.entryType === "CREDIT" ? "+" : "-"}₦
-                  {transaction.amount}
+                  {formatAmount(transaction)}
                 </Text>
               </View>
             ))
@@ -465,6 +506,24 @@ const styles = StyleSheet.create({
   activityDetails: {
     flex: 1,
     marginLeft: 12,
+    minWidth: 0, // allow text to shrink/wrap correctly
+  },
+  activityTitleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  activityLabel: {
+    fontSize: 13,
+    fontFamily: "Poppins_400Regular",
+    color: "#778DA9",
+  },
+  activityRecipient: {
+    fontSize: 15,
+    fontFamily: "Poppins_600SemiBold",
+    color: "#1B263B",
+    flexShrink: 1,
+    maxWidth: "70%",
   },
   activityName: {
     fontSize: 15,
@@ -480,6 +539,10 @@ const styles = StyleSheet.create({
   activityAmount: {
     fontSize: 16,
     fontFamily: "Poppins_600SemiBold",
+    minWidth: 92,
+    width: 92,
+    textAlign: "right",
+    flexShrink: 0,
   },
   emptyState: {
     alignItems: "center",

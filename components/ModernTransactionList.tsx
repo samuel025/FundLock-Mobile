@@ -71,74 +71,129 @@ export default function ModernTransactionList({
   }: {
     item: Transaction;
     index: number;
-  }) => (
-    <MotiView
-      from={{ opacity: 0, translateY: 12 }}
-      animate={{ opacity: 1, translateY: 0 }}
-      transition={{
-        delay: index * 50,
-        type: "timing",
-        duration: 300,
-      }}
-      style={styles.transactionCard}
-    >
-      <View style={styles.transactionLeft}>
-        <View
-          style={[
-            styles.transactionIcon,
-            {
-              backgroundColor:
-                transaction.type === "DEPOSIT"
-                  ? "#E7F6F2"
-                  : transaction.type === "WITHDRAWAL"
-                  ? "#FEE2E2"
-                  : "#E0E7FF",
-            },
-          ]}
-        >
-          <MotiView
-            from={{ scale: 0.7, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ type: "spring", damping: 10 }}
-          >
-            {renderIcon(transaction.type)}
-          </MotiView>
-        </View>
+  }) => {
+    const getTitle = (t: Transaction) => {
+      // Keep titles short to avoid repeating sender name twice
+      switch (t.type) {
+        case "DEPOSIT":
+          return "Received";
+        case "LOCK":
+          return t.recipientName ? `Locked` : "Locked";
+        case "TRANSFER":
+          return t.entryType === "CREDIT" ? "Received" : "Sent";
+        case "REFUND":
+          return "Refunded";
+        case "WITHDRAWAL":
+          return "Withdrawal";
+        default:
+          return t.type || "Transaction";
+      }
+    };
 
-        <View>
-          <Text style={styles.transactionName}>
-            {transaction.type === "DEPOSIT"
-              ? "Received"
-              : transaction.type === "LOCK"
-              ? "Locked for " + transaction.recipientName
-              : transaction.type === "TRANSFER"
-              ? "Spent with " + transaction.recipientName.slice(0, 10)
-              : transaction.type === "REFUND"
-              ? "Refunded from " + transaction.recipientName + " category"
-              : "Withdrawn"}
-          </Text>
-          <Text style={styles.transactionCategory}>{transaction.type}</Text>
-        </View>
-      </View>
+    const getRecipient = (t: Transaction) => {
+      // prefer a human recipient name where available
+      return t.recipientName || t.reference || "";
+    };
 
+    const formatDateTime = (iso?: string) => {
+      if (!iso) return "";
+      try {
+        return new Date(iso).toLocaleString(undefined, {
+          year: "numeric",
+          month: "short",
+          day: "numeric",
+          hour: "numeric",
+          minute: "2-digit",
+          hour12: true,
+        });
+      } catch {
+        return iso;
+      }
+    };
+
+    // amount color: green for credit, red for debit
+    const amountColor = (t: Transaction) =>
+      t.entryType === "CREDIT" ? "#38B2AC" : "#DC2626";
+
+    return (
       <MotiView
-        from={{ opacity: 0, translateX: 10 }}
-        animate={{ opacity: 1, translateX: 0 }}
-        transition={{ delay: index * 50 + 150, duration: 300 }}
+        from={{ opacity: 0, translateY: 12 }}
+        animate={{ opacity: 1, translateY: 0 }}
+        transition={{
+          delay: index * 50,
+          type: "timing",
+          duration: 300,
+        }}
+        style={styles.transactionCard}
       >
-        <Text
-          style={[
-            styles.transactionAmount,
-            {
-              color: transaction.entryType === "CREDIT" ? "#38B2AC" : "#1B263B",
-            },
-          ]}
+        <View style={styles.transactionLeft}>
+          <View
+            style={[
+              styles.transactionIcon,
+              {
+                backgroundColor:
+                  transaction.type === "DEPOSIT"
+                    ? "#E7F6F2"
+                    : transaction.type === "WITHDRAWAL"
+                    ? "#FEE2E2"
+                    : "#E0E7FF",
+              },
+            ]}
+          >
+            <MotiView
+              from={{ scale: 0.7, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ type: "spring", damping: 10 }}
+            >
+              {renderIcon(transaction.type)}
+            </MotiView>
+          </View>
+
+          <View style={styles.transactionDetails}>
+            <View style={styles.transactionTitleRow}>
+              <Text
+                style={styles.transactionLabel}
+                numberOfLines={1}
+                ellipsizeMode="tail"
+              >
+                {getTitle(transaction)}
+              </Text>
+              <Text
+                style={styles.transactionRecipient}
+                numberOfLines={1}
+                ellipsizeMode="tail"
+              >
+                {getRecipient(transaction)}
+              </Text>
+            </View>
+            <Text
+              style={styles.transactionDate}
+              numberOfLines={1}
+              ellipsizeMode="tail"
+            >
+              {formatDateTime(transaction.createdAt)}
+            </Text>
+          </View>
+        </View>
+
+        <MotiView
+          from={{ opacity: 0, translateX: 10 }}
+          animate={{ opacity: 1, translateX: 0 }}
+          transition={{ delay: index * 50 + 150, duration: 300 }}
         >
-          {transaction.entryType === "CREDIT" ? "+" : "-"}₦{transaction.amount}
-        </Text>
+          <Text
+            style={[
+              styles.transactionAmount,
+              { color: amountColor(transaction) },
+            ]}
+          >
+            {transaction.entryType === "CREDIT" ? "+" : "-"}₦
+            {transaction.amount}
+          </Text>
+        </MotiView>
       </MotiView>
-    </MotiView>
-  );
+    );
+  };
 
   const renderFooter = () => {
     if (!isLoadingMore) return null;
@@ -201,10 +256,13 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 2,
   },
+  // left column: icon + details - allow this column to shrink so amount stays visible
   transactionLeft: {
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
+    flex: 1,
+    marginRight: 12,
   },
   transactionIcon: {
     width: 48,
@@ -218,15 +276,43 @@ const styles = StyleSheet.create({
     fontFamily: "Poppins_600SemiBold",
     color: "#1B263B",
   },
-  transactionCategory: {
+  // details should be able to shrink/wrap inside the left column
+  transactionDetails: {
+    flex: 1,
+    minWidth: 0,
+  },
+  transactionTitleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    maxWidth: "100%",
+  },
+  transactionLabel: {
     fontSize: 13,
     fontFamily: "Poppins_400Regular",
     color: "#778DA9",
-    textTransform: "capitalize",
   },
+  transactionRecipient: {
+    fontSize: 16,
+    fontFamily: "Poppins_600SemiBold",
+    color: "#1B263B",
+    flexShrink: 1,
+    maxWidth: "70%", // prevent recipient from occupying entire row
+  },
+  transactionDate: {
+    fontSize: 12,
+    fontFamily: "Poppins_400Regular",
+    color: "#778DA9",
+    marginTop: 2,
+  },
+  // amount container: fixed/min width, does not shrink
   transactionAmount: {
     fontSize: 16,
     fontFamily: "Poppins_600SemiBold",
+    minWidth: 92,
+    width: 92,
+    textAlign: "right",
+    flexShrink: 0,
   },
   footerLoader: {
     flexDirection: "row",

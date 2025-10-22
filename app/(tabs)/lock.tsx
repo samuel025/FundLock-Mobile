@@ -15,7 +15,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { LinearGradient } from "expo-linear-gradient";
 import { ScrollView } from "moti";
-import React, { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import {
   KeyboardAvoidingView,
@@ -27,20 +27,6 @@ import {
 } from "react-native";
 import { TextInput } from "react-native-paper";
 import * as yup from "yup";
-
-// const categories = [
-//   { id: "food", label: "Food & Dining", icon: "restaurant", color: "#F59E0B" },
-//   { id: "fuel", label: "Fuel", icon: "car", color: "#3B82F6" },
-//   { id: "shopping", label: "Shopping", icon: "cart", color: "#EC4899" },
-//   {
-//     id: "entertainment",
-//     label: "Entertainment",
-//     icon: "game-controller",
-//     color: "#8B5CF6",
-//   },
-//   { id: "health", label: "Healthcare", icon: "medkit", color: "#10B981" },
-//   { id: "education", label: "Education", icon: "book", color: "#6366F1" },
-// ];
 
 const schema = yup.object({
   amount: yup
@@ -94,7 +80,7 @@ export default function Lock() {
   });
 
   const selectedCategory = useMemo(
-    () => categories.find((c) => c.id === selectedCategoryId) || null,
+    () => categories?.find((c) => c.id === selectedCategoryId) || null,
     [selectedCategoryId]
   );
 
@@ -118,8 +104,7 @@ export default function Lock() {
     });
   };
 
-  // Show error or success feedback
-  React.useEffect(() => {
+  useEffect(() => {
     if (lockError) {
       setBanner({ message: lockError, type: "error" });
     }
@@ -178,7 +163,7 @@ export default function Lock() {
             </TouchableOpacity>
             <CategoryPicker
               visible={categoryModalVisible}
-              categories={categories}
+              categories={categories || []}
               selectedCategoryId={selectedCategoryId}
               onSelect={setSelectedCategoryId}
               onClose={() => setCategoryModalVisible(false)}
