@@ -56,6 +56,10 @@ export default function Wallet() {
     router.push({ pathname: "/profile", params: { openDeposit: "1" } });
   };
 
+  const handleSpend = () => {
+    router.push({ pathname: "/(tabs)/spend", params: { openDeposit: "1" } });
+  };
+
   const handleWithdraw = () => {
     console.log("Withdraw pressed");
   };
@@ -130,6 +134,7 @@ export default function Wallet() {
           onAddMoney={handleAddMoney}
           onWithdraw={handleWithdraw}
           onSignOut={handleSignOut}
+          onSpend={handleSpend}
         />
 
         {/* Recent Statistics */}

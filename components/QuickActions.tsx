@@ -12,6 +12,7 @@ export default function QuickActions({
   onAddMoney,
   onWithdraw,
   onSignOut,
+  onSpend,
 }: QuickActionsProps) {
   return (
     <View style={styles.container}>
@@ -31,7 +32,7 @@ export default function QuickActions({
           <Text style={styles.actionText}>Withdraw</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.actionItem}>
+        <TouchableOpacity style={styles.actionItem} onPress={onSpend}>
           <View style={[styles.actionIcon, { backgroundColor: "#E0E7FF" }]}>
             <Ionicons name="swap-horizontal" size={24} color="#4F46E5" />
           </View>

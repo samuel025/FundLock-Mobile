@@ -58,8 +58,8 @@ export default function Index() {
     }
   };
 
-  const getRecipient = (t: any) => t.recipientName || t.reference || "";
-
+  const getRecipient = (t: any) =>
+    t.type === "DEPOSIT" ? "DEPOSIT" : t.recipientName || t.reference || "";
   const formatDateTime = (iso?: string) => {
     if (!iso) return "";
     try {
@@ -74,6 +74,10 @@ export default function Index() {
     } catch {
       return iso;
     }
+  };
+
+  const addMoney = () => {
+    router.push({ pathname: "/profile", params: { openDeposit: "1" } });
   };
 
   const formatAmount = (t: any) =>
@@ -225,11 +229,33 @@ export default function Index() {
               <Text style={styles.actionText}>View Locks</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.actionCard}>
-              <View style={[styles.actionIcon, { backgroundColor: "#FEF3C7" }]}>
-                <Ionicons name="settings" size={24} color="#D97706" />
+            <TouchableOpacity style={styles.actionCard} onPress={addMoney}>
+              <View
+                style={[styles.actionIcon, { backgroundColor: "#c9ded9ff" }]}
+              >
+                <Ionicons name="add" size={24} color="#979d90ff" />
               </View>
-              <Text style={styles.actionText}>Settings</Text>
+              <Text style={styles.actionText}>Add Money</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.actionCard}
+              onPress={() => router.push("/(tabs)/spend")}
+            >
+              <View style={[styles.actionIcon, { backgroundColor: "#E0E7FF" }]}>
+                <Ionicons name="swap-horizontal" size={24} color="#4F46E5" />
+              </View>
+              <Text style={styles.actionText}>Spend Locked Funds</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.actionCard}
+              onPress={() => router.push("/(tabs)/profile")}
+            >
+              <View style={[styles.actionIcon, { backgroundColor: "#FEF3C7" }]}>
+                <Ionicons name="person" size={24} color="#D97706" />
+              </View>
+              <Text style={styles.actionText}>Profile</Text>
             </TouchableOpacity>
           </View>
         </View>

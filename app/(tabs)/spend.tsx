@@ -21,15 +21,17 @@ import { LinearGradient } from "expo-linear-gradient";
 import React, { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import {
+  ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
+  Pressable,
   ScrollView,
-  StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
 import * as yup from "yup";
+import spendStyles from "../../styles/spend.styles";
 
 const lockedAmounts: Record<string, number> = {
   food: 5000,
@@ -55,11 +57,11 @@ const schema = yup.object({
 type FormData = yup.InferType<typeof schema>;
 
 export default function Spend() {
+  const [allowDirectOutlet, setAllowDirectOutlet] = useState(false);
   const scrollRef = useRef<any>(null);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedCompany, setSelectedCompany] = useState<string | null>(null);
   const [selectedOutlet, setSelectedOutlet] = useState<string | null>(null);
-  const [isProcessing, setIsProcessing] = useState(false);
   const [banner, setBanner] = useState<{
     message: string;
     type: "success" | "error" | "info";
@@ -67,7 +69,13 @@ export default function Spend() {
 
   const { isCategoryLoading, categories } = useCategory();
   const { isCompanyLoading, companies, fetchCompanies } = useCompany();
-  const { isOutletLoading, outlets, fetchOutlets, clearOutlets } = useOutlet();
+  const {
+    isOutletLoading,
+    outlets,
+    fetchOutlets,
+    fetchAllOutlets,
+    clearOutlets,
+  } = useOutlet();
   const { spendLockedFunds, spendError, spendMessage, isSpending } = useSpend();
 
   useEffect(() => {
@@ -78,6 +86,14 @@ export default function Spend() {
       clearOutlets();
     }
   }, [selectedCategory, fetchCompanies, clearOutlets]);
+
+  useEffect(() => {
+    if (allowDirectOutlet) {
+      setSelectedCompany(null);
+      setSelectedOutlet(null);
+      fetchAllOutlets(selectedCategory ?? "");
+    }
+  }, [allowDirectOutlet, fetchAllOutlets, selectedCategory]);
 
   useEffect(() => {
     if (selectedCompany) {
@@ -118,17 +134,13 @@ export default function Spend() {
       setBanner({ message: "Select a category", type: "error" });
       return;
     }
-    if (!selectedCompany) {
-      setBanner({ message: "Select a company", type: "error" });
-      return;
-    }
     if (!selectedOutlet) {
       setBanner({ message: "Select an outlet", type: "error" });
       return;
     }
     spendLockedFunds({
       amount: String(data.amount),
-      outletId: selectedOutlet, // use outlet selected
+      outletId: selectedOutlet,
       pin: data.pin,
     });
   };
@@ -142,7 +154,10 @@ export default function Spend() {
   if (!fontsLoaded) return null;
 
   return (
-    <LinearGradient colors={["#F8F9FA", "#E9ECEF"]} style={styles.container}>
+    <LinearGradient
+      colors={["#F8F9FA", "#E9ECEF"]}
+      style={spendStyles.container}
+    >
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === "ios" ? "padding" : undefined}
@@ -150,7 +165,7 @@ export default function Spend() {
       >
         <ScrollView
           ref={scrollRef}
-          contentContainerStyle={[styles.content, { paddingBottom: 160 }]}
+          contentContainerStyle={[spendStyles.content, { paddingBottom: 160 }]}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
@@ -162,47 +177,184 @@ export default function Spend() {
             />
           )}
 
-          <View style={styles.header}>
+          <View style={spendStyles.header}>
             <View>
-              <Text style={styles.title}>Spend Locked Funds</Text>
-              <Text style={styles.subtitle}>
+              <Text style={spendStyles.title}>Spend Locked Funds</Text>
+              <Text style={spendStyles.subtitle}>
                 Pay vendors using locked category funds
               </Text>
             </View>
-            <View style={styles.iconBox}>
+            <View style={spendStyles.iconBox}>
               <Ionicons name="card" size={26} color="#38B2AC" />
             </View>
           </View>
 
-          <CategoryPicker
-            categories={categories ?? []}
-            selected={selectedCategory}
-            onSelect={(id) => {
-              setSelectedCategory(id);
-              setSelectedCompany(null);
-            }}
-            styles={styles}
-          />
-
-          {selectedCategory && (
-            <CompanyPicker
-              companies={companies}
-              selected={selectedCompany}
+          {/* Categories: show spinner while loading */}
+          {isCategoryLoading ? (
+            <View style={spendStyles.loadingRow}>
+              <ActivityIndicator size="small" color="#38B2AC" />
+              <Text style={spendStyles.loadingText}>Loading categories...</Text>
+            </View>
+          ) : (
+            <CategoryPicker
+              categories={categories ?? []}
+              selected={selectedCategory}
               onSelect={(id) => {
-                setSelectedCompany(id);
-                setSelectedOutlet(null);
+                setSelectedCategory(id);
+                setSelectedCompany(null);
               }}
-              styles={styles}
+              styles={spendStyles}
             />
           )}
 
-          {selectedCompany && (
-            <OutletPicker
-              outlets={outlets}
-              selected={selectedOutlet}
-              onSelect={(id) => setSelectedOutlet(id)}
-              styles={styles}
-            />
+          {/* Mode selector: segmented pill */}
+          {selectedCategory && (
+            <View style={spendStyles.modeSwitch} accessibilityRole="tablist">
+              <Pressable
+                onPress={() => setAllowDirectOutlet(false)}
+                accessibilityRole="button"
+                accessibilityState={{ selected: !allowDirectOutlet }}
+                style={({ pressed }) => [
+                  spendStyles.modeOption,
+                  !allowDirectOutlet && spendStyles.modeOptionActive,
+                  pressed && spendStyles.modeOptionPressed,
+                ]}
+              >
+                <View
+                  style={{ flexDirection: "row", alignItems: "center", gap: 8 }}
+                >
+                  <Ionicons
+                    name="business"
+                    size={14}
+                    color={!allowDirectOutlet ? "#fff" : "#256A5A"}
+                  />
+                  <Text
+                    style={[
+                      spendStyles.modeOptionText,
+                      !allowDirectOutlet && spendStyles.modeOptionTextActive,
+                    ]}
+                  >
+                    By company
+                  </Text>
+                </View>
+              </Pressable>
+
+              <Pressable
+                onPress={() => setAllowDirectOutlet(true)}
+                accessibilityRole="button"
+                accessibilityState={{ selected: allowDirectOutlet }}
+                style={({ pressed }) => [
+                  spendStyles.modeOption,
+                  allowDirectOutlet && spendStyles.modeOptionActive,
+                  pressed && spendStyles.modeOptionPressed,
+                ]}
+              >
+                <View
+                  style={{ flexDirection: "row", alignItems: "center", gap: 8 }}
+                >
+                  <Ionicons
+                    name="storefront"
+                    size={14}
+                    color={allowDirectOutlet ? "#fff" : "#256A5A"}
+                  />
+                  <Text
+                    style={[
+                      spendStyles.modeOptionText,
+                      allowDirectOutlet && spendStyles.modeOptionTextActive,
+                    ]}
+                  >
+                    Select outlet directly
+                  </Text>
+                </View>
+              </Pressable>
+            </View>
+          )}
+
+          {/* contextual helper text */}
+          {selectedCategory && (
+            <Text style={spendStyles.helperText}>
+              {allowDirectOutlet
+                ? "Showing all outlets."
+                : selectedCompany
+                ? "Showing outlets for the selected company."
+                : "Pick a company to see its outlets."}
+            </Text>
+          )}
+
+          {/* CompanyPicker: hide in direct mode; show spinner while loading */}
+          {selectedCategory && !allowDirectOutlet && (
+            <>
+              {isCompanyLoading ? (
+                <View style={spendStyles.loadingRow}>
+                  <ActivityIndicator size="small" color="#38B2AC" />
+                  <Text style={spendStyles.loadingText}>
+                    Loading companies...
+                  </Text>
+                </View>
+              ) : (
+                <CompanyPicker
+                  companies={companies}
+                  selected={selectedCompany}
+                  onSelect={(id) => {
+                    setSelectedCompany(id);
+                    setSelectedOutlet(null);
+                  }}
+                  styles={spendStyles}
+                />
+              )}
+            </>
+          )}
+
+          {/* OutletPicker: show spinner while outlets load */}
+          {(selectedCompany || allowDirectOutlet) && (
+            <>
+              {isOutletLoading ? (
+                <View style={spendStyles.loadingRow}>
+                  <ActivityIndicator size="small" color="#38B2AC" />
+                  <Text style={spendStyles.loadingText}>
+                    Loading outlets...
+                  </Text>
+                </View>
+              ) : (
+                <OutletPicker
+                  outlets={outlets}
+                  selected={selectedOutlet}
+                  onSelect={(id) => {
+                    setSelectedOutlet(id);
+                  }}
+                  styles={spendStyles}
+                />
+              )}
+            </>
+          )}
+
+          {/* show outlet + company preview when an outlet is selected */}
+          {selectedOutlet && (
+            <View style={{ marginTop: 8, marginBottom: 6 }}>
+              {(() => {
+                const picked = outlets?.find(
+                  (o: any) =>
+                    String(o.id) === String(selectedOutlet) ||
+                    o.id === selectedOutlet
+                );
+                return (
+                  <Text style={spendStyles.helperText}>
+                    Selected outlet:{" "}
+                    <Text
+                      style={{
+                        fontFamily: "Poppins_600SemiBold",
+                        color: "#1B263B",
+                      }}
+                    >
+                      {picked?.name ?? selectedOutlet}
+                    </Text>
+                    {picked?.name ? (
+                      <Text style={{ color: "#718096" }}> — {picked.name}</Text>
+                    ) : null}
+                  </Text>
+                );
+              })()}
+            </View>
           )}
 
           {selectedOutlet && (
@@ -210,28 +362,37 @@ export default function Spend() {
               <AmountSection
                 control={control}
                 availableLocked={availableLocked}
-                styles={styles}
+                styles={spendStyles}
               />
-              <PinSection control={control} styles={styles} />
+              <PinSection control={control} styles={spendStyles} />
             </>
           )}
 
           <TouchableOpacity
             style={[
-              styles.actionButton,
-              (isProcessing || !formState.isValid) && styles.disabledButton,
+              spendStyles.actionButton,
+              (isSpending || !formState.isValid) && spendStyles.disabledButton,
             ]}
             onPress={handleSubmit(onSubmit)}
-            disabled={isProcessing || !formState.isValid}
+            disabled={isSpending || !formState.isValid}
           >
             <LinearGradient
               colors={["#38B2AC", "#2C9A92"]}
-              style={styles.actionGradient}
+              style={spendStyles.actionGradient}
             >
-              <Text style={styles.actionText}>
-                {isProcessing ? "Processing..." : "Complete Payment"}
-              </Text>
-              <Ionicons name="card" size={18} color="#fff" />
+              {isSpending ? (
+                <>
+                  <ActivityIndicator size="small" color="#fff" />
+                  <Text style={[spendStyles.actionText, { marginLeft: 8 }]}>
+                    Processing...
+                  </Text>
+                </>
+              ) : (
+                <>
+                  <Text style={spendStyles.actionText}>Complete Payment</Text>
+                  <Ionicons name="card" size={18} color="#fff" />
+                </>
+              )}
             </LinearGradient>
           </TouchableOpacity>
         </ScrollView>
@@ -239,156 +400,3 @@ export default function Spend() {
     </LinearGradient>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1 },
-  content: { padding: 20, paddingTop: 60, paddingBottom: 40 },
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 20,
-  },
-  title: { fontSize: 26, fontFamily: "Poppins_700Bold", color: "#1B263B" },
-  subtitle: {
-    fontSize: 13,
-    fontFamily: "Poppins_400Regular",
-    color: "#778DA9",
-    marginTop: 4,
-  },
-  iconBox: {
-    width: 56,
-    height: 56,
-    borderRadius: 14,
-    backgroundColor: "#fff",
-    justifyContent: "center",
-    alignItems: "center",
-    elevation: 3,
-  },
-  section: { marginBottom: 18 },
-  sectionTitle: {
-    fontSize: 14,
-    fontFamily: "Poppins_600SemiBold",
-    color: "#415A77",
-    marginBottom: 8,
-  },
-  pickerButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    backgroundColor: "#FFFFFF",
-    borderRadius: 12,
-    padding: 12,
-    borderWidth: 1,
-    borderColor: "#E9ECEF",
-  },
-  pickerText: { fontFamily: "Poppins_500Medium", color: "#1B263B" },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.35)",
-    justifyContent: "flex-end",
-  },
-  modal: {
-    backgroundColor: "#fff",
-    maxHeight: "70%",
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
-    paddingHorizontal: 16,
-    paddingBottom: 18,
-    paddingTop: 8,
-    shadowColor: "#000",
-    shadowOpacity: 0.12,
-    shadowRadius: 10,
-    elevation: 8,
-  },
-  modalLarge: {
-    backgroundColor: "#fff",
-    maxHeight: "85%",
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
-    paddingHorizontal: 16,
-    paddingTop: 12,
-    paddingBottom: 20,
-    shadowColor: "#000",
-    shadowOpacity: 0.08,
-    shadowRadius: 10,
-    elevation: 8,
-  },
-  modalHandle: {
-    alignSelf: "center",
-    width: 40,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: "rgba(0,0,0,0.12)",
-    marginVertical: 8,
-  },
-  modalTitle: {
-    fontSize: 16,
-    fontFamily: "Poppins_600SemiBold",
-    marginBottom: 8,
-    textAlign: "left",
-    paddingLeft: 4,
-  },
-  modalItem: {
-    paddingVertical: 14,
-    paddingHorizontal: 6,
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  modalItemText: {
-    fontSize: 15,
-    fontFamily: "Poppins_500Medium",
-    color: "#1B263B",
-    marginLeft: 12,
-  },
-  itemSeparator: { height: 1, backgroundColor: "#F1F5F9", marginLeft: 56 },
-  modalClose: { marginTop: 12, alignItems: "center" },
-  modalCloseText: { color: "#38B2AC", fontFamily: "Poppins_600SemiBold" },
-  catIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: 8,
-    justifyContent: "center",
-    alignItems: "center",
-    marginRight: 12,
-  },
-  inputCard: {
-    backgroundColor: "#fff",
-    borderRadius: 12,
-    padding: 8,
-    borderWidth: 1,
-    borderColor: "#E9ECEF",
-  },
-  input: { backgroundColor: "transparent", fontSize: 16 },
-  currency: {
-    fontSize: 16,
-    fontFamily: "Poppins_600SemiBold",
-    color: "#38B2AC",
-  },
-  hint: {
-    marginTop: 8,
-    color: "#778DA9",
-    fontFamily: "Poppins_400Regular",
-    fontSize: 12,
-  },
-  actionButton: { marginTop: 20, borderRadius: 12, overflow: "hidden" },
-  disabledButton: { opacity: 0.6 },
-  actionGradient: {
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
-    paddingVertical: 14,
-    gap: 8,
-  },
-  actionText: {
-    color: "#fff",
-    fontFamily: "Poppins_600SemiBold",
-    fontSize: 16,
-  },
-  inputError: {
-    color: "#E53E3E",
-    fontFamily: "Poppins_400Regular",
-    fontSize: 12,
-    marginTop: 4,
-  },
-});

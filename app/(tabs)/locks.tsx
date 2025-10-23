@@ -1,3 +1,4 @@
+import { useGetLocks } from "@/hooks/useGetLocks";
 import {
   Poppins_400Regular,
   Poppins_500Medium,
@@ -8,7 +9,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
-import React from "react";
+import React, { useEffect } from "react";
 import {
   FlatList,
   RefreshControl,
@@ -24,27 +25,7 @@ export const options = { headerShown: false };
 export default function LocksPage() {
   const router = useRouter();
 
-  // dummy data for now
-  const dummyLocks = [
-    {
-      Category: "Groceries",
-      amountLocked: "12500",
-      expiresAt: "2025-11-01",
-    },
-    {
-      Category: "Rent",
-      amountLocked: "85000",
-      expiresAt: "2026-01-01",
-    },
-    {
-      Category: "Vacation",
-      amountLocked: "40000",
-      expiresAt: "",
-    },
-  ];
-
-  const [locks, setLocks] = React.useState<any[]>(dummyLocks);
-  const [refreshing, setRefreshing] = React.useState(false);
+  const { isLocksLoading, locksList, fetchLocks } = useGetLocks();
 
   let [fontsLoaded] = useFonts({
     Poppins_400Regular,
@@ -54,10 +35,12 @@ export default function LocksPage() {
   });
 
   async function onRefresh() {
-    setRefreshing(true);
-    // simulate refresh - replace with real fetch later
-    setTimeout(() => setRefreshing(false), 700);
+    fetchLocks();
   }
+
+  useEffect(() => {
+    fetchLocks();
+  }, []);
 
   if (!fontsLoaded) return null;
 
@@ -102,32 +85,31 @@ export default function LocksPage() {
       <View style={styles.listHeader}>
         <Text style={styles.listHeaderTitle}>Your active locks</Text>
         <View style={styles.countBadge}>
-          <Text style={styles.countText}>{locks.length}</Text>
+          <Text style={styles.countText}>{locksList.length}</Text>
         </View>
       </View>
 
       <FlatList
-        data={locks}
+        data={locksList}
         keyExtractor={(item, index) =>
-          `${item.Category ?? item.category ?? index}`
+          `${item.categoryName ?? item.categoryName ?? index}`
         }
         refreshControl={
           <RefreshControl
-            refreshing={refreshing}
+            refreshing={isLocksLoading}
             onRefresh={onRefresh}
             colors={["#38B2AC"]}
             tintColor="#38B2AC"
           />
         }
-        contentContainerStyle={locks.length ? undefined : { flex: 1 }}
+        contentContainerStyle={locksList.length ? undefined : { flex: 1 }}
         ListEmptyComponent={
           <View style={styles.empty}>
             <Text style={styles.emptyText}>No active locks</Text>
           </View>
         }
         renderItem={({ item }) => {
-          const category =
-            (item as any).Category ?? (item as any).category ?? "Unknown";
+          const category = item.categoryName;
           const amount = Number(
             (item as any).amountLocked ?? (item as any).amount ?? 0
           );

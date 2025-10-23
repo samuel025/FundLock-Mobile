@@ -5,13 +5,22 @@ import { ErrorResponse } from "./wallet";
 export interface Outlets {
   id: string;
   name: string;
+  // optional metadata (may be undefined depending on API)
+  companyId?: string;
+  companyName?: string;
 }
 
-export async function getOutlets(companyId: string): Promise<Outlets[]> {
+// now accepts optional companyId and optional categoryId
+export async function getOutlets(
+  companyId?: string,
+  categoryId?: string
+): Promise<Outlets[]> {
   try {
-    const response = await API.get<any>(
-      "/api/v1/fundlock/companies/outlets/" + companyId
-    );
+    const url = companyId
+      ? `/api/v1/fundlock/companies/outlets/${companyId}`
+      : `/api/v1/fundlock/outlets/${categoryId}`;
+
+    const response = await API.get<any>(url);
     const payload = response?.data?.data ?? {};
 
     let list: any[] = [];
@@ -20,7 +29,18 @@ export async function getOutlets(companyId: string): Promise<Outlets[]> {
       list = (payload as any).outlets;
     else if (Array.isArray((payload as any).data)) list = (payload as any).data;
     else list = [];
-    return list.map((it) => ({ id: String(it.id), name: it.name }));
+
+    return list.map((it) => ({
+      id: String(it.id),
+      name: it.name,
+      companyId:
+        it.companyId != null
+          ? String(it.companyId)
+          : it.company?.id != null
+          ? String(it.company.id)
+          : undefined,
+      companyName: it.companyName ?? it.company?.name,
+    }));
   } catch (error) {
     if (axios.isAxiosError(error)) {
       const axiosError = error as AxiosError<ErrorResponse>;

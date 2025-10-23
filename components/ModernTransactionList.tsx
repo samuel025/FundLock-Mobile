@@ -90,10 +90,8 @@ export default function ModernTransactionList({
       }
     };
 
-    const getRecipient = (t: Transaction) => {
-      // prefer a human recipient name where available
-      return t.recipientName || t.reference || "";
-    };
+    const getRecipient = (t: any) =>
+      t.type === "DEPOSIT" ? "DEPOSIT" : t.recipientName || t.reference || "";
 
     const formatDateTime = (iso?: string) => {
       if (!iso) return "";
