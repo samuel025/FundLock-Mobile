@@ -15,12 +15,14 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  StatusBar,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
 import { TextInput } from "react-native-paper";
+import { SafeAreaView } from "react-native-safe-area-context";
 import * as yup from "yup";
 
 // Validation schema
@@ -107,216 +109,227 @@ export default function SignIn() {
         colors={["#0D1B2A", "#1B263B", "#415A77"]}
         style={styles.container}
       >
-        <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
-          style={styles.container}
-        >
-          <ScrollView
-            contentContainerStyle={styles.scrollContainer}
-            showsVerticalScrollIndicator={false}
-            keyboardShouldPersistTaps="handled"
+        <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
+          <KeyboardAvoidingView
+            behavior={Platform.OS === "ios" ? "padding" : "height"}
+            style={styles.container}
+            keyboardVerticalOffset={
+              Platform.OS === "android" ? StatusBar.currentHeight ?? 24 : 0
+            }
           >
-            <Animated.View style={[styles.content, { opacity: fadeAnim }]}>
-              {/* Logo Section */}
-              <View style={styles.logoContainer}>
-                <LinearGradient
-                  colors={["#38B2AC", "#2C9A8F"]}
-                  style={styles.logoCircle}
-                >
-                  <Ionicons name="lock-closed" size={40} color="#FFFFFF" />
-                </LinearGradient>
-                <Text style={styles.brandName}>FundLock</Text>
-                <Text style={styles.tagline}>
-                  Financial Discipline Made Simple
-                </Text>
-              </View>
-
-              {/* Success Message */}
-              {showSuccessMessage && (
-                <View style={styles.successBanner}>
-                  <Ionicons name="checkmark-circle" size={20} color="#38B2AC" />
-                  <Text style={styles.successText}>
-                    Account created! Please sign in.
-                  </Text>
-                </View>
-              )}
-
-              {/* Error Message */}
-              {signInError && (
-                <View style={styles.errorBanner}>
-                  <Ionicons name="alert-circle" size={20} color="#DC2626" />
-                  <Text style={styles.errorText}>{signInError}</Text>
-                </View>
-              )}
-
-              {/* Form Card */}
-              <View style={styles.formCard}>
-                <Text style={styles.formTitle}>Welcome Back</Text>
-                <Text style={styles.formSubtitle}>
-                  Sign in to continue managing your finances
-                </Text>
-
-                <Controller
-                  control={control}
-                  name="email"
-                  render={({ field: { onChange, onBlur, value } }) => (
-                    <View style={styles.inputContainer}>
-                      <TextInput
-                        label="Email"
-                        autoCapitalize="none"
-                        keyboardType="email-address"
-                        placeholder="Enter your email"
-                        mode="outlined"
-                        value={value}
-                        onChangeText={(text) => {
-                          onChange(text);
-                          setSignInError(null);
-                        }}
-                        onBlur={onBlur}
-                        error={!!errors.email}
-                        left={
-                          <TextInput.Icon
-                            icon={() => (
-                              <Ionicons
-                                name="mail-outline"
-                                size={20}
-                                color="#778DA9"
-                              />
-                            )}
-                          />
-                        }
-                        theme={{
-                          roundness: 12,
-                          colors: {
-                            primary: "#38B2AC",
-                            outline: errors.email ? "#DC2626" : "#E9ECEF",
-                          },
-                        }}
-                        style={styles.input}
-                        outlineStyle={styles.inputOutline}
-                      />
-                      {errors.email && (
-                        <Text style={styles.inputError}>
-                          {errors.email.message}
-                        </Text>
-                      )}
-                    </View>
-                  )}
-                />
-
-                <Controller
-                  control={control}
-                  name="password"
-                  render={({ field: { onChange, onBlur, value } }) => (
-                    <View style={styles.inputContainer}>
-                      <TextInput
-                        label="Password"
-                        autoCapitalize="none"
-                        placeholder="Enter your password"
-                        secureTextEntry={!showPassword}
-                        mode="outlined"
-                        value={value}
-                        onChangeText={(text) => {
-                          onChange(text);
-                          setSignInError(null);
-                        }}
-                        onBlur={onBlur}
-                        error={!!errors.password}
-                        left={
-                          <TextInput.Icon
-                            icon={() => (
-                              <Ionicons
-                                name="lock-closed-outline"
-                                size={20}
-                                color="#778DA9"
-                              />
-                            )}
-                          />
-                        }
-                        right={
-                          <TextInput.Icon
-                            icon={showPassword ? "eye-off" : "eye"}
-                            onPress={() => setShowPassword(!showPassword)}
-                          />
-                        }
-                        theme={{
-                          roundness: 12,
-                          colors: {
-                            primary: "#38B2AC",
-                            outline: errors.password ? "#DC2626" : "#E9ECEF",
-                          },
-                        }}
-                        style={styles.input}
-                        outlineStyle={styles.inputOutline}
-                      />
-                      {errors.password && (
-                        <Text style={styles.inputError}>
-                          {errors.password.message}
-                        </Text>
-                      )}
-                    </View>
-                  )}
-                />
-
-                <TouchableOpacity style={styles.forgotPassword}>
-                  <Text style={styles.forgotPasswordText}>
-                    Forgot password?
-                  </Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={[
-                    styles.signInButton,
-                    (!isValid || signInMutation.isPending) &&
-                      styles.signInButtonDisabled,
-                  ]}
-                  onPress={handleSubmit(onSubmit)}
-                  disabled={signInMutation.isPending || !isValid}
-                >
+            <ScrollView
+              contentContainerStyle={styles.scrollContainer}
+              showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
+            >
+              <Animated.View style={[styles.content, { opacity: fadeAnim }]}>
+                {/* Logo Section */}
+                <View style={styles.logoContainer}>
                   <LinearGradient
-                    colors={
-                      isValid && !signInMutation.isPending
-                        ? ["#38B2AC", "#2C9A8F"]
-                        : ["#8B9DC3", "#778DA9"]
-                    }
-                    style={styles.signInButtonGradient}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 0 }}
+                    colors={["#38B2AC", "#2C9A8F"]}
+                    style={styles.logoCircle}
                   >
-                    {signInMutation.isPending ? (
-                      <Text style={styles.signInButtonText}>Signing in...</Text>
-                    ) : (
-                      <>
-                        <Text style={styles.signInButtonText}>Sign In</Text>
-                        <Ionicons
-                          name="arrow-forward"
-                          size={20}
-                          color="#FFFFFF"
-                        />
-                      </>
-                    )}
+                    <Ionicons name="lock-closed" size={40} color="#FFFFFF" />
                   </LinearGradient>
-                </TouchableOpacity>
-
-                <View style={styles.divider}>
-                  <View style={styles.dividerLine} />
-                  <Text style={styles.dividerText}>OR</Text>
-                  <View style={styles.dividerLine} />
+                  <Text style={styles.brandName}>FundLock</Text>
+                  <Text style={styles.tagline}>
+                    Financial Discipline Made Simple
+                  </Text>
                 </View>
 
-                <TouchableOpacity
-                  style={styles.signUpLink}
-                  onPress={() => router.replace("/signUp")}
-                >
-                  <Text style={styles.signUpLinkText}>
-                    Don&apos;t have an account?{" "}
-                    <Text style={styles.signUpLinkBold}>Sign Up</Text>
+                {/* Success Message */}
+                {showSuccessMessage && (
+                  <View style={styles.successBanner}>
+                    <Ionicons
+                      name="checkmark-circle"
+                      size={20}
+                      color="#38B2AC"
+                    />
+                    <Text style={styles.successText}>
+                      Account created! Please sign in.
+                    </Text>
+                  </View>
+                )}
+
+                {/* Error Message */}
+                {signInError && (
+                  <View style={styles.errorBanner}>
+                    <Ionicons name="alert-circle" size={20} color="#DC2626" />
+                    <Text style={styles.errorText}>{signInError}</Text>
+                  </View>
+                )}
+
+                {/* Form Card */}
+                <View style={styles.formCard}>
+                  <Text style={styles.formTitle}>Welcome Back</Text>
+                  <Text style={styles.formSubtitle}>
+                    Sign in to continue managing your finances
                   </Text>
-                </TouchableOpacity>
-              </View>
-            </Animated.View>
-          </ScrollView>
-        </KeyboardAvoidingView>
+
+                  <Controller
+                    control={control}
+                    name="email"
+                    render={({ field: { onChange, onBlur, value } }) => (
+                      <View style={styles.inputContainer}>
+                        <TextInput
+                          label="Email"
+                          autoCapitalize="none"
+                          keyboardType="email-address"
+                          placeholder="Enter your email"
+                          mode="outlined"
+                          value={value}
+                          onChangeText={(text) => {
+                            onChange(text);
+                            setSignInError(null);
+                          }}
+                          onBlur={onBlur}
+                          error={!!errors.email}
+                          left={
+                            <TextInput.Icon
+                              icon={() => (
+                                <Ionicons
+                                  name="mail-outline"
+                                  size={20}
+                                  color="#778DA9"
+                                />
+                              )}
+                            />
+                          }
+                          theme={{
+                            roundness: 12,
+                            colors: {
+                              primary: "#38B2AC",
+                              outline: errors.email ? "#DC2626" : "#E9ECEF",
+                            },
+                          }}
+                          style={styles.input}
+                          outlineStyle={styles.inputOutline}
+                        />
+                        {errors.email && (
+                          <Text style={styles.inputError}>
+                            {errors.email.message}
+                          </Text>
+                        )}
+                      </View>
+                    )}
+                  />
+
+                  <Controller
+                    control={control}
+                    name="password"
+                    render={({ field: { onChange, onBlur, value } }) => (
+                      <View style={styles.inputContainer}>
+                        <TextInput
+                          label="Password"
+                          autoCapitalize="none"
+                          placeholder="Enter your password"
+                          secureTextEntry={!showPassword}
+                          mode="outlined"
+                          value={value}
+                          onChangeText={(text) => {
+                            onChange(text);
+                            setSignInError(null);
+                          }}
+                          onBlur={onBlur}
+                          error={!!errors.password}
+                          left={
+                            <TextInput.Icon
+                              icon={() => (
+                                <Ionicons
+                                  name="lock-closed-outline"
+                                  size={20}
+                                  color="#778DA9"
+                                />
+                              )}
+                            />
+                          }
+                          right={
+                            <TextInput.Icon
+                              icon={showPassword ? "eye-off" : "eye"}
+                              onPress={() => setShowPassword(!showPassword)}
+                            />
+                          }
+                          theme={{
+                            roundness: 12,
+                            colors: {
+                              primary: "#38B2AC",
+                              outline: errors.password ? "#DC2626" : "#E9ECEF",
+                            },
+                          }}
+                          style={styles.input}
+                          outlineStyle={styles.inputOutline}
+                        />
+                        {errors.password && (
+                          <Text style={styles.inputError}>
+                            {errors.password.message}
+                          </Text>
+                        )}
+                      </View>
+                    )}
+                  />
+
+                  <TouchableOpacity style={styles.forgotPassword}>
+                    <Text style={styles.forgotPasswordText}>
+                      Forgot password?
+                    </Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={[
+                      styles.signInButton,
+                      (!isValid || signInMutation.isPending) &&
+                        styles.signInButtonDisabled,
+                    ]}
+                    onPress={handleSubmit(onSubmit)}
+                    disabled={signInMutation.isPending || !isValid}
+                  >
+                    <LinearGradient
+                      colors={
+                        isValid && !signInMutation.isPending
+                          ? ["#38B2AC", "#2C9A8F"]
+                          : ["#8B9DC3", "#778DA9"]
+                      }
+                      style={styles.signInButtonGradient}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 0 }}
+                    >
+                      {signInMutation.isPending ? (
+                        <Text style={styles.signInButtonText}>
+                          Signing in...
+                        </Text>
+                      ) : (
+                        <>
+                          <Text style={styles.signInButtonText}>Sign In</Text>
+                          <Ionicons
+                            name="arrow-forward"
+                            size={20}
+                            color="#FFFFFF"
+                          />
+                        </>
+                      )}
+                    </LinearGradient>
+                  </TouchableOpacity>
+
+                  <View style={styles.divider}>
+                    <View style={styles.dividerLine} />
+                    <Text style={styles.dividerText}>OR</Text>
+                    <View style={styles.dividerLine} />
+                  </View>
+
+                  <TouchableOpacity
+                    style={styles.signUpLink}
+                    onPress={() => router.replace("/signUp")}
+                  >
+                    <Text style={styles.signUpLinkText}>
+                      Don&apos;t have an account?{" "}
+                      <Text style={styles.signUpLinkBold}>Sign Up</Text>
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </Animated.View>
+            </ScrollView>
+          </KeyboardAvoidingView>
+        </SafeAreaView>
       </LinearGradient>
     </AuthPageGuard>
   );

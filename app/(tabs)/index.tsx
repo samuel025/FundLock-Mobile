@@ -26,6 +26,7 @@ export default function Index() {
   const user = useAuthStore((state) => state.user);
   const isLoadingUser = useAuthStore((state) => state.isLoadingUser);
   const [refreshing, setRefreshing] = useState(false);
+  const [showBalance, setShowBalance] = useState(true);
 
   const {
     balance,
@@ -88,6 +89,12 @@ export default function Index() {
         maximumFractionDigits: 2,
       }
     )}`;
+
+  const formatCurrency = (val: any) =>
+    `₦${Number(val || 0).toLocaleString(undefined, {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })}`;
 
   const amountColor = (t: any) =>
     t.entryType === "CREDIT" ? "#38B2AC" : "#DC2626";
@@ -154,11 +161,19 @@ export default function Index() {
             <View style={styles.balanceHeader}>
               <View>
                 <Text style={styles.balanceLabel}>Total Balance</Text>
-                <Text style={styles.balanceAmount}>₦{balance || "0.00"}</Text>
+                <Text style={styles.balanceAmount}>
+                  {showBalance ? formatCurrency(balance) : "₦ •••• ••••"}
+                </Text>
               </View>
-              <TouchableOpacity style={styles.eyeButton}>
+              <TouchableOpacity
+                style={styles.eyeButton}
+                onPress={() => setShowBalance((s) => !s)}
+                accessibilityLabel={
+                  showBalance ? "Hide balance" : "Show balance"
+                }
+              >
                 <Ionicons
-                  name="eye-outline"
+                  name={showBalance ? "eye-outline" : "eye-off-outline"}
                   size={20}
                   color="rgba(255,255,255,0.8)"
                 />
@@ -173,7 +188,7 @@ export default function Index() {
                 <View>
                   <Text style={styles.statLabel}>Locked</Text>
                   <Text style={styles.statValue}>
-                    ₦{totalLockedAmount || "0.00"}
+                    {showBalance ? formatCurrency(totalLockedAmount) : "••••••"}
                   </Text>
                 </View>
               </View>
@@ -187,7 +202,9 @@ export default function Index() {
                 <View>
                   <Text style={styles.statLabel}>Redeemed</Text>
                   <Text style={styles.statValue}>
-                    ₦{totalRedeemedAmount || "0.00"}
+                    {showBalance
+                      ? formatCurrency(totalRedeemedAmount)
+                      : "••••••"}
                   </Text>
                 </View>
               </View>

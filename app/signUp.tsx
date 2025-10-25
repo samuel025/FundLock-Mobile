@@ -12,12 +12,14 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  StatusBar,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
 import { TextInput } from "react-native-paper";
+import { SafeAreaView } from "react-native-safe-area-context";
 import * as yup from "yup";
 
 // Validation schema
@@ -104,350 +106,362 @@ export default function SignUp() {
   return (
     <AuthPageGuard>
       <LinearGradient
-        colors={["#0D1B2A", "#1B263B", "#415A77"]}
+        colors={["#0D1B2AC", "#1B263B", "#415A77"]}
         style={styles.container}
       >
-        <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
-          style={styles.container}
-        >
-          <ScrollView
-            contentContainerStyle={styles.scrollContainer}
-            showsVerticalScrollIndicator={false}
-            keyboardShouldPersistTaps="handled"
+        <StatusBar barStyle="light-content" />
+        <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
+          <KeyboardAvoidingView
+            behavior={Platform.OS === "ios" ? "padding" : "height"}
+            style={styles.container}
+            keyboardVerticalOffset={
+              Platform.OS === "android" ? StatusBar.currentHeight ?? 24 : 0
+            }
           >
-            <Animated.View style={[styles.content, { opacity: fadeAnim }]}>
-              {/* Logo Section */}
-              <View style={styles.logoContainer}>
-                <LinearGradient
-                  colors={["#38B2AC", "#2C9A8F"]}
-                  style={styles.logoCircle}
-                >
-                  <Ionicons name="lock-closed" size={32} color="#FFFFFF" />
-                </LinearGradient>
-                <Text style={styles.brandName}>Join FundLock</Text>
-                <Text style={styles.tagline}>
-                  Start your journey to financial discipline
-                </Text>
-              </View>
-
-              {/* Form Card */}
-              <View style={styles.formCard}>
-                <Text style={styles.formTitle}>Create Account</Text>
-                <Text style={styles.formSubtitle}>
-                  Fill in your details to get started
-                </Text>
-
-                <View style={styles.formRow}>
-                  <Controller
-                    control={control}
-                    name="firstName"
-                    render={({ field: { onChange, onBlur, value } }) => (
-                      <View style={[styles.inputContainer, styles.halfWidth]}>
-                        <TextInput
-                          label="First Name"
-                          autoCapitalize="words"
-                          placeholder="John"
-                          mode="outlined"
-                          value={value}
-                          onChangeText={onChange}
-                          onBlur={onBlur}
-                          error={!!errors.firstName}
-                          theme={{
-                            roundness: 12,
-                            colors: {
-                              primary: "#38B2AC",
-                              outline: errors.firstName ? "#DC2626" : "#E9ECEF",
-                            },
-                          }}
-                          style={styles.input}
-                          outlineStyle={styles.inputOutline}
-                        />
-                        {errors.firstName && (
-                          <Text style={styles.inputError}>
-                            {errors.firstName.message}
-                          </Text>
-                        )}
-                      </View>
-                    )}
-                  />
-
-                  <Controller
-                    control={control}
-                    name="lastName"
-                    render={({ field: { onChange, onBlur, value } }) => (
-                      <View style={[styles.inputContainer, styles.halfWidth]}>
-                        <TextInput
-                          label="Last Name"
-                          autoCapitalize="words"
-                          placeholder="Doe"
-                          mode="outlined"
-                          value={value}
-                          onChangeText={onChange}
-                          onBlur={onBlur}
-                          error={!!errors.lastName}
-                          theme={{
-                            roundness: 12,
-                            colors: {
-                              primary: "#38B2AC",
-                              outline: errors.lastName ? "#DC2626" : "#E9ECEF",
-                            },
-                          }}
-                          style={styles.input}
-                          outlineStyle={styles.inputOutline}
-                        />
-                        {errors.lastName && (
-                          <Text style={styles.inputError}>
-                            {errors.lastName.message}
-                          </Text>
-                        )}
-                      </View>
-                    )}
-                  />
+            <ScrollView
+              contentContainerStyle={styles.scrollContainer}
+              showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
+            >
+              <Animated.View style={[styles.content, { opacity: fadeAnim }]}>
+                {/* Logo Section */}
+                <View style={styles.logoContainer}>
+                  <LinearGradient
+                    colors={["#38B2AC", "#2C9A8F"]}
+                    style={styles.logoCircle}
+                  >
+                    <Ionicons name="lock-closed" size={32} color="#FFFFFF" />
+                  </LinearGradient>
+                  <Text style={styles.brandName}>Join FundLock</Text>
+                  <Text style={styles.tagline}>
+                    Start your journey to financial discipline
+                  </Text>
                 </View>
 
-                <Controller
-                  control={control}
-                  name="email"
-                  render={({ field: { onChange, onBlur, value } }) => (
-                    <View style={styles.inputContainer}>
-                      <TextInput
-                        label="Email"
-                        autoCapitalize="none"
-                        keyboardType="email-address"
-                        placeholder="[email protected]"
-                        mode="outlined"
-                        value={value}
-                        onChangeText={onChange}
-                        onBlur={onBlur}
-                        error={!!errors.email}
-                        left={
-                          <TextInput.Icon
-                            icon={() => (
-                              <Ionicons
-                                name="mail-outline"
-                                size={20}
-                                color="#778DA9"
-                              />
-                            )}
-                          />
-                        }
-                        theme={{
-                          roundness: 12,
-                          colors: {
-                            primary: "#38B2AC",
-                            outline: errors.email ? "#DC2626" : "#E9ECEF",
-                          },
-                        }}
-                        style={styles.input}
-                        outlineStyle={styles.inputOutline}
-                      />
-                      {errors.email && (
-                        <Text style={styles.inputError}>
-                          {errors.email.message}
-                        </Text>
-                      )}
-                    </View>
-                  )}
-                />
-
-                <Controller
-                  control={control}
-                  name="phoneNumber"
-                  render={({ field: { onChange, onBlur, value } }) => (
-                    <View style={styles.inputContainer}>
-                      <TextInput
-                        label="Phone Number"
-                        keyboardType="phone-pad"
-                        placeholder="08012345678"
-                        mode="outlined"
-                        value={value}
-                        onChangeText={onChange}
-                        onBlur={onBlur}
-                        error={!!errors.phoneNumber}
-                        left={
-                          <TextInput.Icon
-                            icon={() => (
-                              <Ionicons
-                                name="call-outline"
-                                size={20}
-                                color="#778DA9"
-                              />
-                            )}
-                          />
-                        }
-                        theme={{
-                          roundness: 12,
-                          colors: {
-                            primary: "#38B2AC",
-                            outline: errors.phoneNumber ? "#DC2626" : "#E9ECEF",
-                          },
-                        }}
-                        style={styles.input}
-                        outlineStyle={styles.inputOutline}
-                      />
-                      {errors.phoneNumber && (
-                        <Text style={styles.inputError}>
-                          {errors.phoneNumber.message}
-                        </Text>
-                      )}
-                    </View>
-                  )}
-                />
-
-                <Controller
-                  control={control}
-                  name="password"
-                  render={({ field: { onChange, onBlur, value } }) => (
-                    <View style={styles.inputContainer}>
-                      <TextInput
-                        label="Password"
-                        autoCapitalize="none"
-                        placeholder="Enter password"
-                        secureTextEntry={!showPassword}
-                        mode="outlined"
-                        value={value}
-                        onChangeText={onChange}
-                        onBlur={onBlur}
-                        error={!!errors.password}
-                        left={
-                          <TextInput.Icon
-                            icon={() => (
-                              <Ionicons
-                                name="lock-closed-outline"
-                                size={20}
-                                color="#778DA9"
-                              />
-                            )}
-                          />
-                        }
-                        right={
-                          <TextInput.Icon
-                            icon={showPassword ? "eye-off" : "eye"}
-                            onPress={() => setShowPassword(!showPassword)}
-                          />
-                        }
-                        theme={{
-                          roundness: 12,
-                          colors: {
-                            primary: "#38B2AC",
-                            outline: errors.password ? "#DC2626" : "#E9ECEF",
-                          },
-                        }}
-                        style={styles.input}
-                        outlineStyle={styles.inputOutline}
-                      />
-                      {errors.password && (
-                        <Text style={styles.inputError}>
-                          {errors.password.message}
-                        </Text>
-                      )}
-                    </View>
-                  )}
-                />
-
-                <Controller
-                  control={control}
-                  name="pin"
-                  render={({ field: { onChange, onBlur, value } }) => (
-                    <View style={styles.inputContainer}>
-                      <TextInput
-                        label="4-Digit PIN"
-                        keyboardType="numeric"
-                        placeholder="0000"
-                        secureTextEntry={!showPin}
-                        mode="outlined"
-                        value={value}
-                        onChangeText={onChange}
-                        onBlur={onBlur}
-                        error={!!errors.pin}
-                        maxLength={4}
-                        left={
-                          <TextInput.Icon
-                            icon={() => (
-                              <Ionicons
-                                name="keypad-outline"
-                                size={20}
-                                color="#778DA9"
-                              />
-                            )}
-                          />
-                        }
-                        right={
-                          <TextInput.Icon
-                            icon={showPin ? "eye-off" : "eye"}
-                            onPress={() => setShowPin(!showPin)}
-                          />
-                        }
-                        theme={{
-                          roundness: 12,
-                          colors: {
-                            primary: "#38B2AC",
-                            outline: errors.pin ? "#DC2626" : "#E9ECEF",
-                          },
-                        }}
-                        style={styles.input}
-                        outlineStyle={styles.inputOutline}
-                      />
-                      {errors.pin && (
-                        <Text style={styles.inputError}>
-                          {errors.pin.message}
-                        </Text>
-                      )}
-                    </View>
-                  )}
-                />
-
-                <TouchableOpacity
-                  style={[
-                    styles.signUpButton,
-                    (!isValid || isSubmitting) && styles.signUpButtonDisabled,
-                  ]}
-                  onPress={handleSubmit(onSubmit)}
-                  disabled={isSubmitting || !isValid}
-                >
-                  <LinearGradient
-                    colors={
-                      isValid && !isSubmitting
-                        ? ["#38B2AC", "#2C9A8F"]
-                        : ["#8B9DC3", "#778DA9"]
-                    }
-                    style={styles.signUpButtonGradient}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 0 }}
-                  >
-                    {isSubmitting ? (
-                      <Text style={styles.signUpButtonText}>
-                        Creating Account...
-                      </Text>
-                    ) : (
-                      <>
-                        <Text style={styles.signUpButtonText}>
-                          Create Account
-                        </Text>
-                        <Ionicons
-                          name="arrow-forward"
-                          size={20}
-                          color="#FFFFFF"
-                        />
-                      </>
-                    )}
-                  </LinearGradient>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={styles.signInLink}
-                  onPress={() => router.replace("/signIn")}
-                >
-                  <Text style={styles.signInLinkText}>
-                    Already have an account?{" "}
-                    <Text style={styles.signInLinkBold}>Sign In</Text>
+                {/* Form Card */}
+                <View style={styles.formCard}>
+                  <Text style={styles.formTitle}>Create Account</Text>
+                  <Text style={styles.formSubtitle}>
+                    Fill in your details to get started
                   </Text>
-                </TouchableOpacity>
-              </View>
-            </Animated.View>
-          </ScrollView>
-        </KeyboardAvoidingView>
+
+                  <View style={styles.formRow}>
+                    <Controller
+                      control={control}
+                      name="firstName"
+                      render={({ field: { onChange, onBlur, value } }) => (
+                        <View style={[styles.inputContainer, styles.halfWidth]}>
+                          <TextInput
+                            label="First Name"
+                            autoCapitalize="words"
+                            placeholder="John"
+                            mode="outlined"
+                            value={value}
+                            onChangeText={onChange}
+                            onBlur={onBlur}
+                            error={!!errors.firstName}
+                            theme={{
+                              roundness: 12,
+                              colors: {
+                                primary: "#38B2AC",
+                                outline: errors.firstName
+                                  ? "#DC2626"
+                                  : "#E9ECEF",
+                              },
+                            }}
+                            style={styles.input}
+                            outlineStyle={styles.inputOutline}
+                          />
+                          {errors.firstName && (
+                            <Text style={styles.inputError}>
+                              {errors.firstName.message}
+                            </Text>
+                          )}
+                        </View>
+                      )}
+                    />
+
+                    <Controller
+                      control={control}
+                      name="lastName"
+                      render={({ field: { onChange, onBlur, value } }) => (
+                        <View style={[styles.inputContainer, styles.halfWidth]}>
+                          <TextInput
+                            label="Last Name"
+                            autoCapitalize="words"
+                            placeholder="Doe"
+                            mode="outlined"
+                            value={value}
+                            onChangeText={onChange}
+                            onBlur={onBlur}
+                            error={!!errors.lastName}
+                            theme={{
+                              roundness: 12,
+                              colors: {
+                                primary: "#38B2AC",
+                                outline: errors.lastName
+                                  ? "#DC2626"
+                                  : "#E9ECEF",
+                              },
+                            }}
+                            style={styles.input}
+                            outlineStyle={styles.inputOutline}
+                          />
+                          {errors.lastName && (
+                            <Text style={styles.inputError}>
+                              {errors.lastName.message}
+                            </Text>
+                          )}
+                        </View>
+                      )}
+                    />
+                  </View>
+
+                  <Controller
+                    control={control}
+                    name="email"
+                    render={({ field: { onChange, onBlur, value } }) => (
+                      <View style={styles.inputContainer}>
+                        <TextInput
+                          label="Email"
+                          autoCapitalize="none"
+                          keyboardType="email-address"
+                          placeholder="[email protected]"
+                          mode="outlined"
+                          value={value}
+                          onChangeText={onChange}
+                          onBlur={onBlur}
+                          error={!!errors.email}
+                          left={
+                            <TextInput.Icon
+                              icon={() => (
+                                <Ionicons
+                                  name="mail-outline"
+                                  size={20}
+                                  color="#778DA9"
+                                />
+                              )}
+                            />
+                          }
+                          theme={{
+                            roundness: 12,
+                            colors: {
+                              primary: "#38B2AC",
+                              outline: errors.email ? "#DC2626" : "#E9ECEF",
+                            },
+                          }}
+                          style={styles.input}
+                          outlineStyle={styles.inputOutline}
+                        />
+                        {errors.email && (
+                          <Text style={styles.inputError}>
+                            {errors.email.message}
+                          </Text>
+                        )}
+                      </View>
+                    )}
+                  />
+
+                  <Controller
+                    control={control}
+                    name="phoneNumber"
+                    render={({ field: { onChange, onBlur, value } }) => (
+                      <View style={styles.inputContainer}>
+                        <TextInput
+                          label="Phone Number"
+                          keyboardType="phone-pad"
+                          placeholder="08012345678"
+                          mode="outlined"
+                          value={value}
+                          onChangeText={onChange}
+                          onBlur={onBlur}
+                          error={!!errors.phoneNumber}
+                          left={
+                            <TextInput.Icon
+                              icon={() => (
+                                <Ionicons
+                                  name="call-outline"
+                                  size={20}
+                                  color="#778DA9"
+                                />
+                              )}
+                            />
+                          }
+                          theme={{
+                            roundness: 12,
+                            colors: {
+                              primary: "#38B2AC",
+                              outline: errors.phoneNumber
+                                ? "#DC2626"
+                                : "#E9ECEF",
+                            },
+                          }}
+                          style={styles.input}
+                          outlineStyle={styles.inputOutline}
+                        />
+                        {errors.phoneNumber && (
+                          <Text style={styles.inputError}>
+                            {errors.phoneNumber.message}
+                          </Text>
+                        )}
+                      </View>
+                    )}
+                  />
+
+                  <Controller
+                    control={control}
+                    name="password"
+                    render={({ field: { onChange, onBlur, value } }) => (
+                      <View style={styles.inputContainer}>
+                        <TextInput
+                          label="Password"
+                          autoCapitalize="none"
+                          placeholder="Enter password"
+                          secureTextEntry={!showPassword}
+                          mode="outlined"
+                          value={value}
+                          onChangeText={onChange}
+                          onBlur={onBlur}
+                          error={!!errors.password}
+                          left={
+                            <TextInput.Icon
+                              icon={() => (
+                                <Ionicons
+                                  name="lock-closed-outline"
+                                  size={20}
+                                  color="#778DA9"
+                                />
+                              )}
+                            />
+                          }
+                          right={
+                            <TextInput.Icon
+                              icon={showPassword ? "eye-off" : "eye"}
+                              onPress={() => setShowPassword(!showPassword)}
+                            />
+                          }
+                          theme={{
+                            roundness: 12,
+                            colors: {
+                              primary: "#38B2AC",
+                              outline: errors.password ? "#DC2626" : "#E9ECEF",
+                            },
+                          }}
+                          style={styles.input}
+                          outlineStyle={styles.inputOutline}
+                        />
+                        {errors.password && (
+                          <Text style={styles.inputError}>
+                            {errors.password.message}
+                          </Text>
+                        )}
+                      </View>
+                    )}
+                  />
+
+                  <Controller
+                    control={control}
+                    name="pin"
+                    render={({ field: { onChange, onBlur, value } }) => (
+                      <View style={styles.inputContainer}>
+                        <TextInput
+                          label="4-Digit PIN"
+                          keyboardType="numeric"
+                          placeholder="0000"
+                          secureTextEntry={!showPin}
+                          mode="outlined"
+                          value={value}
+                          onChangeText={onChange}
+                          onBlur={onBlur}
+                          error={!!errors.pin}
+                          maxLength={4}
+                          left={
+                            <TextInput.Icon
+                              icon={() => (
+                                <Ionicons
+                                  name="keypad-outline"
+                                  size={20}
+                                  color="#778DA9"
+                                />
+                              )}
+                            />
+                          }
+                          right={
+                            <TextInput.Icon
+                              icon={showPin ? "eye-off" : "eye"}
+                              onPress={() => setShowPin(!showPin)}
+                            />
+                          }
+                          theme={{
+                            roundness: 12,
+                            colors: {
+                              primary: "#38B2AC",
+                              outline: errors.pin ? "#DC2626" : "#E9ECEF",
+                            },
+                          }}
+                          style={styles.input}
+                          outlineStyle={styles.inputOutline}
+                        />
+                        {errors.pin && (
+                          <Text style={styles.inputError}>
+                            {errors.pin.message}
+                          </Text>
+                        )}
+                      </View>
+                    )}
+                  />
+
+                  <TouchableOpacity
+                    style={[
+                      styles.signUpButton,
+                      (!isValid || isSubmitting) && styles.signUpButtonDisabled,
+                    ]}
+                    onPress={handleSubmit(onSubmit)}
+                    disabled={isSubmitting || !isValid}
+                  >
+                    <LinearGradient
+                      colors={
+                        isValid && !isSubmitting
+                          ? ["#38B2AC", "#2C9A8F"]
+                          : ["#8B9DC3", "#778DA9"]
+                      }
+                      style={styles.signUpButtonGradient}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 0 }}
+                    >
+                      {isSubmitting ? (
+                        <Text style={styles.signUpButtonText}>
+                          Creating Account...
+                        </Text>
+                      ) : (
+                        <>
+                          <Text style={styles.signUpButtonText}>
+                            Create Account
+                          </Text>
+                          <Ionicons
+                            name="arrow-forward"
+                            size={20}
+                            color="#FFFFFF"
+                          />
+                        </>
+                      )}
+                    </LinearGradient>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={styles.signInLink}
+                    onPress={() => router.replace("/signIn")}
+                  >
+                    <Text style={styles.signInLinkText}>
+                      Already have an account?{" "}
+                      <Text style={styles.signInLinkBold}>Sign In</Text>
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </Animated.View>
+            </ScrollView>
+          </KeyboardAvoidingView>
+        </SafeAreaView>
       </LinearGradient>
     </AuthPageGuard>
   );

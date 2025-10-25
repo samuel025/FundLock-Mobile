@@ -25,7 +25,7 @@ export interface SpendResponse {
 export async function postSpend(data: LockRequest): Promise<string> {
   try {
     const response = await API.post<SpendResponse>(
-      "api/v1/fundlock/redeem-locked-funds",
+      "/api/v1/fundlock/redeem-locked-funds",
       data
     );
     return response.data.message;

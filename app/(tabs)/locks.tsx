@@ -7,9 +7,10 @@ import {
   useFonts,
 } from "@expo-google-fonts/poppins";
 import { Ionicons } from "@expo/vector-icons";
+import { useFocusEffect } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
-import React, { useEffect } from "react";
+import React from "react";
 import {
   FlatList,
   RefreshControl,
@@ -38,9 +39,11 @@ export default function LocksPage() {
     fetchLocks();
   }
 
-  useEffect(() => {
-    fetchLocks();
-  }, []);
+  useFocusEffect(
+    React.useCallback(() => {
+      fetchLocks();
+    }, [fetchLocks])
+  );
 
   if (!fontsLoaded) return null;
 

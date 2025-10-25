@@ -6,6 +6,7 @@ interface QuickActionsProps {
   onAddMoney: () => void;
   onWithdraw: () => void;
   onSignOut: () => void;
+  onSpend: () => void;
 }
 
 export default function QuickActions({

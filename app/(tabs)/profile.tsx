@@ -6,6 +6,10 @@ import { WithdrawModal } from "@/components/profileComponents/WithdrawModal";
 import { useAuthStore } from "@/lib/useAuthStore";
 import { postDeposit } from "@/services/deposit";
 import {
+  createRemitaVirtualAccount,
+  getVirtualAccountDetails,
+} from "@/services/remita";
+import {
   Poppins_400Regular,
   Poppins_500Medium,
   Poppins_600SemiBold,
@@ -48,6 +52,8 @@ export default function Profile() {
     accountNumber: string;
     bank: string;
   } | null>(null);
+  const [virtualLoading, setVirtualLoading] = useState(false);
+  const [creatingVirtual, setCreatingVirtual] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
 
   const user = useAuthStore((state) => state.user);
@@ -110,25 +116,57 @@ export default function Profile() {
     );
   };
 
-  const handleCreateVirtual = () => {
-    if (virtualAccount) {
-      setVirtualModal(true);
-      return;
-    }
-    const acct = {
-      accountNumber: String(1000000000 + Math.floor(Math.random() * 900000000)),
-      bank: "Sample Bank",
+  // fetch existing virtual account on mount
+  React.useEffect(() => {
+    let mounted = true;
+    (async () => {
+      setVirtualLoading(true);
+      try {
+        const details = await getVirtualAccountDetails();
+        if (mounted && details?.account_number) {
+          setVirtualAccount({
+            accountNumber: details.account_number,
+            bank: details.bank_name,
+          });
+        }
+      } catch (err) {
+        // no virtual account / API error — ignore (UI will show create button)
+        console.log("getVirtualAccountDetails:", err);
+      } finally {
+        if (mounted) setVirtualLoading(false);
+      }
+    })();
+    return () => {
+      mounted = false;
     };
-    setVirtualAccount(acct);
+  }, []);
+
+  // open modal (do NOT auto-create). creation happens when user taps Create in modal.
+  const handleCreateVirtual = () => {
     setVirtualModal(true);
   };
 
-  // if navigated with ?openDeposit=1 open the deposit modal and remove the param
+  const createVirtual = async () => {
+    // Called from inside modal when user taps Create
+    setCreatingVirtual(true);
+    try {
+      const res = await createRemitaVirtualAccount();
+      // update local state with response so modal shows details immediately
+      setVirtualAccount({
+        accountNumber: res.account_number,
+        bank: res.bank_name,
+      });
+      // keep modal open so user can copy/use the new account
+    } catch (err: any) {
+      Alert.alert("Error", err?.message ?? "Failed to create virtual account");
+    } finally {
+      setCreatingVirtual(false);
+    }
+  };
+
   React.useEffect(() => {
     if (openDeposit === "1") {
       setDepositModal(true);
-      // remove query param so refreshing/profile visits won't reopen modal
-      // replace keeps us on the same screen but clears the query
       router.replace("/profile");
     }
   }, [openDeposit, router]);
@@ -181,7 +219,9 @@ export default function Profile() {
           visible={virtualModal}
           onClose={() => setVirtualModal(false)}
           virtualAccount={virtualAccount}
-          onCreate={handleCreateVirtual}
+          onCreate={createVirtual}
+          isLoading={virtualLoading}
+          isCreating={creatingVirtual}
         />
 
         <Text style={styles.version}>FundLock v1.0.0</Text>

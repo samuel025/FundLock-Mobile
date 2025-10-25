@@ -29,6 +29,7 @@ export default function Wallet() {
   const user = useAuthStore((state) => state.user);
   const isLoadingUser = useAuthStore((state) => state.isLoadingUser);
   const [refreshing, setRefreshing] = useState(false);
+  const [showBalance, setShowBalance] = useState(true);
 
   const {
     balance,
@@ -127,6 +128,8 @@ export default function Wallet() {
           totalRedeemed={totalRedeemedAmount || "0.00"}
           totalLocked={totalLockedAmount || "0.00"}
           isLoading={isLoadingWallet}
+          showBalance={showBalance}
+          onToggleShowBalance={() => setShowBalance((s) => !s)}
         />
 
         {/* Quick Actions */}

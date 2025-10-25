@@ -1,39 +1,107 @@
 import React from "react";
-import { Modal, View, Text, KeyboardAvoidingView, Platform, TouchableOpacity, StyleSheet } from "react-native";
+import {
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
 export function VirtualAccountModal({
   visible,
   onClose,
   virtualAccount,
   onCreate,
+  isLoading = false,
+  isCreating = false,
 }: {
   visible: boolean;
   onClose: () => void;
   virtualAccount: { accountNumber: string; bank: string } | null;
   onCreate: () => void;
+  isLoading?: boolean;
+  isCreating?: boolean;
 }) {
+  // dev debug — remove or comment out in production
+  // console.log({ visible, isLoading, isCreating, virtualAccount });
+
   return (
     <Modal visible={visible} transparent animationType="slide">
       <View style={styles.modalOverlay}>
-        <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} keyboardVerticalOffset={100}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : undefined}
+          keyboardVerticalOffset={100}
+        >
           <View style={styles.modal}>
             <Text style={styles.modalTitle}>Virtual Account</Text>
-            {virtualAccount ? (
+
+            {isLoading ? (
+              <View style={{ paddingVertical: 16, alignItems: "center" }}>
+                <ActivityIndicator size="small" color="#38B2AC" />
+              </View>
+            ) : virtualAccount ? (
               <>
-                <Text style={{ fontFamily: "Poppins_500Medium", color: "#1B263B", marginBottom: 8 }}>{virtualAccount.bank}</Text>
-                <Text style={{ fontFamily: "Poppins_400Regular", color: "#415A77", marginBottom: 12 }}>Account number: {virtualAccount.accountNumber}</Text>
-                <TouchableOpacity style={styles.modalButtonPrimary} onPress={() => { onClose(); }}>
+                <Text
+                  style={{
+                    fontFamily: "Poppins_500Medium",
+                    color: "#1B263B",
+                    marginBottom: 8,
+                  }}
+                >
+                  {virtualAccount.bank}
+                </Text>
+                <Text
+                  style={{
+                    fontFamily: "Poppins_400Regular",
+                    color: "#415A77",
+                    marginBottom: 12,
+                  }}
+                >
+                  Account number: {virtualAccount.accountNumber}
+                </Text>
+                <TouchableOpacity
+                  style={[styles.modalButtonPrimary]}
+                  onPress={() => {
+                    onClose();
+                  }}
+                >
                   <Text style={styles.modalButtonTextPrimary}>Copy / Use</Text>
                 </TouchableOpacity>
               </>
             ) : (
               <>
-                <Text style={{ fontFamily: "Poppins_400Regular", color: "#415A77", marginBottom: 12 }}>No virtual account yet. Create one to receive deposits.</Text>
-                <TouchableOpacity style={styles.modalButtonPrimary} onPress={onCreate}>
-                  <Text style={styles.modalButtonTextPrimary}>Create Virtual Account</Text>
+                <Text
+                  style={{
+                    fontFamily: "Poppins_400Regular",
+                    color: "#415A77",
+                    marginBottom: 12,
+                  }}
+                >
+                  No virtual account yet. Create one to receive deposits.
+                </Text>
+
+                <TouchableOpacity
+                  style={[
+                    styles.modalButtonPrimary,
+                    isCreating && { opacity: 0.8 },
+                  ]}
+                  onPress={onCreate}
+                  disabled={isCreating}
+                >
+                  {isCreating ? (
+                    <ActivityIndicator color="#fff" />
+                  ) : (
+                    <Text style={styles.modalButtonTextPrimary}>
+                      Create Virtual Account
+                    </Text>
+                  )}
                 </TouchableOpacity>
               </>
             )}
+
             <TouchableOpacity style={{ marginTop: 12 }} onPress={onClose}>
               <Text style={styles.modalCloseText}>Close</Text>
             </TouchableOpacity>
@@ -45,10 +113,37 @@ export function VirtualAccountModal({
 }
 
 const styles = StyleSheet.create({
-  modalOverlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.35)", justifyContent: "flex-end" },
-  modal: { backgroundColor: "#fff", padding: 16, borderTopLeftRadius: 16, borderTopRightRadius: 16 },
-  modalTitle: { fontFamily: "Poppins_600SemiBold", fontSize: 16, marginBottom: 12 },
-  modalButtonPrimary: { flex: 1, padding: 12, borderRadius: 12, backgroundColor: "#38B2AC", alignItems: "center", justifyContent: "center" },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.35)",
+    justifyContent: "flex-end",
+  },
+  modal: {
+    backgroundColor: "#fff",
+    padding: 16,
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+  },
+  modalTitle: {
+    fontFamily: "Poppins_600SemiBold",
+    fontSize: 16,
+    marginBottom: 12,
+  },
+  // changed: remove flex:1, make full width, add margin
+  modalButtonPrimary: {
+    width: "100%",
+    padding: 12,
+    borderRadius: 12,
+    backgroundColor: "#38B2AC",
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 8,
+  },
   modalButtonTextPrimary: { fontFamily: "Poppins_600SemiBold", color: "#fff" },
-  modalCloseText: { color: "#38B2AC", fontFamily: "Poppins_600SemiBold", textAlign: "center", marginTop: 8 },
+  modalCloseText: {
+    color: "#38B2AC",
+    fontFamily: "Poppins_600SemiBold",
+    textAlign: "center",
+    marginTop: 8,
+  },
 });
