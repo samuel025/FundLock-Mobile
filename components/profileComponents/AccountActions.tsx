@@ -6,11 +6,13 @@ export function AccountActions({
   onDeposit,
   onWithdraw,
   onVirtual,
+  onSignOut,
   virtualExists,
 }: {
   onDeposit: () => void;
   onWithdraw: () => void;
   onVirtual: () => void;
+  onSignOut?: () => void;
   virtualExists: boolean;
 }) {
   return (
@@ -61,6 +63,23 @@ export function AccountActions({
           </View>
           <Ionicons name="chevron-forward" size={20} color="#778DA9" />
         </TouchableOpacity>
+
+        {/* Sign Out row */}
+        {onSignOut && (
+          <>
+            <View style={styles.divider} />
+            <TouchableOpacity style={styles.row} onPress={onSignOut}>
+              <View style={[styles.actionIcon, { backgroundColor: "#FFEFEF" }]}>
+                <Ionicons name="log-out-outline" size={20} color="#DC2626" />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.rowTitle}>Sign Out</Text>
+                <Text style={styles.rowSubtitle}>Sign out of your account</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={20} color="#778DA9" />
+            </TouchableOpacity>
+          </>
+        )}
       </View>
     </View>
   );
@@ -85,7 +104,7 @@ const styles = StyleSheet.create({
   actionIcon: {
     width: 44,
     height: 44,
-    borderRadius: 10,
+    borderRadius: 12,
     justifyContent: "center",
     alignItems: "center",
     marginRight: 12,
@@ -93,12 +112,12 @@ const styles = StyleSheet.create({
   rowTitle: {
     fontFamily: "Poppins_600SemiBold",
     color: "#1B263B",
-    fontSize: 15,
+    fontSize: 14,
   },
   rowSubtitle: {
     fontFamily: "Poppins_400Regular",
     color: "#778DA9",
-    marginTop: 4,
+    fontSize: 12,
   },
-  divider: { height: 1, backgroundColor: "#F1F5F9", marginLeft: 72 },
+  divider: { height: 1, backgroundColor: "#F1F5F9", marginHorizontal: 8 },
 });

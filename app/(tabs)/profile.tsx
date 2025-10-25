@@ -3,6 +3,7 @@ import { DepositModal } from "@/components/profileComponents/DepositModal";
 import { ProfileHeader } from "@/components/profileComponents/ProfileHeader";
 import { VirtualAccountModal } from "@/components/profileComponents/VirtualAccountModal";
 import { WithdrawModal } from "@/components/profileComponents/WithdrawModal";
+import { authActions } from "@/lib/authContext"; // <-- added import
 import { useAuthStore } from "@/lib/useAuthStore";
 import { postDeposit } from "@/services/deposit";
 import {
@@ -164,6 +165,17 @@ export default function Profile() {
     }
   };
 
+  // Sign out handler
+  const handleSignOut = async () => {
+    try {
+      await authActions.signOut();
+      router.replace("/signIn");
+    } catch (err) {
+      console.error("Sign out failed:", err);
+      Alert.alert("Error", "Failed to sign out. Please try again.");
+    }
+  };
+
   React.useEffect(() => {
     if (openDeposit === "1") {
       setDepositModal(true);
@@ -191,6 +203,7 @@ export default function Profile() {
           onDeposit={() => setDepositModal(true)}
           onWithdraw={() => setWithdrawModal(true)}
           onVirtual={handleCreateVirtual}
+          onSignOut={handleSignOut} // <-- pass handler
           virtualExists={!!virtualAccount}
         />
 

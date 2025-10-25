@@ -193,9 +193,33 @@ export default function Lock() {
                           mode="outlined"
                           label="Amount to lock"
                           value={value !== undefined ? String(value) : ""}
-                          onChangeText={(t) =>
-                            onChange(t.replace(/[^0-9.]/g, ""))
-                          }
+                          onChangeText={(t) => {
+                            // allow only digits and decimal point, limit extra dots
+                            let cleaned = t.replace(/[^0-9.]/g, "");
+                            cleaned = cleaned.replace(/\.(?=.*\.)/g, ""); // remove extra dots
+
+                            const numericBalance = Number(balance) || 0;
+                            const parsed = Number(cleaned);
+
+                            // if parsed number exceeds available balance, cap to balance
+                            if (!cleaned) {
+                              onChange(undefined as any);
+                              return;
+                            }
+                            if (!isNaN(parsed) && parsed > numericBalance) {
+                              // keep it as the max available (preserve decimal if present)
+                              // convert to string but avoid trailing "."
+                              const capped =
+                                Number.isInteger(numericBalance) ||
+                                cleaned.indexOf(".") === -1
+                                  ? String(numericBalance)
+                                  : String(Math.min(parsed, numericBalance));
+                              onChange(capped);
+                              return;
+                            }
+
+                            onChange(cleaned);
+                          }}
                           keyboardType={
                             Platform.OS === "ios" ? "decimal-pad" : "numeric"
                           }
@@ -221,7 +245,7 @@ export default function Lock() {
                           </Text>
                         )}
                         <Text style={styles.hint}>
-                          Available: ₦{balance?.toLocaleString()}
+                          Available: ₦{Number(balance || 0).toLocaleString()}
                         </Text>
                       </>
                     )}

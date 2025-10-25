@@ -6,6 +6,7 @@ import OutletPicker from "@/components/spendComponents/OutletPicker";
 import PinSection from "@/components/spendComponents/PinSection";
 import { useCategory } from "@/hooks/useCategory";
 import { useCompany } from "@/hooks/useCompany";
+import { useGetLocks } from "@/hooks/useGetLocks";
 import { useOutlet } from "@/hooks/useOutlet";
 import { useSpend } from "@/hooks/useSpend";
 import {
@@ -32,12 +33,6 @@ import {
 } from "react-native";
 import * as yup from "yup";
 import spendStyles from "../../styles/spend.styles";
-
-const lockedAmounts: Record<string, number> = {
-  food: 5000,
-  fuel: 8000,
-  shopping: 2000,
-};
 
 const schema = yup.object({
   amount: yup
@@ -78,6 +73,9 @@ export default function Spend() {
   } = useOutlet();
   const { spendLockedFunds, spendError, spendMessage, isSpending } = useSpend();
 
+  // add hook to read locks
+  const { isLocksLoading, locksList, fetchLocks } = useGetLocks();
+
   useEffect(() => {
     if (selectedCategory) {
       setSelectedCompany(null);
@@ -102,6 +100,11 @@ export default function Spend() {
     }
   }, [selectedCompany, fetchOutlets]);
 
+  useEffect(() => {
+    // ensure locks are available here (no-op if already fetched)
+    fetchLocks();
+  }, [fetchLocks]);
+
   let [fontsLoaded] = useFonts({
     Poppins_400Regular,
     Poppins_500Medium,
@@ -125,8 +128,20 @@ export default function Spend() {
     }
   }, [spendError, spendMessage]);
 
-  const availableLocked = selectedCategory
-    ? lockedAmounts[selectedCategory] || 0
+  // compute availableLocked from fetched locks and selected category
+  const selectedCategoryName = selectedCategory
+    ? categories?.find((c) => String(c.id) === String(selectedCategory))
+        ?.name ?? null
+    : null;
+
+  const availableLocked = selectedCategoryName
+    ? Number(
+        locksList.find(
+          (l: any) =>
+            String(l.categoryName).toLowerCase() ===
+            String(selectedCategoryName).toLowerCase()
+        )?.amount ?? 0
+      )
     : 0;
 
   const onSubmit = (data: FormData) => {

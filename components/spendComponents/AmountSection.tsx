@@ -25,7 +25,27 @@ export default function AmountSection({
                 mode="outlined"
                 label="Amount"
                 value={value !== undefined ? String(value) : ""}
-                onChangeText={(t) => onChange(t.replace(/[^0-9.]/g, ""))}
+                onChangeText={(t) => {
+                  // sanitize: keep digits and at most one decimal point
+                  const cleaned = t
+                    .replace(/[^0-9.]/g, "")
+                    .replace(/(\..*)\./g, "$1");
+
+                  // try to parse numeric value
+                  const numeric = parseFloat(cleaned);
+
+                  // if numeric and greater than availableLocked, clamp to availableLocked
+                  if (!isNaN(numeric)) {
+                    if (numeric > availableLocked) {
+                      onChange(String(availableLocked));
+                    } else {
+                      onChange(cleaned);
+                    }
+                  } else {
+                    // allow empty string or a single dot while typing (e.g. ".5")
+                    onChange(cleaned);
+                  }
+                }}
                 keyboardType={Platform.OS === "ios" ? "decimal-pad" : "numeric"}
                 left={
                   <TextInput.Icon
