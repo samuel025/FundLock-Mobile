@@ -26,15 +26,12 @@ export default function AmountSection({
                 label="Amount"
                 value={value !== undefined ? String(value) : ""}
                 onChangeText={(t) => {
-                  // sanitize: keep digits and at most one decimal point
                   const cleaned = t
                     .replace(/[^0-9.]/g, "")
                     .replace(/(\..*)\./g, "$1");
 
-                  // try to parse numeric value
                   const numeric = parseFloat(cleaned);
 
-                  // if numeric and greater than availableLocked, clamp to availableLocked
                   if (!isNaN(numeric)) {
                     if (numeric > availableLocked) {
                       onChange(String(availableLocked));
@@ -42,7 +39,6 @@ export default function AmountSection({
                       onChange(cleaned);
                     }
                   } else {
-                    // allow empty string or a single dot while typing (e.g. ".5")
                     onChange(cleaned);
                   }
                 }}

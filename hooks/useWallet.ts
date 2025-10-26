@@ -73,9 +73,7 @@ export function useWallet() {
     onMutate: () => {
       setIsLoadingTransactions(true);
     },
-    onSuccess: (data) => {
-      setTransactions(data || []);
-    },
+    onSuccess: (data) => {},
     onError: (error) => {
       console.error("Failed to fetch transactions:", error);
       setTransactions([]);
@@ -104,7 +102,6 @@ export function useWallet() {
 
   const fetchWalletData = useCallback(() => {
     if (user && accessToken) {
-      console.log("Fetching wallet data...");
       walletMutation.mutate();
       transactionsMutation.mutate();
       weeklyInsightMutation.mutate();

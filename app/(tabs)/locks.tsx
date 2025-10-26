@@ -94,9 +94,7 @@ export default function LocksPage() {
 
       <FlatList
         data={locksList}
-        keyExtractor={(item, index) =>
-          `${item.categoryName ?? item.categoryName ?? index}`
-        }
+        keyExtractor={(item, index) => `${item.categoryName ?? index}`}
         refreshControl={
           <RefreshControl
             refreshing={isLocksLoading}

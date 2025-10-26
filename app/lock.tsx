@@ -3,6 +3,7 @@ import { ExpireDatePicker } from "@/components/ExpireDatePicker";
 import { MessageBanner } from "@/components/MessageBanner";
 import { useCategory } from "@/hooks/useCategory";
 import { useLock } from "@/hooks/useLock";
+import { useWallet } from "@/hooks/useWallet";
 import { walletStore } from "@/lib/walletStore";
 import {
   Poppins_400Regular,
@@ -21,6 +22,7 @@ import { Controller, useForm } from "react-hook-form";
 import {
   KeyboardAvoidingView,
   Platform,
+  StatusBar,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -63,8 +65,9 @@ export default function Lock() {
     type: "success" | "error" | "info";
   } | null>(null);
 
-  const { isCategoryLoading, categories } = useCategory();
+  const { categories } = useCategory();
   const { isLocking, lockError, lockMessage, lockFunds } = useLock();
+  const { fetchWalletData } = useWallet();
 
   const balance = walletStore((state) => state.balance);
 
@@ -87,7 +90,6 @@ export default function Lock() {
   );
 
   const onSubmit = (data: FormData) => {
-    console.log("onSubmit called", data, selectedCategory);
     if (!selectedCategory) {
       setBanner({ message: "Select a category", type: "error" });
       return;
@@ -97,7 +99,6 @@ export default function Lock() {
       setBanner({ message: "Insufficient balance", type: "error" });
       return;
     }
-    console.log(selectedCategory.id);
     lockFunds({
       amountLocked: String(data.amount),
       category_id: selectedCategory.id,
@@ -114,6 +115,7 @@ export default function Lock() {
       setBanner({ message: lockMessage, type: "success" });
       reset();
       setSelectedCategoryId(null);
+      fetchWalletData();
     }
   }, [lockError, lockMessage]);
 
@@ -124,7 +126,9 @@ export default function Lock() {
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : undefined}
         style={{ flex: 1 }}
-        keyboardVerticalOffset={100}
+        keyboardVerticalOffset={
+          Platform.OS === "ios" ? 0 : StatusBar.currentHeight ?? 0
+        }
       >
         <ScrollView
           contentContainerStyle={styles.content}
@@ -201,14 +205,11 @@ export default function Lock() {
                             const numericBalance = Number(balance) || 0;
                             const parsed = Number(cleaned);
 
-                            // if parsed number exceeds available balance, cap to balance
                             if (!cleaned) {
                               onChange(undefined as any);
                               return;
                             }
                             if (!isNaN(parsed) && parsed > numericBalance) {
-                              // keep it as the max available (preserve decimal if present)
-                              // convert to string but avoid trailing "."
                               const capped =
                                 Number.isInteger(numericBalance) ||
                                 cleaned.indexOf(".") === -1

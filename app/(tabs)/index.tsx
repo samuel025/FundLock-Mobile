@@ -36,6 +36,7 @@ export default function Index() {
     fetchWalletData,
     insights,
   } = useWallet();
+
   let [fontsLoaded] = useFonts({
     Poppins_400Regular,
     Poppins_500Medium,
@@ -43,7 +44,6 @@ export default function Index() {
     Poppins_700Bold,
   });
 
-  // Helper functions for recent activity display
   const getTitle = (t: any) => {
     switch (t.type) {
       case "DEPOSIT":
@@ -60,7 +60,8 @@ export default function Index() {
   };
 
   const getRecipient = (t: any) =>
-    t.type === "DEPOSIT" ? "DEPOSIT" : t.recipientName || t.reference || "";
+    t.type === "DEPOSIT" ? "DEPOSIT" : t.recipientName || "";
+
   const formatDateTime = (iso?: string) => {
     if (!iso) return "";
     try {
@@ -557,7 +558,7 @@ const styles = StyleSheet.create({
   activityDetails: {
     flex: 1,
     marginLeft: 12,
-    minWidth: 0, // allow text to shrink/wrap correctly
+    minWidth: 0,
   },
   activityTitleRow: {
     flexDirection: "row",

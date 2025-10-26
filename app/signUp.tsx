@@ -115,7 +115,7 @@ export default function SignUp() {
             behavior={Platform.OS === "ios" ? "padding" : "height"}
             style={styles.container}
             keyboardVerticalOffset={
-              Platform.OS === "android" ? StatusBar.currentHeight ?? 24 : 0
+              Platform.OS === "ios" ? 0 : StatusBar.currentHeight ?? 0
             }
           >
             <ScrollView

@@ -27,6 +27,7 @@ import {
   Platform,
   Pressable,
   ScrollView,
+  StatusBar,
   Text,
   TouchableOpacity,
   View,
@@ -73,8 +74,7 @@ export default function Spend() {
   } = useOutlet();
   const { spendLockedFunds, spendError, spendMessage, isSpending } = useSpend();
 
-  // add hook to read locks
-  const { isLocksLoading, locksList, fetchLocks } = useGetLocks();
+  const { locksList, fetchLocks } = useGetLocks();
 
   useEffect(() => {
     if (selectedCategory) {
@@ -101,7 +101,6 @@ export default function Spend() {
   }, [selectedCompany, fetchOutlets]);
 
   useEffect(() => {
-    // ensure locks are available here (no-op if already fetched)
     fetchLocks();
   }, [fetchLocks]);
 
@@ -125,10 +124,10 @@ export default function Spend() {
     if (spendMessage) {
       setBanner({ message: spendMessage, type: "success" });
       reset();
+      fetchLocks();
     }
   }, [spendError, spendMessage]);
 
-  // compute availableLocked from fetched locks and selected category
   const selectedCategoryName = selectedCategory
     ? categories?.find((c) => String(c.id) === String(selectedCategory))
         ?.name ?? null
@@ -175,8 +174,10 @@ export default function Spend() {
     >
       <KeyboardAvoidingView
         style={{ flex: 1 }}
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
-        keyboardVerticalOffset={100}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={
+          Platform.OS === "ios" ? 0 : StatusBar.currentHeight ?? 0
+        }
       >
         <ScrollView
           ref={scrollRef}
@@ -285,7 +286,6 @@ export default function Spend() {
             </View>
           )}
 
-          {/* contextual helper text */}
           {selectedCategory && (
             <Text style={spendStyles.helperText}>
               {allowDirectOutlet
@@ -296,7 +296,6 @@ export default function Spend() {
             </Text>
           )}
 
-          {/* CompanyPicker: hide in direct mode; show spinner while loading */}
           {selectedCategory && !allowDirectOutlet && (
             <>
               {isCompanyLoading ? (
@@ -343,7 +342,6 @@ export default function Spend() {
             </>
           )}
 
-          {/* show outlet + company preview when an outlet is selected */}
           {selectedOutlet && (
             <View style={{ marginTop: 8, marginBottom: 6 }}>
               {(() => {
