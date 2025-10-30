@@ -95,7 +95,6 @@ export default function SignUp() {
       await authActions.signUp(data);
       router.replace("/signIn?registered=true");
     } catch (error: any) {
-      console.error("Sign up error:", error);
       Alert.alert(
         "Error",
         error.message || "Failed to create account. Please try again."
@@ -106,7 +105,7 @@ export default function SignUp() {
   return (
     <AuthPageGuard>
       <LinearGradient
-        colors={["#0D1B2AC", "#1B263B", "#415A77"]}
+        colors={["#0D1B2A", "#1B263B", "#415A77"]}
         style={styles.container}
       >
         <StatusBar barStyle="light-content" />

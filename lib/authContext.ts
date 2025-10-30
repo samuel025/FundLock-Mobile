@@ -46,14 +46,9 @@ export const authActions = {
                 // Try getting user again with new token
                 await authActions.getUser();
               } catch (refreshError) {
-                console.error(
-                  "Failed to refresh token, signing out:",
-                  refreshError
-                );
                 await authActions.signOut();
               }
             } else {
-              console.error("Token expired and no refresh token available");
               await authActions.signOut();
             }
           } else {

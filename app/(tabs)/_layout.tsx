@@ -24,7 +24,7 @@ export default function RootLayout() {
           },
           tabBarLabelStyle: {
             fontFamily: "Poppins_500Medium",
-            fontSize: 11,
+            fontSize: 10,
           },
           headerShown: false,
         }}
@@ -34,7 +34,7 @@ export default function RootLayout() {
           options={{
             title: "Home",
             tabBarIcon: ({ color, size }) => (
-              <Ionicons name="home" size={size} color={color} />
+              <Ionicons name="home" size={22} color={color} />
             ),
           }}
         />
@@ -43,7 +43,7 @@ export default function RootLayout() {
           options={{
             title: "Wallet",
             tabBarIcon: ({ color, size }) => (
-              <Ionicons name="wallet" size={size} color={color} />
+              <Ionicons name="wallet" size={22} color={color} />
             ),
           }}
         />
@@ -52,7 +52,7 @@ export default function RootLayout() {
           options={{
             title: "Lock",
             tabBarIcon: ({ color, size }) => (
-              <Ionicons name="lock-closed" size={size} color={color} />
+              <Ionicons name="lock-closed" size={22} color={color} />
             ),
           }}
         />
@@ -61,7 +61,7 @@ export default function RootLayout() {
           options={{
             title: "Spend",
             tabBarIcon: ({ color, size }) => (
-              <Ionicons name="card" size={size} color={color} />
+              <Ionicons name="card" size={22} color={color} />
             ),
           }}
         />
@@ -70,7 +70,7 @@ export default function RootLayout() {
           options={{
             title: "Profile",
             tabBarIcon: ({ color, size }) => (
-              <Ionicons name="person" size={size} color={color} />
+              <Ionicons name="person" size={22} color={color} />
             ),
           }}
         />

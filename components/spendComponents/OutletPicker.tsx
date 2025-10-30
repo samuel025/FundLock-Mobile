@@ -17,7 +17,7 @@ export default function OutletPicker({
   onSelect,
   styles,
 }: {
-  outlets: { id: string; name: string }[];
+  outlets: { id: string; name: string; orgId?: string }[];
   selected: string | null;
   onSelect: (id: string) => void;
   styles: any;
@@ -62,7 +62,10 @@ export default function OutletPicker({
                       pressed && { opacity: 0.6 },
                     ]}
                   >
-                    <Text style={styles.modalItemText}>{item.name}</Text>
+                    <Text style={styles.modalItemText}>
+                      {item.name}
+                      {item.orgId ? ` (${item.orgId})` : ""}
+                    </Text>
                   </Pressable>
                 )}
               />

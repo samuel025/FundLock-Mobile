@@ -369,12 +369,16 @@ const styles = StyleSheet.create({
     fontFamily: "Poppins_700Bold",
     color: "#FFFFFF",
     marginTop: 16,
+    lineHeight: 48,
+    includeFontPadding: false,
   },
   tagline: {
     fontSize: 14,
     fontFamily: "Poppins_400Regular",
     color: "#8B9DC3",
     marginTop: 8,
+    lineHeight: 20,
+    includeFontPadding: false,
   },
   successBanner: {
     flexDirection: "row",
@@ -392,6 +396,8 @@ const styles = StyleSheet.create({
     color: "#E7F6F2",
     fontSize: 14,
     fontFamily: "Poppins_500Medium",
+    lineHeight: 20,
+    includeFontPadding: false,
   },
   errorBanner: {
     flexDirection: "row",
@@ -409,6 +415,8 @@ const styles = StyleSheet.create({
     color: "#FEE2E2",
     fontSize: 14,
     fontFamily: "Poppins_500Medium",
+    lineHeight: 20,
+    includeFontPadding: false,
   },
   formCard: {
     backgroundColor: "#FFFFFF",
@@ -425,12 +433,16 @@ const styles = StyleSheet.create({
     fontFamily: "Poppins_700Bold",
     color: "#1B263B",
     marginBottom: 8,
+    lineHeight: 36,
+    includeFontPadding: false,
   },
   formSubtitle: {
     fontSize: 14,
     fontFamily: "Poppins_400Regular",
     color: "#778DA9",
     marginBottom: 24,
+    lineHeight: 20,
+    includeFontPadding: false,
   },
   inputContainer: {
     marginBottom: 20,
@@ -448,6 +460,8 @@ const styles = StyleSheet.create({
     fontFamily: "Poppins_400Regular",
     marginTop: 4,
     marginLeft: 4,
+    lineHeight: 18,
+    includeFontPadding: false,
   },
   forgotPassword: {
     alignSelf: "flex-end",
@@ -457,6 +471,8 @@ const styles = StyleSheet.create({
     color: "#38B2AC",
     fontSize: 14,
     fontFamily: "Poppins_500Medium",
+    lineHeight: 20,
+    includeFontPadding: false,
   },
   signInButton: {
     borderRadius: 12,
@@ -477,6 +493,8 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontSize: 16,
     fontFamily: "Poppins_600SemiBold",
+    lineHeight: 24,
+    includeFontPadding: false,
   },
   divider: {
     flexDirection: "row",
@@ -493,6 +511,8 @@ const styles = StyleSheet.create({
     color: "#778DA9",
     fontSize: 12,
     fontFamily: "Poppins_500Medium",
+    lineHeight: 18,
+    includeFontPadding: false,
   },
   signUpLink: {
     alignItems: "center",
@@ -501,6 +521,8 @@ const styles = StyleSheet.create({
     color: "#778DA9",
     fontSize: 14,
     fontFamily: "Poppins_400Regular",
+    lineHeight: 20,
+    includeFontPadding: false,
   },
   signUpLinkBold: {
     color: "#38B2AC",

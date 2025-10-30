@@ -20,7 +20,6 @@ export async function refreshAccessToken(refreshToken: string): Promise<{
       `${process.env.EXPO_PUBLIC_BASE_URL}/api/v1/fundlock/refresh-token`,
       { refreshToken }
     );
-    console.log(response.data);
     return response.data.data.tokens;
   } catch (error) {
     if (axios.isAxiosError(error)) {

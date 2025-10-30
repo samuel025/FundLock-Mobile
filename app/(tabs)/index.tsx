@@ -268,7 +268,17 @@ export default function Index() {
 
             <TouchableOpacity
               style={styles.actionCard}
-              onPress={() => router.push("/(tabs)/profile")}
+              onPress={() => router.push("/spendByOrgId")}
+            >
+              <View style={[styles.actionIcon, { backgroundColor: "#E0E7FF" }]}>
+                <Ionicons name="storefront" size={24} color="#4F46E5" />
+              </View>
+              <Text style={styles.actionText}>Spend by Org ID</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.actionCard}
+              onPress={() => router.push("/spendByOrgId")}
             >
               <View style={[styles.actionIcon, { backgroundColor: "#FEF3C7" }]}>
                 <Ionicons name="person" size={24} color="#D97706" />

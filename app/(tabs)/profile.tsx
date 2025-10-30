@@ -102,7 +102,6 @@ export default function Profile() {
       });
       setDepositLink(res.authorization_url);
     } catch (err: any) {
-      console.error("generateDepositLink error", err);
       Alert.alert("Error", err?.message ?? "Failed to generate deposit link");
     } finally {
       setIsGenerating(false);
@@ -131,7 +130,6 @@ export default function Profile() {
           });
         }
       } catch (err) {
-        // no virtual account / API error — ignore (UI will show create button)
         console.log("getVirtualAccountDetails:", err);
       } finally {
         if (mounted) setVirtualLoading(false);
@@ -142,22 +140,18 @@ export default function Profile() {
     };
   }, []);
 
-  // open modal (do NOT auto-create). creation happens when user taps Create in modal.
   const handleCreateVirtual = () => {
     setVirtualModal(true);
   };
 
   const createVirtual = async () => {
-    // Called from inside modal when user taps Create
     setCreatingVirtual(true);
     try {
       const res = await createRemitaVirtualAccount();
-      // update local state with response so modal shows details immediately
       setVirtualAccount({
         accountNumber: res.account_number,
         bank: res.bank_name,
       });
-      // keep modal open so user can copy/use the new account
     } catch (err: any) {
       Alert.alert("Error", err?.message ?? "Failed to create virtual account");
     } finally {
@@ -203,7 +197,7 @@ export default function Profile() {
           onDeposit={() => setDepositModal(true)}
           onWithdraw={() => setWithdrawModal(true)}
           onVirtual={handleCreateVirtual}
-          onSignOut={handleSignOut} // <-- pass handler
+          onSignOut={handleSignOut}
           virtualExists={!!virtualAccount}
         />
 
@@ -211,7 +205,7 @@ export default function Profile() {
           visible={depositModal}
           onClose={() => {
             setDepositModal(false);
-            setDepositLink(null); // clear link when modal closed
+            setDepositLink(null);
           }}
           control={depositControl}
           handleSubmit={handleDepositSubmit}

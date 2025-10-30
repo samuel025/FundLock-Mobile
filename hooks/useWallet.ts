@@ -73,7 +73,9 @@ export function useWallet() {
     onMutate: () => {
       setIsLoadingTransactions(true);
     },
-    onSuccess: (data) => {},
+    onSuccess: (data) => {
+      setTransactions(data);
+    },
     onError: (error) => {
       console.error("Failed to fetch transactions:", error);
       setTransactions([]);

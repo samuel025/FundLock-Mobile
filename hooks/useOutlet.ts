@@ -5,8 +5,7 @@ import { useCallback, useState } from "react";
 type OutletsStateItem = {
   id: string;
   name: string;
-  companyId?: string;
-  companyName?: string;
+  orgId?: string;
 };
 
 type FetchOpts = { companyId?: string; categoryId?: string };
@@ -36,8 +35,7 @@ export function useOutlet() {
         list.map((c: any) => ({
           id: String(c.id),
           name: c.name,
-          companyId: c.companyId ? String(c.companyId) : undefined,
-          companyName: c.companyName ?? c.company?.name,
+          orgId: c.orgId,
         }))
       );
     },

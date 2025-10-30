@@ -25,9 +25,7 @@ export function AccountActions({
           </View>
           <View style={{ flex: 1 }}>
             <Text style={styles.rowTitle}>Deposit</Text>
-            <Text style={styles.rowSubtitle}>
-              Generate payment link (Paystack)
-            </Text>
+            <Text style={styles.rowSubtitle}>Generate payment link</Text>
           </View>
           <Ionicons name="chevron-forward" size={20} color="#778DA9" />
         </TouchableOpacity>

@@ -111,11 +111,8 @@ export default function LocksPage() {
         }
         renderItem={({ item }) => {
           const category = item.categoryName;
-          const amount = Number(
-            (item as any).amountLocked ?? (item as any).amount ?? 0
-          );
-          const expiresRaw =
-            (item as any).expiresAt ?? (item as any).expires ?? "";
+          const amount = Number((item as any).amount ?? 0);
+          const expiresRaw = (item as any).expiresAt ?? "";
           const expires =
             expiresRaw && expiresRaw !== ""
               ? new Date(expiresRaw).toISOString().split("T")[0]
