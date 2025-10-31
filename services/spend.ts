@@ -2,9 +2,15 @@ import { API } from "@/lib/api";
 import axios, { AxiosError } from "axios";
 import { ErrorResponse } from "./wallet";
 
-export interface LockRequest {
+export interface SpendRequest {
   amount: string;
   outletId: string;
+  pin: string;
+}
+
+export interface SpendByOrgIdRequest {
+  amount: number;
+  orgId: string;
   pin: string;
 }
 
@@ -22,10 +28,42 @@ export interface SpendResponse {
   data: Details;
 }
 
-export async function postSpend(data: LockRequest): Promise<string> {
+export async function postSpend(data: SpendRequest): Promise<string> {
   try {
     const response = await API.post<SpendResponse>(
       "/api/v1/fundlock/redeem-locked-funds",
+      data
+    );
+    return response.data.message;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      const axiosError = error as AxiosError<ErrorResponse>;
+
+      if (!axiosError.response) {
+        const customError: any = new Error(
+          "Network error. Please check your internet connection and try again."
+        );
+        customError.status = 0;
+        throw customError;
+      }
+
+      const errorMessage =
+        axiosError.response?.data?.message || "Failed to spend funds";
+
+      const customError: any = new Error(errorMessage);
+      customError.status = axiosError.response?.status;
+      throw customError;
+    }
+    throw new Error("An unexpected error occurred. Please try again");
+  }
+}
+
+export async function postSpendByOrgId(
+  data: SpendByOrgIdRequest
+): Promise<string> {
+  try {
+    const response = await API.post<SpendResponse>(
+      "/api/v1/fundlock/redeemFundsByOrgId",
       data
     );
     return response.data.message;

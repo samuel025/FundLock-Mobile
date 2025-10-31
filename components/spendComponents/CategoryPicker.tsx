@@ -44,6 +44,7 @@ export default function CategoryPicker({
           <KeyboardAvoidingView
             behavior={Platform.OS === "ios" ? "padding" : undefined}
             keyboardVerticalOffset={100}
+            style={{ flex: 1, justifyContent: "flex-end" }}
           >
             <View style={styles.modalLarge}>
               <View style={styles.modalHandle} />

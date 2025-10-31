@@ -31,6 +31,7 @@ export function CategoryPicker({
         <KeyboardAvoidingView
           behavior={Platform.OS === "ios" ? "padding" : undefined}
           keyboardVerticalOffset={100}
+          style={{ flex: 1, justifyContent: "flex-end" }}
         >
           <View style={styles.modal}>
             <Text style={styles.modalTitle}>Select Category</Text>
@@ -80,9 +81,16 @@ const styles = StyleSheet.create({
 
   modal: {
     backgroundColor: "#fff",
-    padding: 16,
+    maxHeight: "60%",
     borderTopLeftRadius: 16,
     borderTopRightRadius: 16,
+    paddingHorizontal: 16,
+    paddingBottom: 18,
+    paddingTop: 8,
+    shadowColor: "#000",
+    shadowOpacity: 0.12,
+    shadowRadius: 10,
+    elevation: 8,
   },
   modalTitle: {
     fontSize: 16,

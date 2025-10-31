@@ -19,6 +19,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { LinearGradient } from "expo-linear-gradient";
+import { router } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import {
@@ -173,7 +174,7 @@ export default function Spend() {
       style={spendStyles.container}
     >
       <KeyboardAvoidingView
-        style={{ flex: 1 }}
+        style={{ flex: 1, justifyContent: "flex-end" }}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         keyboardVerticalOffset={
           Platform.OS === "ios" ? 0 : StatusBar.currentHeight ?? 0
@@ -203,6 +204,29 @@ export default function Spend() {
             <View style={spendStyles.iconBox}>
               <Ionicons name="card" size={26} color="#38B2AC" />
             </View>
+          </View>
+
+          <View style={spendStyles.lockActionWrap}>
+            <TouchableOpacity
+              style={spendStyles.lockCard}
+              onPress={() => router.push("/spendByOrgId")}
+              accessibilityRole="button"
+            >
+              <View style={spendStyles.lockCardLeft}>
+                <View style={spendStyles.lockIcon}>
+                  <Ionicons name="storefront" size={18} color="#fff" />
+                </View>
+                <View style={spendStyles.lockText}>
+                  <Text style={spendStyles.lockTitle}>
+                    Spend By Vendor&apos;s ID
+                  </Text>
+                  <Text style={spendStyles.lockSubtitle}>
+                    You can just search by the vendor&apos;s ID and spend
+                  </Text>
+                </View>
+              </View>
+              <Ionicons name="chevron-forward" size={20} color="#2D3748" />
+            </TouchableOpacity>
           </View>
 
           {/* Categories: show spinner while loading */}

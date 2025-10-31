@@ -1,12 +1,13 @@
+import { MessageBanner } from "@/components/MessageBanner";
+import { useSpendByOrgId } from "@/hooks/useSpendByOrgId";
 import { getOutletByOrgId, OutletByOrgId } from "@/services/outlet";
 import { Ionicons } from "@expo/vector-icons";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import {
-  Alert,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -37,7 +38,11 @@ type FormData = yup.InferType<typeof schema>;
 export default function SpendByOrgId() {
   const [outlet, setOutlet] = useState<OutletByOrgId | null>(null);
   const [loading, setLoading] = useState(false);
-  const [spending, setSpending] = useState(false);
+  const [banner, setBanner] = useState<{
+    message: string;
+    type: "success" | "error" | "info";
+  } | null>(null);
+  const scrollRef = useRef<any>(null);
 
   const { control, handleSubmit, watch, formState, reset } = useForm<FormData>({
     resolver: yupResolver(schema),
@@ -47,6 +52,28 @@ export default function SpendByOrgId() {
 
   const orgId = watch("orgId");
 
+  const { spendLockedFundsByOrgID, spendError, spendMessage, isSpending } =
+    useSpendByOrgId();
+
+  useEffect(() => {
+    if (spendError) {
+      setBanner({ message: spendError, type: "error" });
+    }
+    if (spendMessage) {
+      setBanner({ message: spendMessage, type: "success" });
+      reset();
+    }
+  }, [spendError, spendMessage]);
+
+  useEffect(() => {
+    if (banner) {
+      scrollRef.current?.scrollTo?.({ y: 0, animated: true });
+      const timer = setTimeout(() => setBanner(null), 5000);
+      setOutlet(null);
+      return () => clearTimeout(timer);
+    }
+  }, [banner]);
+
   const handleFetchOutlet = async () => {
     setLoading(true);
     setOutlet(null);
@@ -54,24 +81,15 @@ export default function SpendByOrgId() {
       const data = await getOutletByOrgId(orgId.trim().toUpperCase());
       setOutlet(data);
     } catch (err: any) {
-      Alert.alert("Error", err?.message || "Failed to fetch outlet");
+      setBanner({ message: "Failed to fetch outlet", type: "error" });
     } finally {
       setLoading(false);
     }
   };
 
   const onSubmit = async (data: FormData) => {
-    setSpending(true);
-    // TODO: Replace with your actual spend API logic
-    setTimeout(() => {
-      Alert.alert(
-        "Success",
-        `Spent ₦${data.amount} at ${outlet?.name || outlet?.outlet?.name}`
-      );
-      setSpending(false);
-      reset();
-      setOutlet(null);
-    }, 1000);
+    spendLockedFundsByOrgID(data);
+    reset();
   };
 
   return (
@@ -88,6 +106,13 @@ export default function SpendByOrgId() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
+          {banner && (
+            <MessageBanner
+              message={banner.message}
+              type={banner.type}
+              onClose={() => setBanner(null)}
+            />
+          )}
           <View style={styles.header}>
             <TouchableOpacity
               onPress={() => router.back()}
@@ -121,7 +146,7 @@ export default function SpendByOrgId() {
                       mode="outlined"
                       label="Enter Org ID"
                       value={value}
-                      onChangeText={onChange}
+                      onChangeText={(text) => onChange(text.toUpperCase())}
                       outlineColor="#E6EEF0"
                       activeOutlineColor="#38B2AC"
                       style={styles.input}
@@ -263,17 +288,17 @@ export default function SpendByOrgId() {
               <TouchableOpacity
                 style={[
                   styles.actionButton,
-                  (spending || !formState.isValid) && styles.disabledButton,
+                  (isSpending || !formState.isValid) && styles.disabledButton,
                 ]}
                 onPress={handleSubmit(onSubmit)}
-                disabled={spending || !formState.isValid}
+                disabled={isSpending || !formState.isValid}
               >
                 <LinearGradient
                   colors={["#2C9A92", "#238276"]}
                   style={styles.actionGradient}
                 >
                   <Text style={styles.actionText}>
-                    {spending ? "Processing..." : "Pay vendor"}
+                    {isSpending ? "Processing..." : "Pay vendor"}
                   </Text>
                   <Ionicons name="card" size={16} color="#fff" />
                 </LinearGradient>
@@ -344,9 +369,9 @@ const styles = StyleSheet.create({
   },
 
   inputContainer: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 16,
-    padding: 16,
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    padding: 8,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.04,
@@ -438,9 +463,9 @@ const styles = StyleSheet.create({
   },
   fullWidthFormItem: {
     width: "100%",
-    backgroundColor: "#F8FAFF",
+    backgroundColor: "#fff",
     borderRadius: 12,
-    padding: 12,
+    padding: 8,
   },
 
   actionButton: {
