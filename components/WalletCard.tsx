@@ -35,7 +35,7 @@ export default function WalletCard({
 
         <View style={styles.subWalletDetailsBox}>
           <View style={styles.balanceDetails}>
-            <Text style={[styles.textFeintSub]}>Locked</Text>
+            <Text style={[styles.textFeintSub]}>Budgeted</Text>
             <Text style={styles.textSub}>{lockedBalance}</Text>
           </View>
         </View>

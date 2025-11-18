@@ -22,12 +22,13 @@ export default function RootLayout() {
             paddingTop: 8,
             borderRadius: 16,
           },
-          tabBarLabelStyle: {
-            fontFamily: "Poppins_500Medium",
-            fontSize: 10,
-          },
           tabBarItemStyle: {
-            minWidth: 80,
+            width: 75,
+          },
+          tabBarLabelStyle: {
+            fontSize: 10,
+            textAlign: "center",
+            fontFamily: "Poppins_500Medium",
           },
           headerShown: false,
         }}
@@ -51,20 +52,20 @@ export default function RootLayout() {
           }}
         />
         <Tabs.Screen
-          name="locks"
-          options={{
-            title: "Lock",
-            tabBarIcon: ({ color, size }) => (
-              <Ionicons name="lock-closed" size={20} color={color} />
-            ),
-          }}
-        />
-        <Tabs.Screen
           name="spend"
           options={{
             title: "Spend",
             tabBarIcon: ({ color, size }) => (
               <Ionicons name="card" size={20} color={color} />
+            ),
+          }}
+        />
+        <Tabs.Screen
+          name="budgets"
+          options={{
+            title: "Budget",
+            tabBarIcon: ({ color, size }) => (
+              <Ionicons name="pie-chart" size={20} color={color} />
             ),
           }}
         />

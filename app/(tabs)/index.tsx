@@ -20,6 +20,7 @@ import {
   Text,
   TouchableOpacity,
   View,
+  Platform,
 } from "react-native";
 
 export default function Index() {
@@ -49,7 +50,7 @@ export default function Index() {
       case "DEPOSIT":
         return "Received";
       case "LOCK":
-        return t.recipientName ? `Locked` : "Locked";
+        return t.recipientName ? `Budgeted` : "Budgeted";
       case "TRANSFER":
         return t.entryType === "CREDIT" ? "Received" : "Sent";
       case "REFUND":
@@ -78,17 +79,13 @@ export default function Index() {
     }
   };
 
-  const addMoney = () => {
-    router.push({ pathname: "/profile", params: { openDeposit: "1" } });
-  };
-
   const formatAmount = (t: any) =>
     `${t.entryType === "CREDIT" ? "+" : "-"}₦${Number(t.amount).toLocaleString(
       undefined,
       {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
-      }
+      },
     )}`;
 
   const formatCurrency = (val: any) =>
@@ -187,7 +184,7 @@ export default function Index() {
                   <Ionicons name="lock-closed" size={16} color="#38B2AC" />
                 </View>
                 <View>
-                  <Text style={styles.statLabel}>Locked</Text>
+                  <Text style={styles.statLabel}>Budgeted</Text>
                   <Text style={styles.statValue}>
                     {showBalance ? formatCurrency(totalLockedAmount) : "••••••"}
                   </Text>
@@ -229,22 +226,22 @@ export default function Index() {
 
             <TouchableOpacity
               style={styles.actionCard}
-              onPress={() => router.push("/lock")}
+              onPress={() => router.push("/budget")}
             >
               <View style={[styles.actionIcon, { backgroundColor: "#FEE2E2" }]}>
                 <Ionicons name="lock-closed" size={24} color="#DC2626" />
               </View>
-              <Text style={styles.actionText}>Lock Funds</Text>
+              <Text style={styles.actionText}>Budget Funds</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
               style={styles.actionCard}
-              onPress={() => router.push("/locks")}
+              onPress={() => router.push("/(tabs)/budgets")}
             >
               <View style={[styles.actionIcon, { backgroundColor: "#E0E7FF" }]}>
                 <Ionicons name="layers" size={24} color="#4F46E5" />
               </View>
-              <Text style={styles.actionText}>View Locks</Text>
+              <Text style={styles.actionText}>View Budgets</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -254,7 +251,7 @@ export default function Index() {
               <View style={[styles.actionIcon, { backgroundColor: "#E0E7FF" }]}>
                 <Ionicons name="swap-horizontal" size={24} color="#4F46E5" />
               </View>
-              <Text style={styles.actionText}>Spend Locked Funds</Text>
+              <Text style={styles.actionText}>Spend Budgeted Funds</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -389,7 +386,10 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     paddingHorizontal: 20,
-    paddingTop: 60,
+    paddingTop: Platform.select({
+      ios: 60,
+      android: 16,
+    }),
     paddingBottom: 24,
   },
   greeting: {

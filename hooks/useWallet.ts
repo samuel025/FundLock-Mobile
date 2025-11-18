@@ -17,7 +17,6 @@ export function useWallet() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isLoadingTransactions, setIsLoadingTransactions] = useState(false);
   const [isLoadingInsights, setIsLoadingInsights] = useState(false);
-  // default to a safe object so UI never sees `undefined`
   const [insights, setInsights] = useState<Insights>({
     spentThisWeek: "0",
     receivedThisWeek: "0",
@@ -37,7 +36,9 @@ export function useWallet() {
   const walletMutation = useMutation({
     mutationFn: getWalletDetails,
     onMutate: () => {
-      setIsLoading(true);
+      if (!balance) {
+        setIsLoading(true);
+      }
     },
     onSuccess: async (data) => {
       const { balance, walletNumber, totalLockedAmount, totalRedeemedAmount } =
@@ -113,7 +114,6 @@ export function useWallet() {
   useFocusEffect(
     useCallback(() => {
       if (user && accessToken && !hasFetchedRef.current) {
-        console.log("Screen focused - fetching data");
         fetchWalletData();
         hasFetchedRef.current = true;
       }
@@ -132,7 +132,6 @@ export function useWallet() {
       previousTokenRef.current !== accessToken &&
       user
     ) {
-      console.log("Token refreshed, refetching wallet data...");
       hasFetchedRef.current = false;
       fetchWalletData();
       hasFetchedRef.current = true;

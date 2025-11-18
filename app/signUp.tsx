@@ -4,7 +4,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import {
   Alert,
@@ -28,7 +28,7 @@ const schema = yup.object().shape({
     .string()
     .email("Please enter a valid email address")
     .test("is-valid-email", "Please enter a valid email address", (value) =>
-      /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/i.test(value || "")
+      /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/i.test(value || ""),
     )
     .required("Email is required"),
   firstName: yup
@@ -44,7 +44,7 @@ const schema = yup.object().shape({
     .required("Password is required")
     .matches(
       /^(?=.*[A-Z])(?=.*\d).+$/,
-      "Password must contain at least one uppercase letter and one number"
+      "Password must contain at least one uppercase letter and one number",
     )
     .min(8, "Password must be at least 8 characters long"),
   pin: yup
@@ -63,15 +63,16 @@ export type signUpFormData = yup.InferType<typeof schema>;
 export default function SignUp() {
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [showPin, setShowPin] = useState<boolean>(false);
-  const fadeAnim = new Animated.Value(0);
+  const fadeAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
+    fadeAnim.setValue(0);
     Animated.timing(fadeAnim, {
       toValue: 1,
       duration: 800,
       useNativeDriver: true,
     }).start();
-  });
+  }, [fadeAnim]);
 
   const {
     control,
@@ -97,7 +98,7 @@ export default function SignUp() {
     } catch (error: any) {
       Alert.alert(
         "Error",
-        error.message || "Failed to create account. Please try again."
+        error.message || "Failed to create account. Please try again.",
       );
     }
   };
@@ -114,7 +115,7 @@ export default function SignUp() {
             behavior={Platform.OS === "ios" ? "padding" : "height"}
             style={styles.container}
             keyboardVerticalOffset={
-              Platform.OS === "ios" ? 0 : StatusBar.currentHeight ?? 0
+              Platform.OS === "ios" ? 0 : (StatusBar.currentHeight ?? 0)
             }
           >
             <ScrollView
@@ -122,7 +123,12 @@ export default function SignUp() {
               showsVerticalScrollIndicator={false}
               keyboardShouldPersistTaps="handled"
             >
-              <Animated.View style={[styles.content, { opacity: fadeAnim }]}>
+              <Animated.View
+                style={[
+                  styles.content,
+                  { opacity: Platform.OS === "android" ? 1 : fadeAnim },
+                ]}
+              >
                 {/* Logo Section */}
                 <View style={styles.logoContainer}>
                   <LinearGradient

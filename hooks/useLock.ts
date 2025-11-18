@@ -19,7 +19,7 @@ export function useLock() {
       setIsLocking(false);
     },
     onError: (error: any) => {
-      setLockError(error?.message || "Failed to lock funds");
+      setLockError(error?.message || "Failed to budget funds");
       setIsLocking(false);
     },
     onSettled: () => {

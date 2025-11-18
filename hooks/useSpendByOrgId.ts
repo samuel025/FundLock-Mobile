@@ -19,7 +19,7 @@ export function useSpendByOrgId() {
       setIsSpending(false);
     },
     onError: (error: any) => {
-      setSpendError(error?.message || "Failed to lock funds");
+      setSpendError(error?.message || "Failed to budget funds");
       setIsSpending(false);
     },
     onSettled: () => {

@@ -35,7 +35,7 @@ const schema = yup.object({
   amount: yup
     .number()
     .transform((value, original) =>
-      original === "" ? undefined : Number(original)
+      original === "" ? undefined : Number(original),
     )
     .typeError("Enter a valid amount")
     .positive("Amount must be greater than 0")
@@ -54,10 +54,10 @@ const schema = yup.object({
 
 type FormData = yup.InferType<typeof schema>;
 
-export default function Lock() {
+export default function Budget() {
   const router = useRouter();
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(
-    null
+    null,
   );
   const [categoryModalVisible, setCategoryModalVisible] = useState(false);
   const [banner, setBanner] = useState<{
@@ -86,7 +86,7 @@ export default function Lock() {
 
   const selectedCategory = useMemo(
     () => categories?.find((c) => c.id === selectedCategoryId) || null,
-    [selectedCategoryId]
+    [selectedCategoryId],
   );
 
   const onSubmit = (data: FormData) => {
@@ -127,7 +127,7 @@ export default function Lock() {
         behavior={Platform.OS === "ios" ? "padding" : undefined}
         style={{ flex: 1 }}
         keyboardVerticalOffset={
-          Platform.OS === "ios" ? 0 : StatusBar.currentHeight ?? 0
+          Platform.OS === "ios" ? 0 : (StatusBar.currentHeight ?? 0)
         }
       >
         <ScrollView
@@ -153,7 +153,7 @@ export default function Lock() {
             </TouchableOpacity>
 
             <View style={styles.headerCenter}>
-              <Text style={styles.title}>Lock Funds</Text>
+              <Text style={styles.title}>Budget Funds</Text>
               <Text style={styles.subtitle}>
                 Set aside money for a category
               </Text>
@@ -195,7 +195,7 @@ export default function Lock() {
                       <>
                         <TextInput
                           mode="outlined"
-                          label="Amount to lock"
+                          label="Amount to budget"
                           value={value !== undefined ? String(value) : ""}
                           onChangeText={(t) => {
                             // allow only digits and decimal point, limit extra dots
@@ -318,7 +318,7 @@ export default function Lock() {
                   style={styles.actionGradient}
                 >
                   <Text style={styles.actionText}>
-                    {isLocking ? "Locking..." : "Lock Funds"}
+                    {isLocking ? "Locking..." : "Budget Funds"}
                   </Text>
                   <Ionicons name="lock-closed" size={18} color="#fff" />
                 </LinearGradient>

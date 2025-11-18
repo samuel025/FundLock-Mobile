@@ -22,7 +22,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
-import { Alert, ScrollView, StyleSheet, Text } from "react-native";
+import { Alert, ScrollView, StyleSheet, Text, Platform } from "react-native";
 import * as yup from "yup";
 
 const depositSchema = yup.object({
@@ -71,7 +71,7 @@ export default function Profile() {
       `${user?.firstName?.charAt(0) ?? "U"}${
         user?.lastName?.charAt(0) ?? ""
       }`.toUpperCase(),
-    []
+    [],
   );
 
   const {
@@ -112,7 +112,7 @@ export default function Profile() {
     setWithdrawModal(false);
     Alert.alert(
       "Withdrawal requested",
-      `₦${data.amount?.toLocaleString()} withdrawal initiated`
+      `₦${data.amount?.toLocaleString()} withdrawal initiated`,
     );
   };
 
@@ -239,7 +239,14 @@ export default function Profile() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  content: { padding: 20, paddingTop: 60, paddingBottom: 40 },
+  content: {
+    padding: 20,
+    paddingTop: Platform.select({
+      ios: 60,
+      android: 16,
+    }),
+    paddingBottom: 40,
+  },
   version: {
     textAlign: "center",
     color: "#9CA3AF",

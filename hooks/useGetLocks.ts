@@ -13,6 +13,7 @@ export function useGetLocks() {
     onMutate: () => setIsLocksLoading(true),
     onSuccess: (data) => {
       const list = Array.isArray(data) ? data : [];
+      console.log(list);
       setLocksList(
         list.map((c: any) => ({
           categoryName: c.categoryName,

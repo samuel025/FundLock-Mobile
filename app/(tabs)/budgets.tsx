@@ -23,7 +23,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 export const options = { headerShown: false };
 
-export default function LocksPage() {
+export default function BudgetsPage() {
   const router = useRouter();
 
   const { isLocksLoading, locksList, fetchLocks } = useGetLocks();
@@ -42,7 +42,7 @@ export default function LocksPage() {
   useFocusEffect(
     React.useCallback(() => {
       fetchLocks();
-    }, [fetchLocks])
+    }, [fetchLocks]),
   );
 
   if (!fontsLoaded) return null;
@@ -52,12 +52,12 @@ export default function LocksPage() {
       <SafeAreaView edges={["top"]} style={styles.safe}>
         <View style={styles.header}>
           <View style={styles.headerCenter}>
-            <Text style={styles.title}>My Locks</Text>
+            <Text style={styles.title}>My Budgets</Text>
             <Text style={styles.subtitle}>Active locked funds by category</Text>
           </View>
 
           <View style={styles.iconBox}>
-            <Ionicons name="lock-closed" size={26} color="#38B2AC" />
+            <Ionicons name="pie-chart-sharp" size={26} color="#38B2AC" />
           </View>
         </View>
       </SafeAreaView>
@@ -66,15 +66,15 @@ export default function LocksPage() {
       <View style={styles.lockActionWrap}>
         <TouchableOpacity
           style={styles.lockCard}
-          onPress={() => router.push("/lock")}
+          onPress={() => router.push("/budget")}
           accessibilityRole="button"
         >
           <View style={styles.lockCardLeft}>
             <View style={styles.lockIcon}>
-              <Ionicons name="lock-closed" size={18} color="#fff" />
+              <Ionicons name="pie-chart" size={18} color="#fff" />
             </View>
             <View style={styles.lockText}>
-              <Text style={styles.lockTitle}>Lock Funds</Text>
+              <Text style={styles.lockTitle}>Budget Funds</Text>
               <Text style={styles.lockSubtitle}>
                 Create a new locked savings
               </Text>
@@ -86,7 +86,7 @@ export default function LocksPage() {
 
       {/* List header / separator */}
       <View style={styles.listHeader}>
-        <Text style={styles.listHeaderTitle}>Your active locks</Text>
+        <Text style={styles.listHeaderTitle}>Your active budgets</Text>
         <View style={styles.countBadge}>
           <Text style={styles.countText}>{locksList.length}</Text>
         </View>
@@ -106,7 +106,7 @@ export default function LocksPage() {
         contentContainerStyle={locksList.length ? undefined : { flex: 1 }}
         ListEmptyComponent={
           <View style={styles.empty}>
-            <Text style={styles.emptyText}>No active locks</Text>
+            <Text style={styles.emptyText}>No active budgets</Text>
           </View>
         }
         renderItem={({ item }) => {

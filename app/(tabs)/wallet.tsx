@@ -23,6 +23,7 @@ import {
   Text,
   TouchableOpacity,
   View,
+  Platform,
 } from "react-native";
 
 export default function Wallet() {
@@ -186,7 +187,10 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     paddingHorizontal: 20,
-    paddingTop: 60,
+    paddingTop: Platform.select({
+      ios: 60,
+      android: 16,
+    }),
     paddingBottom: 20,
   },
   headerLeft: {

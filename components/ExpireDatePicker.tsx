@@ -30,8 +30,8 @@ export function ExpireDatePicker({
     <View style={styles.section}>
       <Text style={styles.sectionTitle}>Expire At</Text>
       <Text style={styles.subtitle}>
-        Note that this will be ignored if there is an existing lock in the
-        category you choose and your money will be added to the existing lock.
+        Note that this will be ignored if there is an existing budget in the
+        category you choose and your money will be added to the existing budget.
       </Text>
       <TouchableOpacity
         style={styles.datePickerButton}

@@ -55,7 +55,7 @@ export default function WalletBalanceCard({
 
         <View style={styles.statsRow}>
           <View style={styles.statItem}>
-            <Text style={styles.statLabel}>Locked</Text>
+            <Text style={styles.statLabel}>Budgeted</Text>
             <Text style={styles.statValue}>
               {showBalance ? `₦${totalLocked}` : "••••••"}
             </Text>

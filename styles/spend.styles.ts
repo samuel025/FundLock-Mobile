@@ -1,8 +1,15 @@
-import { StyleSheet } from "react-native";
+import { StyleSheet, Platform } from "react-native";
 
 export default StyleSheet.create({
   container: { flex: 1 },
-  content: { padding: 20, paddingTop: 60, paddingBottom: 40 },
+  content: {
+    padding: 20,
+    paddingTop: Platform.select({
+      ios: 60,
+      android: 16,
+    }),
+    paddingBottom: 40,
+  },
   lockActionWrap: { paddingHorizontal: 20, marginBottom: 12 },
   lockCard: {
     flexDirection: "row",
@@ -84,7 +91,7 @@ export default StyleSheet.create({
   },
   modal: {
     backgroundColor: "#fff",
-    maxHeight: "70%",
+    maxHeight: "60%",
     borderTopLeftRadius: 16,
     borderTopRightRadius: 16,
     paddingHorizontal: 16,
