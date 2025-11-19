@@ -1,6 +1,7 @@
 import { AuthGuard } from "@/components/RouteGuard";
 import { Ionicons } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
+import { Platform } from "react-native";
 
 export default function RootLayout() {
   return (
@@ -29,6 +30,7 @@ export default function RootLayout() {
             fontSize: 10,
             textAlign: "center",
             fontFamily: "Poppins_500Medium",
+            includeFontPadding: Platform.OS === "android",
           },
           headerShown: false,
         }}

@@ -25,6 +25,7 @@ import {
   View,
   Platform,
 } from "react-native";
+import { ActivityIndicator } from "react-native-paper";
 
 export default function Wallet() {
   const user = useAuthStore((state) => state.user);
@@ -40,6 +41,8 @@ export default function Wallet() {
     transactions,
     isLoadingTransactions,
     fetchWalletData,
+    walletData,
+    loadMore,
   } = useWallet();
 
   let [fontsLoaded] = useFonts({
@@ -81,7 +84,7 @@ export default function Wallet() {
   if (!fontsLoaded || (isLoadingUser && !user)) {
     return (
       <View style={styles.loadingContainer}>
-        <Text style={styles.loadingText}>Loading...</Text>
+        <ActivityIndicator size="large" color="#38B2AC" />
       </View>
     );
   }
@@ -152,14 +155,15 @@ export default function Wallet() {
         <View style={styles.transactionsSection}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Transactions</Text>
-            <TouchableOpacity>
+            {/*<TouchableOpacity>
               <Ionicons name="options-outline" size={24} color="#1B263B" />
-            </TouchableOpacity>
+            </TouchableOpacity>*/}
           </View>
 
           <ModernTransactionList
-            transactions={transactions}
+            transactions={walletData?.transactions || []}
             isLoading={isLoadingTransactions}
+            onLoadMore={loadMore}
           />
         </View>
       </ScrollView>

@@ -15,6 +15,8 @@ interface ModernTransactionListProps {
   isLoading: boolean;
   isLoadingMore?: boolean;
   onLoadMore?: () => void;
+  hasNext?: boolean;
+  currentPage?: number;
 }
 
 export default function ModernTransactionList({
@@ -78,7 +80,7 @@ export default function ModernTransactionList({
         case "DEPOSIT":
           return "Received";
         case "LOCK":
-          return t.recipientName ? `Locked` : "Locked";
+          return t.recipientName ? `Budgeted` : "Budgeted";
         case "TRANSFER":
           return t.entryType === "CREDIT" ? "Received" : "Sent";
         case "REFUND":
@@ -133,8 +135,8 @@ export default function ModernTransactionList({
                   transaction.type === "DEPOSIT"
                     ? "#E7F6F2"
                     : transaction.type === "WITHDRAWAL"
-                    ? "#FEE2E2"
-                    : "#E0E7FF",
+                      ? "#FEE2E2"
+                      : "#E0E7FF",
               },
             ]}
           >

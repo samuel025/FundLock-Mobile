@@ -98,7 +98,7 @@ export default function SpendByOrgId() {
         behavior={Platform.OS === "ios" ? "padding" : undefined}
         style={{ flex: 1 }}
         keyboardVerticalOffset={
-          Platform.OS === "ios" ? 0 : StatusBar.currentHeight ?? 0
+          Platform.OS === "ios" ? 0 : (StatusBar.currentHeight ?? 0)
         }
       >
         <ScrollView
@@ -313,7 +313,14 @@ export default function SpendByOrgId() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  content: { padding: 20, paddingTop: 60, paddingBottom: 40 },
+  content: {
+    padding: 20,
+    paddingTop: Platform.select({
+      ios: 60,
+      android: 20,
+    }),
+    paddingBottom: 40,
+  },
 
   header: {
     flexDirection: "row",

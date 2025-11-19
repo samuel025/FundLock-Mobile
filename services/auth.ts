@@ -43,7 +43,7 @@ export async function loginUser(data: SignInFormData): Promise<LoginResponse> {
       // Network error (no response from server)
       if (!axiosError.response) {
         const customError: any = new Error(
-          "Network error. Please check your internet connection and try again."
+          "Network error. Please check your internet connection and try again.",
         );
         customError.status = 0;
         throw customError;
@@ -66,7 +66,7 @@ export async function loginUser(data: SignInFormData): Promise<LoginResponse> {
 }
 
 export async function signUpUser(
-  data: signUpFormData
+  data: signUpFormData,
 ): Promise<SignUpResponse> {
   try {
     const response = await API.post<SignUpResponse>(
@@ -76,9 +76,8 @@ export async function signUpUser(
         password: data.password,
         firstName: data.firstName,
         lastName: data.lastName,
-        pin: data.pin,
         phoneNumber: data.phoneNumber,
-      }
+      },
     );
 
     return response.data;
@@ -90,7 +89,7 @@ export async function signUpUser(
       if (!axiosError.response) {
         console.error("Network error during sign up");
         const customError: any = new Error(
-          "Network error. Please check your internet connection and try again."
+          "Network error. Please check your internet connection and try again.",
         );
         customError.status = 0;
         throw customError;

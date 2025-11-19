@@ -6,6 +6,7 @@ import {
   getWeeklyTransactionInsights,
   Insights,
   Transaction,
+  WalletData,
 } from "@/services/wallet";
 import { useMutation } from "@tanstack/react-query";
 import { useFocusEffect } from "expo-router";
@@ -21,8 +22,10 @@ export function useWallet() {
     spentThisWeek: "0",
     receivedThisWeek: "0",
   });
+  const [walletData, setWalletData] = useState<WalletData | null>(null);
   const hasFetchedRef = useRef(false);
   const previousTokenRef = useRef<string | null>(null);
+  const [isLoadingMore, setIsLoadingMore] = useState(false); // NEW
 
   const walletState = walletStore();
   const {
@@ -31,30 +34,38 @@ export function useWallet() {
     totalRedeemedAmount,
     isLoading: isLoadingWallet,
     setIsLoading,
+    hasPin,
   } = walletState;
 
   const walletMutation = useMutation({
     mutationFn: getWalletDetails,
     onMutate: () => {
-      if (!balance) {
-        setIsLoading(true);
-      }
+      // if (!balance) {
+      //   setIsLoading(true);
+      // }
     },
     onSuccess: async (data) => {
-      const { balance, walletNumber, totalLockedAmount, totalRedeemedAmount } =
-        data;
+      const {
+        balance,
+        walletNumber,
+        totalLockedAmount,
+        totalRedeemedAmount,
+        hasPin,
+      } = data;
 
       const {
         setBalance,
         setTotalLockedAmount,
         setTotalRedeemedAmount,
         setWalletNumber,
+        setHasPin,
       } = walletStore.getState();
 
       setBalance(balance);
       setTotalLockedAmount(totalLockedAmount);
       setTotalRedeemedAmount(totalRedeemedAmount);
       setWalletNumber(walletNumber);
+      setHasPin(hasPin);
     },
     onError: (error) => {
       console.error("Failed to fetch wallet details:", error);
@@ -69,13 +80,20 @@ export function useWallet() {
     },
   });
 
+  type page = {
+    page?: number;
+  };
+
   const transactionsMutation = useMutation({
-    mutationFn: getWalletTransactions,
+    mutationFn: (opts: page) => {
+      return getWalletTransactions(opts.page ?? undefined);
+    },
     onMutate: () => {
       setIsLoadingTransactions(true);
     },
     onSuccess: (data) => {
-      setTransactions(data);
+      setWalletData(data);
+      setTransactions(data.transactions);
     },
     onError: (error) => {
       console.error("Failed to fetch transactions:", error);
@@ -106,7 +124,7 @@ export function useWallet() {
   const fetchWalletData = useCallback(() => {
     if (user && accessToken) {
       walletMutation.mutate();
-      transactionsMutation.mutate();
+      transactionsMutation.mutate({});
       weeklyInsightMutation.mutate();
     }
   }, [user, accessToken]);
@@ -121,10 +139,9 @@ export function useWallet() {
       return () => {
         hasFetchedRef.current = false;
       };
-    }, [user, accessToken])
+    }, [user, accessToken]),
   );
 
-  // Handle token refresh scenario
   useEffect(() => {
     if (
       accessToken &&
@@ -139,6 +156,31 @@ export function useWallet() {
     previousTokenRef.current = accessToken;
   }, [accessToken, user, fetchWalletData]);
 
+  const loadMore = useCallback(async () => {
+    if (isLoadingMore) return;
+    if (!walletData?.hasNext) return;
+
+    try {
+      setIsLoadingMore(true);
+      const nextPage = (walletData.currentPage ?? 0) + 1;
+      const data = await getWalletTransactions(nextPage);
+
+      // append new page to current state
+      setWalletData((prev) => {
+        const prevTx = prev?.transactions ?? [];
+        return {
+          ...data,
+          transactions: [...prevTx, ...data.transactions],
+        };
+      });
+      setTransactions((prev) => [...prev, ...data.transactions]);
+    } catch (e) {
+      console.error("Failed to load more transactions:", e);
+    } finally {
+      setIsLoadingMore(false);
+    }
+  }, [walletData, isLoadingMore]);
+
   return {
     balance,
     totalLockedAmount,
@@ -149,5 +191,9 @@ export function useWallet() {
     isLoadingInsights,
     insights,
     fetchWalletData,
+    walletData,
+    loadMore,
+    isLoadingMore,
+    hasPin,
   };
 }

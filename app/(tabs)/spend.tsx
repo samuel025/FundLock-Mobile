@@ -19,8 +19,8 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { LinearGradient } from "expo-linear-gradient";
-import { router } from "expo-router";
-import React, { useEffect, useRef, useState } from "react";
+import { router, useFocusEffect } from "expo-router";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import {
   ActivityIndicator,
@@ -35,6 +35,7 @@ import {
 } from "react-native";
 import * as yup from "yup";
 import spendStyles from "../../styles/spend.styles";
+import { PinGuard } from "@/components/PinGuard";
 
 const schema = yup.object({
   amount: yup
@@ -101,9 +102,11 @@ export default function Spend() {
     }
   }, [selectedCompany, fetchOutlets]);
 
-  useEffect(() => {
-    fetchLocks();
-  }, [fetchLocks]);
+  useFocusEffect(
+    useCallback(() => {
+      fetchLocks(); // fetch on screen focus
+    }, [fetchLocks]),
+  );
 
   let [fontsLoaded] = useFonts({
     Poppins_400Regular,
@@ -169,271 +172,290 @@ export default function Spend() {
   if (!fontsLoaded) return null;
 
   return (
-    <LinearGradient
-      colors={["#F8F9FA", "#E9ECEF"]}
-      style={spendStyles.container}
-    >
-      <KeyboardAvoidingView
-        style={{ flex: 1, justifyContent: "flex-end" }}
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        keyboardVerticalOffset={
-          Platform.OS === "ios" ? 0 : (StatusBar.currentHeight ?? 0)
-        }
+    <PinGuard>
+      <LinearGradient
+        colors={["#F8F9FA", "#E9ECEF"]}
+        style={spendStyles.container}
       >
-        <ScrollView
-          ref={scrollRef}
-          contentContainerStyle={[spendStyles.content, { paddingBottom: 160 }]}
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
+        <KeyboardAvoidingView
+          style={{ flex: 1, justifyContent: "flex-end" }}
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          keyboardVerticalOffset={
+            Platform.OS === "ios" ? 0 : (StatusBar.currentHeight ?? 0)
+          }
         >
-          {banner && (
-            <MessageBanner
-              message={banner.message}
-              type={banner.type}
-              onClose={() => setBanner(null)}
-            />
-          )}
+          <ScrollView
+            ref={scrollRef}
+            contentContainerStyle={[
+              spendStyles.content,
+              { paddingBottom: 160 },
+            ]}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+          >
+            {banner && (
+              <MessageBanner
+                message={banner.message}
+                type={banner.type}
+                onClose={() => setBanner(null)}
+              />
+            )}
 
-          <View style={spendStyles.header}>
-            <View>
-              <Text style={spendStyles.title}>Spend Locked Funds</Text>
-              <Text style={spendStyles.subtitle}>
-                Pay vendors using budgeted category funds
-              </Text>
-            </View>
-            <View style={spendStyles.iconBox}>
-              <Ionicons name="card" size={26} color="#38B2AC" />
-            </View>
-          </View>
-
-          <View style={spendStyles.lockActionWrap}>
-            <TouchableOpacity
-              style={spendStyles.lockCard}
-              onPress={() => router.push("/spendByOrgId")}
-              accessibilityRole="button"
-            >
-              <View style={spendStyles.lockCardLeft}>
-                <View style={spendStyles.lockIcon}>
-                  <Ionicons name="storefront" size={18} color="#fff" />
-                </View>
-                <View style={spendStyles.lockText}>
-                  <Text style={spendStyles.lockTitle}>
-                    Spend By Vendor&apos;s ID
-                  </Text>
-                  <Text style={spendStyles.lockSubtitle}>
-                    You can just search by the vendor&apos;s ID and spend
-                  </Text>
-                </View>
+            <View style={spendStyles.header}>
+              <View>
+                <Text style={spendStyles.title}>Spend Locked Funds</Text>
+                <Text style={spendStyles.subtitle}>
+                  Pay vendors using budgeted category funds
+                </Text>
               </View>
-              <Ionicons name="chevron-forward" size={20} color="#2D3748" />
-            </TouchableOpacity>
-          </View>
-
-          {/* Categories: show spinner while loading */}
-          {isCategoryLoading ? (
-            <View style={spendStyles.loadingRow}>
-              <ActivityIndicator size="small" color="#38B2AC" />
-              <Text style={spendStyles.loadingText}>Loading categories...</Text>
+              <View style={spendStyles.iconBox}>
+                <Ionicons name="card" size={26} color="#38B2AC" />
+              </View>
             </View>
-          ) : (
-            <CategoryPicker
-              categories={categories ?? []}
-              selected={selectedCategory}
-              onSelect={(id) => {
-                setSelectedCategory(id);
-                setSelectedCompany(null);
-              }}
-              styles={spendStyles}
-            />
-          )}
 
-          {/* Mode selector: segmented pill */}
-          {selectedCategory && (
-            <View style={spendStyles.modeSwitch} accessibilityRole="tablist">
-              <Pressable
-                onPress={() => setAllowDirectOutlet(false)}
+            <View style={spendStyles.lockActionWrap}>
+              <TouchableOpacity
+                style={spendStyles.lockCard}
+                onPress={() => router.push("/spendByOrgId")}
                 accessibilityRole="button"
-                accessibilityState={{ selected: !allowDirectOutlet }}
-                style={({ pressed }) => [
-                  spendStyles.modeOption,
-                  !allowDirectOutlet && spendStyles.modeOptionActive,
-                  pressed && spendStyles.modeOptionPressed,
-                ]}
               >
-                <View
-                  style={{ flexDirection: "row", alignItems: "center", gap: 8 }}
-                >
-                  <Ionicons
-                    name="business"
-                    size={14}
-                    color={!allowDirectOutlet ? "#fff" : "#256A5A"}
-                  />
-                  <Text
-                    style={[
-                      spendStyles.modeOptionText,
-                      !allowDirectOutlet && spendStyles.modeOptionTextActive,
-                    ]}
-                  >
-                    By company
-                  </Text>
-                </View>
-              </Pressable>
-
-              <Pressable
-                onPress={() => setAllowDirectOutlet(true)}
-                accessibilityRole="button"
-                accessibilityState={{ selected: allowDirectOutlet }}
-                style={({ pressed }) => [
-                  spendStyles.modeOption,
-                  allowDirectOutlet && spendStyles.modeOptionActive,
-                  pressed && spendStyles.modeOptionPressed,
-                ]}
-              >
-                <View
-                  style={{ flexDirection: "row", alignItems: "center", gap: 8 }}
-                >
-                  <Ionicons
-                    name="storefront"
-                    size={14}
-                    color={allowDirectOutlet ? "#fff" : "#256A5A"}
-                  />
-                  <Text
-                    style={[
-                      spendStyles.modeOptionText,
-                      allowDirectOutlet && spendStyles.modeOptionTextActive,
-                    ]}
-                  >
-                    Select outlet directly
-                  </Text>
-                </View>
-              </Pressable>
-            </View>
-          )}
-
-          {selectedCategory && (
-            <Text style={spendStyles.helperText}>
-              {allowDirectOutlet
-                ? "Showing all outlets."
-                : selectedCompany
-                  ? "Showing outlets for the selected company."
-                  : "Pick a company to see its outlets."}
-            </Text>
-          )}
-
-          {selectedCategory && !allowDirectOutlet && (
-            <>
-              {isCompanyLoading ? (
-                <View style={spendStyles.loadingRow}>
-                  <ActivityIndicator size="small" color="#38B2AC" />
-                  <Text style={spendStyles.loadingText}>
-                    Loading companies...
-                  </Text>
-                </View>
-              ) : (
-                <CompanyPicker
-                  companies={companies}
-                  selected={selectedCompany}
-                  onSelect={(id) => {
-                    setSelectedCompany(id);
-                    setSelectedOutlet(null);
-                  }}
-                  styles={spendStyles}
-                />
-              )}
-            </>
-          )}
-
-          {/* OutletPicker: show spinner while outlets load */}
-          {(selectedCompany || allowDirectOutlet) && (
-            <>
-              {isOutletLoading ? (
-                <View style={spendStyles.loadingRow}>
-                  <ActivityIndicator size="small" color="#38B2AC" />
-                  <Text style={spendStyles.loadingText}>
-                    Loading outlets...
-                  </Text>
-                </View>
-              ) : (
-                <OutletPicker
-                  outlets={outlets}
-                  selected={selectedOutlet}
-                  onSelect={(id) => {
-                    setSelectedOutlet(id);
-                  }}
-                  styles={spendStyles}
-                />
-              )}
-            </>
-          )}
-
-          {selectedOutlet && (
-            <View style={{ marginTop: 8, marginBottom: 6 }}>
-              {(() => {
-                const picked = outlets?.find(
-                  (o: any) =>
-                    String(o.id) === String(selectedOutlet) ||
-                    o.id === selectedOutlet,
-                );
-                return (
-                  <Text style={spendStyles.helperText}>
-                    Selected outlet:{" "}
-                    <Text
-                      style={{
-                        fontFamily: "Poppins_600SemiBold",
-                        color: "#1B263B",
-                      }}
-                    >
-                      {picked?.name ?? selectedOutlet}
+                <View style={spendStyles.lockCardLeft}>
+                  <View style={spendStyles.lockIcon}>
+                    <Ionicons name="storefront" size={18} color="#fff" />
+                  </View>
+                  <View style={spendStyles.lockText}>
+                    <Text style={spendStyles.lockTitle}>
+                      Spend By Vendor&apos;s ID
                     </Text>
-                    {picked?.name ? (
-                      <Text style={{ color: "#718096" }}> — {picked.name}</Text>
-                    ) : null}
-                  </Text>
-                );
-              })()}
+                    <Text style={spendStyles.lockSubtitle}>
+                      You can just search by the vendor&apos;s ID and spend
+                    </Text>
+                  </View>
+                </View>
+                <Ionicons name="chevron-forward" size={20} color="#2D3748" />
+              </TouchableOpacity>
             </View>
-          )}
 
-          {selectedOutlet && (
-            <>
-              <AmountSection
-                control={control}
-                availableLocked={availableLocked}
+            {/* Categories: show spinner while loading */}
+            {isCategoryLoading ? (
+              <View style={spendStyles.loadingRow}>
+                <ActivityIndicator size="small" color="#38B2AC" />
+                <Text style={spendStyles.loadingText}>
+                  Loading categories...
+                </Text>
+              </View>
+            ) : (
+              <CategoryPicker
+                categories={categories ?? []}
+                selected={selectedCategory}
+                onSelect={(id) => {
+                  setSelectedCategory(id);
+                  setSelectedCompany(null);
+                }}
                 styles={spendStyles}
               />
-              <PinSection control={control} styles={spendStyles} />
-            </>
-          )}
+            )}
 
-          <TouchableOpacity
-            style={[
-              spendStyles.actionButton,
-              (isSpending || !formState.isValid) && spendStyles.disabledButton,
-            ]}
-            onPress={handleSubmit(onSubmit)}
-            disabled={isSpending || !formState.isValid}
-          >
-            <LinearGradient
-              colors={["#38B2AC", "#2C9A92"]}
-              style={spendStyles.actionGradient}
+            {/* Mode selector: segmented pill */}
+            {selectedCategory && (
+              <View style={spendStyles.modeSwitch} accessibilityRole="tablist">
+                <Pressable
+                  onPress={() => setAllowDirectOutlet(false)}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: !allowDirectOutlet }}
+                  style={({ pressed }) => [
+                    spendStyles.modeOption,
+                    !allowDirectOutlet && spendStyles.modeOptionActive,
+                    pressed && spendStyles.modeOptionPressed,
+                  ]}
+                >
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                      gap: 8,
+                    }}
+                  >
+                    <Ionicons
+                      name="business"
+                      size={14}
+                      color={!allowDirectOutlet ? "#fff" : "#256A5A"}
+                    />
+                    <Text
+                      style={[
+                        spendStyles.modeOptionText,
+                        !allowDirectOutlet && spendStyles.modeOptionTextActive,
+                      ]}
+                    >
+                      By company
+                    </Text>
+                  </View>
+                </Pressable>
+
+                <Pressable
+                  onPress={() => setAllowDirectOutlet(true)}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: allowDirectOutlet }}
+                  style={({ pressed }) => [
+                    spendStyles.modeOption,
+                    allowDirectOutlet && spendStyles.modeOptionActive,
+                    pressed && spendStyles.modeOptionPressed,
+                  ]}
+                >
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                      gap: 8,
+                    }}
+                  >
+                    <Ionicons
+                      name="storefront"
+                      size={14}
+                      color={allowDirectOutlet ? "#fff" : "#256A5A"}
+                    />
+                    <Text
+                      style={[
+                        spendStyles.modeOptionText,
+                        allowDirectOutlet && spendStyles.modeOptionTextActive,
+                      ]}
+                    >
+                      Select outlet directly
+                    </Text>
+                  </View>
+                </Pressable>
+              </View>
+            )}
+
+            {selectedCategory && (
+              <Text style={spendStyles.helperText}>
+                {allowDirectOutlet
+                  ? "Showing all outlets."
+                  : selectedCompany
+                    ? "Showing outlets for the selected company."
+                    : "Pick a company to see its outlets."}
+              </Text>
+            )}
+
+            {selectedCategory && !allowDirectOutlet && (
+              <>
+                {isCompanyLoading ? (
+                  <View style={spendStyles.loadingRow}>
+                    <ActivityIndicator size="small" color="#38B2AC" />
+                    <Text style={spendStyles.loadingText}>
+                      Loading companies...
+                    </Text>
+                  </View>
+                ) : (
+                  <CompanyPicker
+                    companies={companies}
+                    selected={selectedCompany}
+                    onSelect={(id) => {
+                      setSelectedCompany(id);
+                      setSelectedOutlet(null);
+                    }}
+                    styles={spendStyles}
+                  />
+                )}
+              </>
+            )}
+
+            {/* OutletPicker: show spinner while outlets load */}
+            {(selectedCompany || allowDirectOutlet) && (
+              <>
+                {isOutletLoading ? (
+                  <View style={spendStyles.loadingRow}>
+                    <ActivityIndicator size="small" color="#38B2AC" />
+                    <Text style={spendStyles.loadingText}>
+                      Loading outlets...
+                    </Text>
+                  </View>
+                ) : (
+                  <OutletPicker
+                    outlets={outlets}
+                    selected={selectedOutlet}
+                    onSelect={(id) => {
+                      setSelectedOutlet(id);
+                    }}
+                    styles={spendStyles}
+                  />
+                )}
+              </>
+            )}
+
+            {selectedOutlet && (
+              <View style={{ marginTop: 8, marginBottom: 6 }}>
+                {(() => {
+                  const picked = outlets?.find(
+                    (o: any) =>
+                      String(o.id) === String(selectedOutlet) ||
+                      o.id === selectedOutlet,
+                  );
+                  return (
+                    <Text style={spendStyles.helperText}>
+                      Selected outlet:{" "}
+                      <Text
+                        style={{
+                          fontFamily: "Poppins_600SemiBold",
+                          color: "#1B263B",
+                        }}
+                      >
+                        {picked?.name ?? selectedOutlet}
+                      </Text>
+                      {picked?.name ? (
+                        <Text style={{ color: "#718096" }}>
+                          {" "}
+                          — {picked.name}
+                        </Text>
+                      ) : null}
+                    </Text>
+                  );
+                })()}
+              </View>
+            )}
+
+            {selectedOutlet && (
+              <>
+                <AmountSection
+                  control={control}
+                  availableLocked={availableLocked}
+                  styles={spendStyles}
+                />
+                <PinSection control={control} styles={spendStyles} />
+              </>
+            )}
+
+            <TouchableOpacity
+              style={[
+                spendStyles.actionButton,
+                (isSpending || !formState.isValid) &&
+                  spendStyles.disabledButton,
+              ]}
+              onPress={handleSubmit(onSubmit)}
+              disabled={isSpending || !formState.isValid}
             >
-              {isSpending ? (
-                <>
-                  <ActivityIndicator size="small" color="#fff" />
-                  <Text style={[spendStyles.actionText, { marginLeft: 8 }]}>
-                    Processing...
-                  </Text>
-                </>
-              ) : (
-                <>
-                  <Text style={spendStyles.actionText}>Complete Payment</Text>
-                  <Ionicons name="card" size={18} color="#fff" />
-                </>
-              )}
-            </LinearGradient>
-          </TouchableOpacity>
-        </ScrollView>
-      </KeyboardAvoidingView>
-    </LinearGradient>
+              <LinearGradient
+                colors={["#38B2AC", "#2C9A92"]}
+                style={spendStyles.actionGradient}
+              >
+                {isSpending ? (
+                  <>
+                    <ActivityIndicator size="small" color="#fff" />
+                    <Text style={[spendStyles.actionText, { marginLeft: 8 }]}>
+                      Processing...
+                    </Text>
+                  </>
+                ) : (
+                  <>
+                    <Text style={spendStyles.actionText}>Complete Payment</Text>
+                    <Ionicons name="card" size={18} color="#fff" />
+                  </>
+                )}
+              </LinearGradient>
+            </TouchableOpacity>
+          </ScrollView>
+        </KeyboardAvoidingView>
+      </LinearGradient>
+    </PinGuard>
   );
 }

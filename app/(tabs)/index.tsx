@@ -36,6 +36,7 @@ export default function Index() {
     transactions,
     fetchWalletData,
     insights,
+    hasPin,
   } = useWallet();
 
   let [fontsLoaded] = useFonts({

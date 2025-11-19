@@ -1,6 +1,7 @@
 import { CategoryPicker } from "@/components/CategoryPicker";
 import { ExpireDatePicker } from "@/components/ExpireDatePicker";
 import { MessageBanner } from "@/components/MessageBanner";
+import { PinGuard } from "@/components/PinGuard";
 import { useCategory } from "@/hooks/useCategory";
 import { useLock } from "@/hooks/useLock";
 import { useWallet } from "@/hooks/useWallet";
@@ -122,212 +123,216 @@ export default function Budget() {
   if (!fontsLoaded) return null;
 
   return (
-    <LinearGradient colors={["#F8F9FA", "#E9ECEF"]} style={styles.container}>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
-        style={{ flex: 1 }}
-        keyboardVerticalOffset={
-          Platform.OS === "ios" ? 0 : (StatusBar.currentHeight ?? 0)
-        }
-      >
-        <ScrollView
-          contentContainerStyle={styles.content}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
+    <PinGuard>
+      <LinearGradient colors={["#F8F9FA", "#E9ECEF"]} style={styles.container}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : undefined}
+          style={{ flex: 1 }}
+          keyboardVerticalOffset={
+            Platform.OS === "ios" ? 0 : (StatusBar.currentHeight ?? 0)
+          }
         >
-          {banner && (
-            <MessageBanner
-              message={banner.message}
-              type={banner.type}
-              onClose={() => setBanner(null)}
-            />
-          )}
+          <ScrollView
+            contentContainerStyle={styles.content}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+          >
+            {banner && (
+              <MessageBanner
+                message={banner.message}
+                type={banner.type}
+                onClose={() => setBanner(null)}
+              />
+            )}
 
-          <View style={styles.header}>
-            <TouchableOpacity
-              onPress={() => router.back()}
-              style={styles.backButton}
-              accessibilityLabel="Go back"
-            >
-              <Ionicons name="chevron-back" size={22} color="#1B263B" />
-            </TouchableOpacity>
-
-            <View style={styles.headerCenter}>
-              <Text style={styles.title}>Budget Funds</Text>
-              <Text style={styles.subtitle}>
-                Set aside money for a category
-              </Text>
-            </View>
-            <View style={styles.iconBox}>
-              <Ionicons name="lock-closed" size={26} color="#38B2AC" />
-            </View>
-          </View>
-
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Choose category</Text>
-            <TouchableOpacity
-              style={styles.pickerButton}
-              onPress={() => setCategoryModalVisible(true)}
-            >
-              <Text style={styles.pickerText}>
-                {selectedCategory ? selectedCategory.name : "Select a category"}
-              </Text>
-              <Ionicons name="chevron-down" size={20} color="#778DA9" />
-            </TouchableOpacity>
-            <CategoryPicker
-              visible={categoryModalVisible}
-              categories={categories || []}
-              selectedCategoryId={selectedCategoryId}
-              onSelect={setSelectedCategoryId}
-              onClose={() => setCategoryModalVisible(false)}
-            />
-          </View>
-
-          {selectedCategory && (
-            <>
-              <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Amount</Text>
-                <View style={styles.inputCard}>
-                  <Controller
-                    control={control}
-                    name="amount"
-                    render={({ field: { onChange, value }, fieldState }) => (
-                      <>
-                        <TextInput
-                          mode="outlined"
-                          label="Amount to budget"
-                          value={value !== undefined ? String(value) : ""}
-                          onChangeText={(t) => {
-                            // allow only digits and decimal point, limit extra dots
-                            let cleaned = t.replace(/[^0-9.]/g, "");
-                            cleaned = cleaned.replace(/\.(?=.*\.)/g, ""); // remove extra dots
-
-                            const numericBalance = Number(balance) || 0;
-                            const parsed = Number(cleaned);
-
-                            if (!cleaned) {
-                              onChange(undefined as any);
-                              return;
-                            }
-                            if (!isNaN(parsed) && parsed > numericBalance) {
-                              const capped =
-                                Number.isInteger(numericBalance) ||
-                                cleaned.indexOf(".") === -1
-                                  ? String(numericBalance)
-                                  : String(Math.min(parsed, numericBalance));
-                              onChange(capped);
-                              return;
-                            }
-
-                            onChange(cleaned);
-                          }}
-                          keyboardType={
-                            Platform.OS === "ios" ? "decimal-pad" : "numeric"
-                          }
-                          left={
-                            <TextInput.Icon
-                              icon={() => (
-                                <Text style={styles.currency}>₦</Text>
-                              )}
-                            />
-                          }
-                          outlineColor="#E2E8F0"
-                          activeOutlineColor="#38B2AC"
-                          style={styles.input}
-                          theme={{
-                            fonts: {
-                              regular: { fontFamily: "Poppins_500Medium" },
-                            },
-                          }}
-                        />
-                        {fieldState.error && (
-                          <Text style={styles.inputError}>
-                            {fieldState.error.message}
-                          </Text>
-                        )}
-                        <Text style={styles.hint}>
-                          Available: ₦{Number(balance || 0).toLocaleString()}
-                        </Text>
-                      </>
-                    )}
-                  />
-                </View>
-              </View>
-
-              <View style={styles.section}>
-                <Controller
-                  control={control}
-                  name="expireAt"
-                  render={({ field: { onChange, value }, fieldState }) => (
-                    <ExpireDatePicker
-                      value={value}
-                      onChange={onChange}
-                      error={fieldState.error?.message}
-                    />
-                  )}
-                />
-              </View>
-
-              <View style={styles.section}>
-                <Text style={styles.sectionTitle}>PIN</Text>
-                <View style={styles.inputCard}>
-                  <Controller
-                    control={control}
-                    name="pin"
-                    render={({ field: { onChange, value }, fieldState }) => (
-                      <>
-                        <TextInput
-                          mode="outlined"
-                          label="4-digit PIN"
-                          value={value}
-                          onChangeText={(t) =>
-                            onChange(t.replace(/[^0-9]/g, "").slice(0, 4))
-                          }
-                          keyboardType="number-pad"
-                          secureTextEntry
-                          outlineColor="#E2E8F0"
-                          activeOutlineColor="#38B2AC"
-                          style={styles.input}
-                          theme={{
-                            fonts: {
-                              regular: { fontFamily: "Poppins_500Medium" },
-                            },
-                          }}
-                        />
-                        {fieldState.error && (
-                          <Text style={styles.inputError}>
-                            {fieldState.error.message}
-                          </Text>
-                        )}
-                      </>
-                    )}
-                  />
-                </View>
-              </View>
-
+            <View style={styles.header}>
               <TouchableOpacity
-                style={[
-                  styles.actionButton,
-                  (isLocking || !formState.isValid) && styles.disabledButton,
-                ]}
-                onPress={handleSubmit(onSubmit)}
-                disabled={isLocking || !formState.isValid}
+                onPress={() => router.back()}
+                style={styles.backButton}
+                accessibilityLabel="Go back"
               >
-                <LinearGradient
-                  colors={["#38B2AC", "#2C9A92"]}
-                  style={styles.actionGradient}
-                >
-                  <Text style={styles.actionText}>
-                    {isLocking ? "Locking..." : "Budget Funds"}
-                  </Text>
-                  <Ionicons name="lock-closed" size={18} color="#fff" />
-                </LinearGradient>
+                <Ionicons name="chevron-back" size={22} color="#1B263B" />
               </TouchableOpacity>
-            </>
-          )}
-        </ScrollView>
-      </KeyboardAvoidingView>
-    </LinearGradient>
+
+              <View style={styles.headerCenter}>
+                <Text style={styles.title}>Budget Funds</Text>
+                <Text style={styles.subtitle}>
+                  Set aside money for a category
+                </Text>
+              </View>
+              <View style={styles.iconBox}>
+                <Ionicons name="lock-closed" size={26} color="#38B2AC" />
+              </View>
+            </View>
+
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Choose category</Text>
+              <TouchableOpacity
+                style={styles.pickerButton}
+                onPress={() => setCategoryModalVisible(true)}
+              >
+                <Text style={styles.pickerText}>
+                  {selectedCategory
+                    ? selectedCategory.name
+                    : "Select a category"}
+                </Text>
+                <Ionicons name="chevron-down" size={20} color="#778DA9" />
+              </TouchableOpacity>
+              <CategoryPicker
+                visible={categoryModalVisible}
+                categories={categories || []}
+                selectedCategoryId={selectedCategoryId}
+                onSelect={setSelectedCategoryId}
+                onClose={() => setCategoryModalVisible(false)}
+              />
+            </View>
+
+            {selectedCategory && (
+              <>
+                <View style={styles.section}>
+                  <Text style={styles.sectionTitle}>Amount</Text>
+                  <View style={styles.inputCard}>
+                    <Controller
+                      control={control}
+                      name="amount"
+                      render={({ field: { onChange, value }, fieldState }) => (
+                        <>
+                          <TextInput
+                            mode="outlined"
+                            label="Amount to budget"
+                            value={value !== undefined ? String(value) : ""}
+                            onChangeText={(t) => {
+                              // allow only digits and decimal point, limit extra dots
+                              let cleaned = t.replace(/[^0-9.]/g, "");
+                              cleaned = cleaned.replace(/\.(?=.*\.)/g, ""); // remove extra dots
+
+                              const numericBalance = Number(balance) || 0;
+                              const parsed = Number(cleaned);
+
+                              if (!cleaned) {
+                                onChange(undefined as any);
+                                return;
+                              }
+                              if (!isNaN(parsed) && parsed > numericBalance) {
+                                const capped =
+                                  Number.isInteger(numericBalance) ||
+                                  cleaned.indexOf(".") === -1
+                                    ? String(numericBalance)
+                                    : String(Math.min(parsed, numericBalance));
+                                onChange(capped);
+                                return;
+                              }
+
+                              onChange(cleaned);
+                            }}
+                            keyboardType={
+                              Platform.OS === "ios" ? "decimal-pad" : "numeric"
+                            }
+                            left={
+                              <TextInput.Icon
+                                icon={() => (
+                                  <Text style={styles.currency}>₦</Text>
+                                )}
+                              />
+                            }
+                            outlineColor="#E2E8F0"
+                            activeOutlineColor="#38B2AC"
+                            style={styles.input}
+                            theme={{
+                              fonts: {
+                                regular: { fontFamily: "Poppins_500Medium" },
+                              },
+                            }}
+                          />
+                          {fieldState.error && (
+                            <Text style={styles.inputError}>
+                              {fieldState.error.message}
+                            </Text>
+                          )}
+                          <Text style={styles.hint}>
+                            Available: ₦{Number(balance || 0).toLocaleString()}
+                          </Text>
+                        </>
+                      )}
+                    />
+                  </View>
+                </View>
+
+                <View style={styles.section}>
+                  <Controller
+                    control={control}
+                    name="expireAt"
+                    render={({ field: { onChange, value }, fieldState }) => (
+                      <ExpireDatePicker
+                        value={value}
+                        onChange={onChange}
+                        error={fieldState.error?.message}
+                      />
+                    )}
+                  />
+                </View>
+
+                <View style={styles.section}>
+                  <Text style={styles.sectionTitle}>PIN</Text>
+                  <View style={styles.inputCard}>
+                    <Controller
+                      control={control}
+                      name="pin"
+                      render={({ field: { onChange, value }, fieldState }) => (
+                        <>
+                          <TextInput
+                            mode="outlined"
+                            label="4-digit PIN"
+                            value={value}
+                            onChangeText={(t) =>
+                              onChange(t.replace(/[^0-9]/g, "").slice(0, 4))
+                            }
+                            keyboardType="number-pad"
+                            secureTextEntry
+                            outlineColor="#E2E8F0"
+                            activeOutlineColor="#38B2AC"
+                            style={styles.input}
+                            theme={{
+                              fonts: {
+                                regular: { fontFamily: "Poppins_500Medium" },
+                              },
+                            }}
+                          />
+                          {fieldState.error && (
+                            <Text style={styles.inputError}>
+                              {fieldState.error.message}
+                            </Text>
+                          )}
+                        </>
+                      )}
+                    />
+                  </View>
+                </View>
+
+                <TouchableOpacity
+                  style={[
+                    styles.actionButton,
+                    (isLocking || !formState.isValid) && styles.disabledButton,
+                  ]}
+                  onPress={handleSubmit(onSubmit)}
+                  disabled={isLocking || !formState.isValid}
+                >
+                  <LinearGradient
+                    colors={["#38B2AC", "#2C9A92"]}
+                    style={styles.actionGradient}
+                  >
+                    <Text style={styles.actionText}>
+                      {isLocking ? "Locking..." : "Budget Funds"}
+                    </Text>
+                    <Ionicons name="lock-closed" size={18} color="#fff" />
+                  </LinearGradient>
+                </TouchableOpacity>
+              </>
+            )}
+          </ScrollView>
+        </KeyboardAvoidingView>
+      </LinearGradient>
+    </PinGuard>
   );
 }
 

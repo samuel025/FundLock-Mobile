@@ -47,10 +47,6 @@ const schema = yup.object().shape({
       "Password must contain at least one uppercase letter and one number",
     )
     .min(8, "Password must be at least 8 characters long"),
-  pin: yup
-    .string()
-    .matches(/^\d{4}$/, "PIN must be exactly 4 digits")
-    .required("PIN is required"),
   phoneNumber: yup
     .string()
     .matches(/^[0-9]{10,15}$/, "Please enter a valid phone number")
@@ -62,7 +58,6 @@ export type signUpFormData = yup.InferType<typeof schema>;
 
 export default function SignUp() {
   const [showPassword, setShowPassword] = useState<boolean>(false);
-  const [showPin, setShowPin] = useState<boolean>(false);
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -87,7 +82,6 @@ export default function SignUp() {
       firstName: "",
       lastName: "",
       phoneNumber: "",
-      pin: "",
     },
   });
 
@@ -358,58 +352,6 @@ export default function SignUp() {
                         {errors.password && (
                           <Text style={styles.inputError}>
                             {errors.password.message}
-                          </Text>
-                        )}
-                      </View>
-                    )}
-                  />
-
-                  <Controller
-                    control={control}
-                    name="pin"
-                    render={({ field: { onChange, onBlur, value } }) => (
-                      <View style={styles.inputContainer}>
-                        <TextInput
-                          label="4-Digit PIN"
-                          keyboardType="numeric"
-                          placeholder="0000"
-                          secureTextEntry={!showPin}
-                          mode="outlined"
-                          value={value}
-                          onChangeText={onChange}
-                          onBlur={onBlur}
-                          error={!!errors.pin}
-                          maxLength={4}
-                          left={
-                            <TextInput.Icon
-                              icon={() => (
-                                <Ionicons
-                                  name="keypad-outline"
-                                  size={20}
-                                  color="#778DA9"
-                                />
-                              )}
-                            />
-                          }
-                          right={
-                            <TextInput.Icon
-                              icon={showPin ? "eye-off" : "eye"}
-                              onPress={() => setShowPin(!showPin)}
-                            />
-                          }
-                          theme={{
-                            roundness: 12,
-                            colors: {
-                              primary: "#38B2AC",
-                              outline: errors.pin ? "#DC2626" : "#E9ECEF",
-                            },
-                          }}
-                          style={styles.input}
-                          outlineStyle={styles.inputOutline}
-                        />
-                        {errors.pin && (
-                          <Text style={styles.inputError}>
-                            {errors.pin.message}
                           </Text>
                         )}
                       </View>
