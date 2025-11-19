@@ -25,9 +25,11 @@ import {
   Animated,
 } from "react-native";
 import { useTheme } from "@/theme";
+import { BlurView } from "expo-blur";
 
 export default function Index() {
-  const { theme } = useTheme();
+  const { theme, scheme } = useTheme();
+  const isDark = scheme === "dark";
 
   const user = useAuthStore((state) => state.user);
   const isLoadingUser = useAuthStore((state) => state.isLoadingUser);
@@ -545,9 +547,24 @@ export default function Index() {
                 key={index}
                 style={[
                   styles.activityItem,
-                  { backgroundColor: theme.colors.surface },
+                  isDark
+                    ? {
+                        // Parent is transparent; clipping only
+                        backgroundColor: "transparent",
+                      }
+                    : {
+                        backgroundColor: theme.colors.surface,
+                      },
                 ]}
               >
+                {isDark && (
+                  <BlurView
+                    intensity={30}
+                    tint="dark"
+                    pointerEvents="none"
+                    style={styles.activityBlur}
+                  />
+                )}
                 <View
                   style={[
                     styles.activityIcon,
@@ -566,7 +583,11 @@ export default function Index() {
                         : "arrow-up"
                     }
                     size={20}
-                    color={amountColor(transaction)}
+                    color={
+                      transaction.entryType === "CREDIT"
+                        ? theme.colors.primary
+                        : theme.colors.danger
+                    }
                   />
                 </View>
                 <View style={styles.activityDetails}>
@@ -601,7 +622,12 @@ export default function Index() {
                 <Text
                   style={[
                     styles.activityAmount,
-                    { color: amountColor(transaction) },
+                    {
+                      color:
+                        transaction.entryType === "CREDIT"
+                          ? theme.colors.primary
+                          : theme.colors.danger,
+                    },
                   ]}
                 >
                   {formatAmount(transaction)}
@@ -875,5 +901,12 @@ const styles = StyleSheet.create({
   successBannerClose: {
     padding: 4,
     marginLeft: 8,
+  },
+  activityBlur: {
+    ...StyleSheet.absoluteFillObject,
+    borderRadius: 16,
+    backgroundColor: "rgba(255,255,255,0.05)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.10)",
   },
 });

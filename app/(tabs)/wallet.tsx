@@ -26,8 +26,11 @@ import {
   Platform,
 } from "react-native";
 import { ActivityIndicator } from "react-native-paper";
+import { useTheme } from "@/theme";
 
 export default function Wallet() {
+  const { theme } = useTheme();
+
   const user = useAuthStore((state) => state.user);
   const isLoadingUser = useAuthStore((state) => state.isLoadingUser);
   const [refreshing, setRefreshing] = useState(false);
@@ -83,44 +86,69 @@ export default function Wallet() {
 
   if (!fontsLoaded || (isLoadingUser && !user)) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#38B2AC" />
+      <View
+        style={[
+          styles.loadingContainer,
+          { backgroundColor: theme.colors.background },
+        ]}
+      >
+        <ActivityIndicator size="large" color={theme.colors.primary} />
       </View>
     );
   }
 
   return (
-    <LinearGradient colors={["#F8F9FA", "#E9ECEF"]} style={styles.container}>
+    <LinearGradient
+      colors={[theme.colors.gradientStart, theme.colors.gradientEnd]}
+      style={styles.container}
+    >
       <ScrollView
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            colors={["#38B2AC"]}
-            tintColor="#38B2AC"
+            colors={[theme.colors.primary]}
+            tintColor={theme.colors.primary}
           />
         }
       >
         {/* Header */}
         <View style={styles.header}>
           <View style={styles.headerLeft}>
-            <View style={styles.avatar}>
-              <Ionicons name="person" size={24} color="#38B2AC" />
+            <View
+              style={[
+                styles.avatar,
+                { backgroundColor: theme.colors.actionIconDepositBg },
+              ]}
+            >
+              <Ionicons name="person" size={24} color={theme.colors.primary} />
             </View>
             <View>
-              <Text style={styles.greetingText}>Hey, {user?.firstName} 👋</Text>
+              <Text style={[styles.greetingText, { color: theme.colors.text }]}>
+                Hey, {user?.firstName} 👋
+              </Text>
             </View>
           </View>
           <View style={styles.headerRight}>
-            <TouchableOpacity style={styles.iconButton}>
-              <Ionicons name="add" size={24} color="#1B263B" />
+            <TouchableOpacity
+              style={[
+                styles.iconButton,
+                { backgroundColor: theme.colors.card },
+              ]}
+            >
+              <Ionicons name="add" size={24} color={theme.colors.text} />
             </TouchableOpacity>
-            <TouchableOpacity style={styles.iconButton}>
+            <TouchableOpacity
+              style={[
+                styles.iconButton,
+                { backgroundColor: theme.colors.card },
+              ]}
+            >
               <Ionicons
                 name="notifications-outline"
                 size={24}
-                color="#1B263B"
+                color={theme.colors.text}
               />
             </TouchableOpacity>
           </View>
@@ -154,9 +182,11 @@ export default function Wallet() {
         {/* Transactions Section */}
         <View style={styles.transactionsSection}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Transactions</Text>
+            <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
+              Transactions
+            </Text>
             {/*<TouchableOpacity>
-              <Ionicons name="options-outline" size={24} color="#1B263B" />
+              <Ionicons name="options-outline" size={24} color={theme.colors.text} />
             </TouchableOpacity>*/}
           </View>
 
@@ -179,7 +209,6 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#F8F9FA",
   },
   loadingText: {
     fontSize: 16,
@@ -206,14 +235,12 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: "rgba(56, 178, 172, 0.15)",
     justifyContent: "center",
     alignItems: "center",
   },
   greetingText: {
     fontSize: 20,
     fontFamily: "Poppins_600SemiBold",
-    color: "#1B263B",
   },
   headerRight: {
     flexDirection: "row",
@@ -223,7 +250,6 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: "#FFFFFF",
     justifyContent: "center",
     alignItems: "center",
     shadowColor: "#000",
@@ -246,6 +272,5 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 22,
     fontFamily: "Poppins_700Bold",
-    color: "#1B263B",
   },
 });

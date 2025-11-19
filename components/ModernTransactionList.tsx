@@ -9,6 +9,8 @@ import {
   Text,
   View,
 } from "react-native";
+import { useTheme } from "@/theme";
+import { BlurView } from "expo-blur";
 
 interface ModernTransactionListProps {
   transactions: Transaction[];
@@ -25,35 +27,61 @@ export default function ModernTransactionList({
   isLoadingMore = false,
   onLoadMore,
 }: ModernTransactionListProps) {
-  // 🔹 Return different icons for each transaction type
+  const { theme, scheme } = useTheme();
+  const isDark = scheme === "dark";
+
   const renderIcon = (type: string) => {
     switch (type) {
       case "DEPOSIT":
-        return <Ionicons name="arrow-down-circle" size={24} color="#38B2AC" />;
+        return (
+          <Ionicons
+            name="arrow-down-circle"
+            size={24}
+            color={theme.colors.primary}
+          />
+        );
       case "WITHDRAWAL":
-        return <Ionicons name="arrow-up-circle" size={24} color="#E53E3E" />;
+        return (
+          <Ionicons
+            name="arrow-up-circle"
+            size={24}
+            color={theme.colors.danger}
+          />
+        );
       case "LOCK":
-        return <Feather name="lock" size={22} color="#1E3A8A" />;
+        return (
+          <Feather name="lock" size={22} color={theme.colors.actionIconLock} />
+        );
       case "TRANSFER":
-        return <Ionicons name="swap-horizontal" size={24} color="#3182CE" />;
+        return (
+          <Ionicons
+            name="swap-horizontal"
+            size={24}
+            color={theme.colors.accent}
+          />
+        );
       case "REFUND":
         return (
           <MaterialCommunityIcons
             name="cash-refund"
             size={24}
-            color="#4A5568"
+            color={theme.colors.actionIconRedeem}
           />
         );
       default:
-        return <Feather name="help-circle" size={22} color="#A0AEC0" />;
+        return (
+          <Feather name="help-circle" size={22} color={theme.colors.muted} />
+        );
     }
   };
 
   if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#38B2AC" />
-        <Text style={styles.loadingText}>Loading transactions...</Text>
+        <ActivityIndicator size="large" color={theme.colors.primary} />
+        <Text style={[styles.loadingText, { color: theme.colors.muted }]}>
+          Loading transactions...
+        </Text>
       </View>
     );
   }
@@ -61,8 +89,14 @@ export default function ModernTransactionList({
   if (!Array.isArray(transactions) || transactions.length === 0) {
     return (
       <View style={styles.emptyContainer}>
-        <Ionicons name="receipt-outline" size={64} color="#CED4DA" />
-        <Text style={styles.emptyText}>No transactions yet</Text>
+        <Ionicons
+          name="receipt-outline"
+          size={64}
+          color={theme.colors.emptyStateIcon}
+        />
+        <Text style={[styles.emptyText, { color: theme.colors.muted }]}>
+          No transactions yet
+        </Text>
       </View>
     );
   }
@@ -75,7 +109,6 @@ export default function ModernTransactionList({
     index: number;
   }) => {
     const getTitle = (t: Transaction) => {
-      // Keep titles short to avoid repeating sender name twice
       switch (t.type) {
         case "DEPOSIT":
           return "Received";
@@ -111,9 +144,24 @@ export default function ModernTransactionList({
       }
     };
 
-    // amount color: green for credit, red for debit
     const amountColor = (t: Transaction) =>
-      t.entryType === "CREDIT" ? "#38B2AC" : "#DC2626";
+      t.entryType === "CREDIT" ? theme.colors.primary : theme.colors.danger;
+
+    const iconBg = (() => {
+      switch (transaction.type) {
+        case "DEPOSIT":
+          return theme.colors.actionIconDepositBg;
+        case "WITHDRAWAL":
+          return theme.colors.actionIconSpendBg;
+        case "LOCK":
+        case "TRANSFER":
+          return theme.colors.actionIconLockBg;
+        case "REFUND":
+          return theme.colors.actionIconRedeemBg;
+        default:
+          return theme.colors.actionIconLockBg;
+      }
+    })();
 
     return (
       <MotiView
@@ -124,22 +172,27 @@ export default function ModernTransactionList({
           type: "timing",
           duration: 300,
         }}
-        style={styles.transactionCard}
+        style={[
+          styles.transactionCard,
+          isDark
+            ? {
+                backgroundColor: "rgba(255,255,255,0.05)",
+                borderWidth: 1,
+                borderColor: "rgba(255,255,255,0.10)",
+              }
+            : { backgroundColor: theme.colors.card },
+        ]}
       >
+        {isDark && (
+          <BlurView
+            intensity={25}
+            tint="dark"
+            style={StyleSheet.absoluteFill}
+          />
+        )}
+
         <View style={styles.transactionLeft}>
-          <View
-            style={[
-              styles.transactionIcon,
-              {
-                backgroundColor:
-                  transaction.type === "DEPOSIT"
-                    ? "#E7F6F2"
-                    : transaction.type === "WITHDRAWAL"
-                      ? "#FEE2E2"
-                      : "#E0E7FF",
-              },
-            ]}
-          >
+          <View style={[styles.transactionIcon, { backgroundColor: iconBg }]}>
             <MotiView
               from={{ scale: 0.7, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
@@ -152,14 +205,17 @@ export default function ModernTransactionList({
           <View style={styles.transactionDetails}>
             <View style={styles.transactionTitleRow}>
               <Text
-                style={styles.transactionLabel}
+                style={[styles.transactionLabel, { color: theme.colors.muted }]}
                 numberOfLines={1}
                 ellipsizeMode="tail"
               >
                 {getTitle(transaction)}
               </Text>
               <Text
-                style={styles.transactionRecipient}
+                style={[
+                  styles.transactionRecipient,
+                  { color: theme.colors.text },
+                ]}
                 numberOfLines={1}
                 ellipsizeMode="tail"
               >
@@ -167,7 +223,7 @@ export default function ModernTransactionList({
               </Text>
             </View>
             <Text
-              style={styles.transactionDate}
+              style={[styles.transactionDate, { color: theme.colors.muted }]}
               numberOfLines={1}
               ellipsizeMode="tail"
             >
@@ -199,8 +255,10 @@ export default function ModernTransactionList({
     if (!isLoadingMore) return null;
     return (
       <View style={styles.footerLoader}>
-        <ActivityIndicator size="small" color="#38B2AC" />
-        <Text style={styles.footerText}>Loading more...</Text>
+        <ActivityIndicator size="small" color={theme.colors.primary} />
+        <Text style={[styles.footerText, { color: theme.colors.muted }]}>
+          Loading more...
+        </Text>
       </View>
     );
   };
@@ -225,7 +283,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   loadingText: {
-    color: "#778DA9",
     fontFamily: "Poppins_500Medium",
     marginTop: 12,
   },
@@ -235,7 +292,6 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     marginTop: 16,
-    color: "#778DA9",
     fontFamily: "Poppins_500Medium",
     fontSize: 16,
   },
@@ -246,7 +302,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    backgroundColor: "#FFFFFF",
     borderRadius: 16,
     padding: 16,
     marginBottom: 12,
@@ -255,8 +310,8 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.04,
     shadowRadius: 8,
     elevation: 2,
+    overflow: "hidden",
   },
-  // left column: icon + details - allow this column to shrink so amount stays visible
   transactionLeft: {
     flexDirection: "row",
     alignItems: "center",
@@ -276,7 +331,6 @@ const styles = StyleSheet.create({
     fontFamily: "Poppins_600SemiBold",
     color: "#1B263B",
   },
-  // details should be able to shrink/wrap inside the left column
   transactionDetails: {
     flex: 1,
     minWidth: 0,
@@ -290,22 +344,18 @@ const styles = StyleSheet.create({
   transactionLabel: {
     fontSize: 13,
     fontFamily: "Poppins_400Regular",
-    color: "#778DA9",
   },
   transactionRecipient: {
     fontSize: 16,
     fontFamily: "Poppins_600SemiBold",
-    color: "#1B263B",
     flexShrink: 1,
-    maxWidth: "70%", // prevent recipient from occupying entire row
+    maxWidth: "70%",
   },
   transactionDate: {
     fontSize: 12,
     fontFamily: "Poppins_400Regular",
-    color: "#778DA9",
     marginTop: 2,
   },
-  // amount container: fixed/min width, does not shrink
   transactionAmount: {
     fontSize: 16,
     fontFamily: "Poppins_600SemiBold",
@@ -322,7 +372,6 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   footerText: {
-    color: "#778DA9",
     fontFamily: "Poppins_500Medium",
     fontSize: 13,
   },

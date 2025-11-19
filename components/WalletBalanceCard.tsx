@@ -2,6 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import React from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { useTheme } from "@/theme";
 
 interface WalletBalanceCardProps {
   balance: string;
@@ -20,21 +21,40 @@ export default function WalletBalanceCard({
   showBalance = true,
   onToggleShowBalance,
 }: WalletBalanceCardProps) {
+  const { theme } = useTheme();
+
   return (
     <View style={styles.container}>
       <LinearGradient
-        colors={["#1B263B", "#415A77"]}
+        colors={[theme.colors.balanceCardStart, theme.colors.balanceCardEnd]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={styles.card}
       >
         <View style={styles.balanceRow}>
           <View style={styles.balanceSection}>
-            <Text style={styles.balanceLabel}>Total Balance</Text>
+            <Text
+              style={[
+                styles.balanceLabel,
+                { color: theme.colors.balanceLabel },
+              ]}
+            >
+              Total Balance
+            </Text>
             {isLoading ? (
-              <View style={styles.loadingPlaceholder} />
+              <View
+                style={[
+                  styles.loadingPlaceholder,
+                  { backgroundColor: theme.colors.statBackground },
+                ]}
+              />
             ) : (
-              <Text style={styles.balanceAmount}>
+              <Text
+                style={[
+                  styles.balanceAmount,
+                  { color: theme.colors.balanceText },
+                ]}
+              >
                 {showBalance ? `₦${balance}` : "₦ •••• ••••"}
               </Text>
             )}
@@ -48,22 +68,44 @@ export default function WalletBalanceCard({
             <Ionicons
               name={showBalance ? "eye-outline" : "eye-off-outline"}
               size={20}
-              color="rgba(255,255,255,0.8)"
+              color={theme.colors.balanceLabel}
             />
           </TouchableOpacity>
         </View>
 
-        <View style={styles.statsRow}>
+        <View
+          style={[
+            styles.statsRow,
+            { backgroundColor: theme.colors.statBackground },
+          ]}
+        >
           <View style={styles.statItem}>
-            <Text style={styles.statLabel}>Budgeted</Text>
-            <Text style={styles.statValue}>
+            <Text
+              style={[styles.statLabel, { color: theme.colors.balanceLabel }]}
+            >
+              Budgeted
+            </Text>
+            <Text
+              style={[styles.statValue, { color: theme.colors.balanceText }]}
+            >
               {showBalance ? `₦${totalLocked}` : "••••••"}
             </Text>
           </View>
-          <View style={styles.statDivider} />
+          <View
+            style={[
+              styles.statDivider,
+              { backgroundColor: theme.colors.statBackground },
+            ]}
+          />
           <View style={styles.statItem}>
-            <Text style={styles.statLabel}>Redeemed</Text>
-            <Text style={styles.statValue}>
+            <Text
+              style={[styles.statLabel, { color: theme.colors.balanceLabel }]}
+            >
+              Redeemed
+            </Text>
+            <Text
+              style={[styles.statValue, { color: theme.colors.balanceText }]}
+            >
               {showBalance ? `₦${totalRedeemed}` : "••••••"}
             </Text>
           </View>
@@ -98,13 +140,11 @@ const styles = StyleSheet.create({
   },
   balanceLabel: {
     fontSize: 14,
-    color: "rgba(255,255,255,0.8)",
     fontFamily: "Poppins_400Regular",
     marginBottom: 8,
   },
   balanceAmount: {
     fontSize: 36,
-    color: "#FFFFFF",
     fontFamily: "Poppins_700Bold",
   },
   eyeButton: {
@@ -113,7 +153,6 @@ const styles = StyleSheet.create({
   loadingPlaceholder: {
     height: 36,
     width: 150,
-    backgroundColor: "rgba(255,255,255,0.2)",
     borderRadius: 8,
   },
   cardDetails: {
@@ -139,7 +178,6 @@ const styles = StyleSheet.create({
   },
   statsRow: {
     flexDirection: "row",
-    backgroundColor: "rgba(255,255,255,0.1)",
     borderRadius: 16,
     padding: 16,
   },
@@ -148,18 +186,15 @@ const styles = StyleSheet.create({
   },
   statLabel: {
     fontSize: 12,
-    color: "rgba(255,255,255,0.7)",
     fontFamily: "Poppins_400Regular",
     marginBottom: 4,
   },
   statValue: {
     fontSize: 18,
-    color: "#FFFFFF",
     fontFamily: "Poppins_600SemiBold",
   },
   statDivider: {
     width: 1,
-    backgroundColor: "rgba(255,255,255,0.2)",
     marginHorizontal: 16,
   },
 });

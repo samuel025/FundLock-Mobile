@@ -3,11 +3,30 @@ import { Ionicons } from "@expo/vector-icons";
 import React from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { LineChart } from "react-native-gifted-charts";
+import { useTheme } from "@/theme";
+import { BlurView } from "expo-blur";
 
 interface RecentStatisticsProps {
   totalSpent: string;
   isLoading: boolean;
-  transactions: Transaction[]; // Add this prop
+  transactions: Transaction[];
+}
+
+function hexToRgba(hex: string, alpha: number) {
+  const raw = hex.replace("#", "");
+  const bigint = parseInt(
+    raw.length === 3
+      ? raw
+          .split("")
+          .map((c) => c + c)
+          .join("")
+      : raw,
+    16,
+  );
+  const r = (bigint >> 16) & 255;
+  const g = (bigint >> 8) & 255;
+  const b = bigint & 255;
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
 
 export default function RecentStatistics({
@@ -15,6 +34,9 @@ export default function RecentStatistics({
   isLoading,
   transactions = [],
 }: RecentStatisticsProps) {
+  const { theme, scheme } = useTheme();
+  const isDark = scheme === "dark";
+
   const days = 7;
   const now = new Date();
   const dailyNet = Array(days).fill(0);
@@ -22,7 +44,7 @@ export default function RecentStatistics({
   transactions.forEach((tx) => {
     const txDate = new Date(tx.createdAt);
     const diffDays = Math.floor(
-      (now.getTime() - txDate.getTime()) / (1000 * 60 * 60 * 24)
+      (now.getTime() - txDate.getTime()) / (1000 * 60 * 60 * 24),
     );
     if (diffDays < days && diffDays >= 0) {
       const idx = days - diffDays - 1;
@@ -46,45 +68,71 @@ export default function RecentStatistics({
   const offset = Math.abs(minVal);
   const chartData = cumulative.map((value) => ({ value: value + offset }));
 
-  // percent display: show a dash "—" when baseline is zero (avoids misleading 100%)
   const first = cumulative[0] ?? 0;
   const last = cumulative[cumulative.length - 1] ?? 0;
   let percentLabel: string = "—";
   let isPositive = true;
 
   if (Math.abs(first) < 1e-9) {
-    // baseline is effectively zero — show dash instead of arbitrary 100%
     percentLabel = "—";
     isPositive = last >= 0;
   } else {
     const percent = ((last - first) / Math.abs(first)) * 100;
-    const rounded = Math.round(percent * 10) / 10; // one decimal
+    const rounded = Math.round(percent * 10) / 10;
     percentLabel = (rounded >= 0 ? "+" : "") + rounded.toString() + "%";
     isPositive = rounded >= 0;
   }
 
   return (
-    <View style={styles.container}>
+    <View
+      style={[
+        styles.container,
+        isDark
+          ? {
+              // Glassy dark: subtle translucency + border
+              backgroundColor: "rgba(255,255,255,0.06)",
+              borderWidth: 1,
+              borderColor: "rgba(255,255,255,0.12)",
+            }
+          : {
+              backgroundColor: theme.colors.card,
+            },
+      ]}
+    >
+      {isDark && (
+        <BlurView intensity={30} tint="dark" style={StyleSheet.absoluteFill} />
+      )}
+
       <View style={styles.header}>
         <View>
-          <Text style={styles.label}>Recent statistic</Text>
-          <Text style={styles.amount}>₦{totalSpent}</Text>
+          <Text style={[styles.label, { color: theme.colors.muted }]}>
+            Recent statistic
+          </Text>
+          <Text style={[styles.amount, { color: theme.colors.text }]}>
+            ₦{totalSpent}
+          </Text>
         </View>
         <View
           style={[
             styles.trendBadge,
-            { backgroundColor: isPositive ? "#E7F6F2" : "#FEE2E2" },
+            {
+              backgroundColor: isPositive
+                ? theme.colors.actionIconDepositBg
+                : theme.colors.actionIconSpendBg,
+            },
           ]}
         >
           <Ionicons
             name={isPositive ? "trending-up" : "trending-down"}
             size={16}
-            color={isPositive ? "#38B2AC" : "#DC2626"}
+            color={isPositive ? theme.colors.primary : theme.colors.danger}
           />
           <Text
             style={[
               styles.trendText,
-              { color: isPositive ? "#38B2AC" : "#DC2626" },
+              {
+                color: isPositive ? theme.colors.primary : theme.colors.danger,
+              },
             ]}
           >
             {percentLabel}
@@ -98,10 +146,10 @@ export default function RecentStatistics({
           height={80}
           width={280}
           spacing={40}
-          color="#38B2AC"
+          color={theme.colors.primary}
           thickness={2}
-          startFillColor="rgba(56, 178, 172, 0.3)"
-          endFillColor="rgba(56, 178, 172, 0.01)"
+          startFillColor={hexToRgba(theme.colors.primary, 0.3)}
+          endFillColor={hexToRgba(theme.colors.primary, 0.01)}
           startOpacity={0.9}
           endOpacity={0.2}
           initialSpacing={0}
@@ -121,7 +169,6 @@ export default function RecentStatistics({
 const styles = StyleSheet.create({
   container: {
     marginHorizontal: 20,
-    backgroundColor: "#FFFFFF",
     borderRadius: 24,
     padding: 20,
     marginBottom: 24,
@@ -130,6 +177,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.08,
     shadowRadius: 12,
     elevation: 4,
+    overflow: "hidden",
   },
   header: {
     flexDirection: "row",
@@ -139,19 +187,16 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 14,
-    color: "#778DA9",
     fontFamily: "Poppins_400Regular",
     marginBottom: 4,
   },
   amount: {
     fontSize: 28,
-    color: "#1B263B",
     fontFamily: "Poppins_700Bold",
   },
   trendBadge: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#E7F6F2",
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 12,
@@ -159,7 +204,6 @@ const styles = StyleSheet.create({
   },
   trendText: {
     fontSize: 14,
-    color: "#38B2AC",
     fontFamily: "Poppins_600SemiBold",
   },
   chartContainer: {

@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import React from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { useTheme } from "@/theme";
 
 interface QuickActionsProps {
   onAddMoney: () => void;
@@ -15,36 +16,76 @@ export default function QuickActions({
   onSignOut,
   onSpend,
 }: QuickActionsProps) {
+  const { theme } = useTheme();
+
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Quick actions</Text>
+      <Text style={[styles.title, { color: theme.colors.text }]}>
+        Quick actions
+      </Text>
       <View style={styles.actionsRow}>
         <TouchableOpacity style={styles.actionItem} onPress={onAddMoney}>
-          <View style={[styles.actionIcon, { backgroundColor: "#E7F6F2" }]}>
-            <Ionicons name="add" size={24} color="#38B2AC" />
+          <View
+            style={[
+              styles.actionIcon,
+              { backgroundColor: theme.colors.actionIconDepositBg },
+            ]}
+          >
+            <Ionicons name="add" size={24} color={theme.colors.primary} />
           </View>
-          <Text style={styles.actionText}>Add Money</Text>
+          <Text style={[styles.actionText, { color: theme.colors.muted }]}>
+            Add Money
+          </Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.actionItem} onPress={onWithdraw}>
-          <View style={[styles.actionIcon, { backgroundColor: "#FEE2E2" }]}>
-            <Ionicons name="arrow-up" size={24} color="#DC2626" />
+          <View
+            style={[
+              styles.actionIcon,
+              { backgroundColor: theme.colors.actionIconSpendBg },
+            ]}
+          >
+            <Ionicons name="arrow-up" size={24} color={theme.colors.danger} />
           </View>
-          <Text style={styles.actionText}>Withdraw</Text>
+          <Text style={[styles.actionText, { color: theme.colors.muted }]}>
+            Withdraw
+          </Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.actionItem} onPress={onSpend}>
-          <View style={[styles.actionIcon, { backgroundColor: "#E0E7FF" }]}>
-            <Ionicons name="swap-horizontal" size={24} color="#4F46E5" />
+          <View
+            style={[
+              styles.actionIcon,
+              { backgroundColor: theme.colors.actionIconLockBg },
+            ]}
+          >
+            <Ionicons
+              name="swap-horizontal"
+              size={24}
+              color={theme.colors.accent}
+            />
           </View>
-          <Text style={styles.actionText}>Spend</Text>
+          <Text style={[styles.actionText, { color: theme.colors.muted }]}>
+            Spend
+          </Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.actionItem} onPress={onSignOut}>
-          <View style={[styles.actionIcon, { backgroundColor: "#FEF3C7" }]}>
-            <Ionicons name="log-out-outline" size={24} color="#D97706" />
+          <View
+            style={[
+              styles.actionIcon,
+              { backgroundColor: theme.colors.actionIconRedeemBg },
+            ]}
+          >
+            <Ionicons
+              name="log-out-outline"
+              size={24}
+              color={theme.colors.actionIconRedeem}
+            />
           </View>
-          <Text style={styles.actionText}>Sign Out</Text>
+          <Text style={[styles.actionText, { color: theme.colors.muted }]}>
+            Sign Out
+          </Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -59,7 +100,6 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 16,
     fontFamily: "Poppins_600SemiBold",
-    color: "#1B263B",
     marginBottom: 16,
   },
   actionsRow: {
@@ -80,6 +120,5 @@ const styles = StyleSheet.create({
   actionText: {
     fontSize: 12,
     fontFamily: "Poppins_500Medium",
-    color: "#415A77",
   },
 });
