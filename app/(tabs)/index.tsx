@@ -2,6 +2,7 @@ import SpendingInsights from "@/components/SpendingInsights";
 import { useWallet } from "@/hooks/useWallet";
 import { authActions } from "@/lib/authContext";
 import { useAuthStore } from "@/lib/useAuthStore";
+import { walletStore } from "@/lib/walletStore";
 import {
   Poppins_400Regular,
   Poppins_500Medium,
@@ -12,7 +13,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   RefreshControl,
   ScrollView,
@@ -21,13 +22,19 @@ import {
   TouchableOpacity,
   View,
   Platform,
+  Animated,
 } from "react-native";
+import { useTheme } from "@/theme";
 
 export default function Index() {
+  const { theme } = useTheme();
+
   const user = useAuthStore((state) => state.user);
   const isLoadingUser = useAuthStore((state) => state.isLoadingUser);
   const [refreshing, setRefreshing] = useState(false);
   const [showBalance, setShowBalance] = useState(true);
+  const [showSuccessMessage, setShowSuccessMessage] = useState(false);
+  const fadeAnim = useState(new Animated.Value(0))[0];
 
   const {
     balance,
@@ -36,7 +43,7 @@ export default function Index() {
     transactions,
     fetchWalletData,
     insights,
-    hasPin,
+    successMessage,
   } = useWallet();
 
   let [fontsLoaded] = useFonts({
@@ -45,6 +52,44 @@ export default function Index() {
     Poppins_600SemiBold,
     Poppins_700Bold,
   });
+
+  useEffect(() => {
+    if (successMessage) {
+      setShowSuccessMessage(true);
+
+      // Fade in animation
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 300,
+        useNativeDriver: true,
+      }).start();
+
+      // Auto-hide after 5 seconds
+      const timer = setTimeout(() => {
+        Animated.timing(fadeAnim, {
+          toValue: 0,
+          duration: 300,
+          useNativeDriver: true,
+        }).start(() => {
+          setShowSuccessMessage(false);
+          walletStore.getState().setSuccessMessage(null);
+        });
+      }, 5000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [successMessage]);
+
+  const dismissSuccessMessage = () => {
+    Animated.timing(fadeAnim, {
+      toValue: 0,
+      duration: 300,
+      useNativeDriver: true,
+    }).start(() => {
+      setShowSuccessMessage(false);
+      walletStore.getState().setSuccessMessage(null);
+    });
+  };
 
   const getTitle = (t: any) => {
     switch (t.type) {
@@ -96,7 +141,7 @@ export default function Index() {
     })}`;
 
   const amountColor = (t: any) =>
-    t.entryType === "CREDIT" ? "#38B2AC" : "#DC2626";
+    t.entryType === "CREDIT" ? theme.colors.primary : theme.colors.danger;
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -112,8 +157,15 @@ export default function Index() {
 
   if (!fontsLoaded || (isLoadingUser && !user)) {
     return (
-      <View style={styles.loadingContainer}>
-        <Text style={styles.loadingText}>Loading...</Text>
+      <View
+        style={[
+          styles.loadingContainer,
+          { backgroundColor: theme.colors.background },
+        ]}
+      >
+        <Text style={[styles.loadingText, { color: theme.colors.muted }]}>
+          Loading...
+        </Text>
       </View>
     );
   }
@@ -121,46 +173,117 @@ export default function Index() {
   const recentTransactions = transactions?.slice(0, 3) || [];
 
   return (
-    <LinearGradient colors={["#F8F9FA", "#E9ECEF"]} style={styles.container}>
+    <LinearGradient
+      colors={[theme.colors.gradientStart, theme.colors.gradientEnd]}
+      style={styles.container}
+    >
       <ScrollView
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            colors={["#38B2AC"]}
-            tintColor="#38B2AC"
+            colors={[theme.colors.primary]}
+            tintColor={theme.colors.primary}
           />
         }
       >
         {/* Header */}
         <View style={styles.header}>
           <View>
-            <Text style={styles.greeting}>Good Morning</Text>
-            <Text style={styles.userName}>{user?.firstName}</Text>
+            <Text style={[styles.greeting, { color: theme.colors.muted }]}>
+              Good Morning
+            </Text>
+            <Text style={[styles.userName, { color: theme.colors.text }]}>
+              {user?.firstName}
+            </Text>
           </View>
           <TouchableOpacity style={styles.profileButton}>
             <LinearGradient
-              colors={["#38B2AC", "#2C9A8F"]}
+              colors={[theme.colors.primary, theme.colors.primary]}
               style={styles.profileGradient}
             >
-              <Ionicons name="person" size={24} color="#FFFFFF" />
+              <Ionicons
+                name="person"
+                size={24}
+                color={theme.colors.balanceText}
+              />
             </LinearGradient>
           </TouchableOpacity>
         </View>
 
+        {showSuccessMessage && successMessage && (
+          <Animated.View
+            style={[
+              styles.successBanner,
+              {
+                opacity: fadeAnim,
+                backgroundColor: theme.colors.card,
+                shadowColor: theme.colors.success,
+              },
+            ]}
+          >
+            <View
+              style={[
+                styles.successBannerContent,
+                {
+                  backgroundColor: theme.colors.successBannerBg,
+                  borderLeftColor: theme.colors.successBannerBorder,
+                },
+              ]}
+            >
+              <View style={styles.successBannerIconWrapper}>
+                <Ionicons
+                  name="checkmark-circle"
+                  size={24}
+                  color={theme.colors.success}
+                />
+              </View>
+              <Text
+                style={[
+                  styles.successBannerText,
+                  { color: theme.colors.successBannerText },
+                ]}
+              >
+                {successMessage}
+              </Text>
+              <TouchableOpacity
+                onPress={dismissSuccessMessage}
+                style={styles.successBannerClose}
+              >
+                <Ionicons name="close" size={20} color={theme.colors.success} />
+              </TouchableOpacity>
+            </View>
+          </Animated.View>
+        )}
+
         {/* Balance Overview Card */}
         <View style={styles.balanceCard}>
           <LinearGradient
-            colors={["#1B263B", "#415A77"]}
+            colors={[
+              theme.colors.balanceCardStart,
+              theme.colors.balanceCardEnd,
+            ]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.balanceGradient}
           >
             <View style={styles.balanceHeader}>
               <View>
-                <Text style={styles.balanceLabel}>Total Balance</Text>
-                <Text style={styles.balanceAmount}>
+                <Text
+                  style={[
+                    styles.balanceLabel,
+                    { color: theme.colors.balanceLabel },
+                  ]}
+                >
+                  Total Balance
+                </Text>
+                <Text
+                  style={[
+                    styles.balanceAmount,
+                    { color: theme.colors.balanceText },
+                  ]}
+                >
                   {showBalance ? formatCurrency(balance) : "₦ •••• ••••"}
                 </Text>
               </View>
@@ -174,33 +297,85 @@ export default function Index() {
                 <Ionicons
                   name={showBalance ? "eye-outline" : "eye-off-outline"}
                   size={20}
-                  color="rgba(255,255,255,0.8)"
+                  color={theme.colors.balanceLabel}
                 />
               </TouchableOpacity>
             </View>
 
-            <View style={styles.balanceStats}>
+            <View
+              style={[
+                styles.balanceStats,
+                { backgroundColor: theme.colors.statBackground },
+              ]}
+            >
               <View style={styles.balanceStat}>
-                <View style={styles.statIcon}>
-                  <Ionicons name="lock-closed" size={16} color="#38B2AC" />
+                <View
+                  style={[
+                    styles.statIcon,
+                    { backgroundColor: theme.colors.actionIconLockBg },
+                  ]}
+                >
+                  <Ionicons
+                    name="lock-closed"
+                    size={16}
+                    color={theme.colors.actionIconLock}
+                  />
                 </View>
                 <View>
-                  <Text style={styles.statLabel}>Budgeted</Text>
-                  <Text style={styles.statValue}>
+                  <Text
+                    style={[
+                      styles.statLabel,
+                      { color: theme.colors.balanceLabel },
+                    ]}
+                  >
+                    Budgeted
+                  </Text>
+                  <Text
+                    style={[
+                      styles.statValue,
+                      { color: theme.colors.balanceText },
+                    ]}
+                  >
                     {showBalance ? formatCurrency(totalLockedAmount) : "••••••"}
                   </Text>
                 </View>
               </View>
 
-              <View style={styles.statDivider} />
+              <View
+                style={[
+                  styles.statDivider,
+                  { backgroundColor: theme.colors.statBackground },
+                ]}
+              />
 
               <View style={styles.balanceStat}>
-                <View style={[styles.statIcon, { backgroundColor: "#E0E7FF" }]}>
-                  <Ionicons name="checkmark-circle" size={16} color="#4F46E5" />
+                <View
+                  style={[
+                    styles.statIcon,
+                    { backgroundColor: theme.colors.actionIconLockBg },
+                  ]}
+                >
+                  <Ionicons
+                    name="checkmark-circle"
+                    size={16}
+                    color={theme.colors.accent}
+                  />
                 </View>
                 <View>
-                  <Text style={styles.statLabel}>Redeemed</Text>
-                  <Text style={styles.statValue}>
+                  <Text
+                    style={[
+                      styles.statLabel,
+                      { color: theme.colors.balanceLabel },
+                    ]}
+                  >
+                    Redeemed
+                  </Text>
+                  <Text
+                    style={[
+                      styles.statValue,
+                      { color: theme.colors.balanceText },
+                    ]}
+                  >
                     {showBalance
                       ? formatCurrency(totalRedeemedAmount)
                       : "••••••"}
@@ -213,66 +388,130 @@ export default function Index() {
 
         {/* Quick Actions */}
         <View style={styles.quickActions}>
-          <Text style={styles.sectionTitle}>Quick Actions</Text>
+          <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
+            Quick Actions
+          </Text>
           <View style={styles.actionsRow}>
             <TouchableOpacity
               style={styles.actionCard}
               onPress={() => router.push("/wallet")}
             >
-              <View style={[styles.actionIcon, { backgroundColor: "#E7F6F2" }]}>
-                <Ionicons name="wallet" size={24} color="#38B2AC" />
+              <View
+                style={[
+                  styles.actionIcon,
+                  { backgroundColor: theme.colors.actionIconDepositBg },
+                ]}
+              >
+                <Ionicons
+                  name="wallet"
+                  size={24}
+                  color={theme.colors.primary}
+                />
               </View>
-              <Text style={styles.actionText}>My Wallet</Text>
+              <Text style={[styles.actionText, { color: theme.colors.muted }]}>
+                My Wallet
+              </Text>
             </TouchableOpacity>
 
             <TouchableOpacity
               style={styles.actionCard}
               onPress={() => router.push("/budget")}
             >
-              <View style={[styles.actionIcon, { backgroundColor: "#FEE2E2" }]}>
-                <Ionicons name="lock-closed" size={24} color="#DC2626" />
+              <View
+                style={[
+                  styles.actionIcon,
+                  { backgroundColor: theme.colors.actionIconSpendBg },
+                ]}
+              >
+                <Ionicons
+                  name="lock-closed"
+                  size={24}
+                  color={theme.colors.danger}
+                />
               </View>
-              <Text style={styles.actionText}>Budget Funds</Text>
+              <Text style={[styles.actionText, { color: theme.colors.muted }]}>
+                Budget Funds
+              </Text>
             </TouchableOpacity>
 
             <TouchableOpacity
               style={styles.actionCard}
               onPress={() => router.push("/(tabs)/budgets")}
             >
-              <View style={[styles.actionIcon, { backgroundColor: "#E0E7FF" }]}>
-                <Ionicons name="layers" size={24} color="#4F46E5" />
+              <View
+                style={[
+                  styles.actionIcon,
+                  { backgroundColor: theme.colors.actionIconLockBg },
+                ]}
+              >
+                <Ionicons name="layers" size={24} color={theme.colors.accent} />
               </View>
-              <Text style={styles.actionText}>View Budgets</Text>
+              <Text style={[styles.actionText, { color: theme.colors.muted }]}>
+                View Budgets
+              </Text>
             </TouchableOpacity>
 
             <TouchableOpacity
               style={styles.actionCard}
               onPress={() => router.push("/(tabs)/spend")}
             >
-              <View style={[styles.actionIcon, { backgroundColor: "#E0E7FF" }]}>
-                <Ionicons name="swap-horizontal" size={24} color="#4F46E5" />
+              <View
+                style={[
+                  styles.actionIcon,
+                  { backgroundColor: theme.colors.actionIconLockBg },
+                ]}
+              >
+                <Ionicons
+                  name="swap-horizontal"
+                  size={24}
+                  color={theme.colors.accent}
+                />
               </View>
-              <Text style={styles.actionText}>Spend Budgeted Funds</Text>
+              <Text style={[styles.actionText, { color: theme.colors.muted }]}>
+                Spend Budgeted Funds
+              </Text>
             </TouchableOpacity>
 
             <TouchableOpacity
               style={styles.actionCard}
               onPress={() => router.push("/spendByOrgId")}
             >
-              <View style={[styles.actionIcon, { backgroundColor: "#E0E7FF" }]}>
-                <Ionicons name="storefront" size={24} color="#4F46E5" />
+              <View
+                style={[
+                  styles.actionIcon,
+                  { backgroundColor: theme.colors.actionIconLockBg },
+                ]}
+              >
+                <Ionicons
+                  name="storefront"
+                  size={24}
+                  color={theme.colors.accent}
+                />
               </View>
-              <Text style={styles.actionText}>Spend by Vendor ID</Text>
+              <Text style={[styles.actionText, { color: theme.colors.muted }]}>
+                Spend by Vendor ID
+              </Text>
             </TouchableOpacity>
 
             <TouchableOpacity
               style={styles.actionCard}
               onPress={() => router.push("/(tabs)/profile")}
             >
-              <View style={[styles.actionIcon, { backgroundColor: "#FEF3C7" }]}>
-                <Ionicons name="person" size={24} color="#D97706" />
+              <View
+                style={[
+                  styles.actionIcon,
+                  { backgroundColor: theme.colors.actionIconRedeemBg },
+                ]}
+              >
+                <Ionicons
+                  name="person"
+                  size={24}
+                  color={theme.colors.actionIconRedeem}
+                />
               </View>
-              <Text style={styles.actionText}>Profile</Text>
+              <Text style={[styles.actionText, { color: theme.colors.muted }]}>
+                Profile
+              </Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -290,23 +529,33 @@ export default function Index() {
         {/* Recent Activity */}
         <View style={styles.recentActivity}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Recent Activity</Text>
+            <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
+              Recent Activity
+            </Text>
             <TouchableOpacity onPress={() => router.push("/wallet")}>
-              <Text style={styles.viewAll}>View All</Text>
+              <Text style={[styles.viewAll, { color: theme.colors.primary }]}>
+                View All
+              </Text>
             </TouchableOpacity>
           </View>
 
           {recentTransactions.length > 0 ? (
             recentTransactions.map((transaction, index) => (
-              <View key={index} style={styles.activityItem}>
+              <View
+                key={index}
+                style={[
+                  styles.activityItem,
+                  { backgroundColor: theme.colors.surface },
+                ]}
+              >
                 <View
                   style={[
                     styles.activityIcon,
                     {
                       backgroundColor:
                         transaction.entryType === "CREDIT"
-                          ? "#E7F6F2"
-                          : "#FEE2E2",
+                          ? theme.colors.actionIconDepositBg
+                          : theme.colors.actionIconSpendBg,
                     },
                   ]}
                 >
@@ -323,21 +572,29 @@ export default function Index() {
                 <View style={styles.activityDetails}>
                   <View style={styles.activityTitleRow}>
                     <Text
-                      style={styles.activityLabel}
+                      style={[
+                        styles.activityLabel,
+                        { color: theme.colors.muted },
+                      ]}
                       numberOfLines={1}
                       ellipsizeMode="tail"
                     >
                       {getTitle(transaction)}
                     </Text>
                     <Text
-                      style={styles.activityRecipient}
+                      style={[
+                        styles.activityRecipient,
+                        { color: theme.colors.text },
+                      ]}
                       numberOfLines={1}
                       ellipsizeMode="tail"
                     >
                       {getRecipient(transaction)}
                     </Text>
                   </View>
-                  <Text style={styles.activityDate}>
+                  <Text
+                    style={[styles.activityDate, { color: theme.colors.muted }]}
+                  >
                     {formatDateTime(transaction.createdAt)}
                   </Text>
                 </View>
@@ -356,9 +613,11 @@ export default function Index() {
               <Ionicons
                 name="document-text-outline"
                 size={48}
-                color="#CED4DA"
+                color={theme.colors.emptyStateIcon}
               />
-              <Text style={styles.emptyText}>No recent activity</Text>
+              <Text style={[styles.emptyText, { color: theme.colors.muted }]}>
+                No recent activity
+              </Text>
             </View>
           )}
         </View>
@@ -375,11 +634,9 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#F8F9FA",
   },
   loadingText: {
     fontSize: 16,
-    color: "#415A77",
     fontFamily: "Poppins_500Medium",
   },
   header: {
@@ -396,12 +653,10 @@ const styles = StyleSheet.create({
   greeting: {
     fontSize: 14,
     fontFamily: "Poppins_400Regular",
-    color: "#778DA9",
   },
   userName: {
     fontSize: 24,
     fontFamily: "Poppins_700Bold",
-    color: "#1B263B",
     marginTop: 4,
   },
   profileButton: {
@@ -437,13 +692,11 @@ const styles = StyleSheet.create({
   },
   balanceLabel: {
     fontSize: 14,
-    color: "rgba(255,255,255,0.7)",
     fontFamily: "Poppins_400Regular",
     marginBottom: 8,
   },
   balanceAmount: {
     fontSize: 36,
-    color: "#FFFFFF",
     fontFamily: "Poppins_700Bold",
   },
   eyeButton: {
@@ -451,7 +704,6 @@ const styles = StyleSheet.create({
   },
   balanceStats: {
     flexDirection: "row",
-    backgroundColor: "rgba(255,255,255,0.1)",
     borderRadius: 16,
     padding: 16,
   },
@@ -465,23 +717,19 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 12,
-    backgroundColor: "#E7F6F2",
     justifyContent: "center",
     alignItems: "center",
   },
   statLabel: {
     fontSize: 12,
-    color: "rgba(255,255,255,0.7)",
     fontFamily: "Poppins_400Regular",
   },
   statValue: {
     fontSize: 16,
-    color: "#FFFFFF",
     fontFamily: "Poppins_600SemiBold",
   },
   statDivider: {
     width: 1,
-    backgroundColor: "rgba(255,255,255,0.2)",
     marginHorizontal: 16,
   },
   quickActions: {
@@ -490,7 +738,6 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 20,
     fontFamily: "Poppins_700Bold",
-    color: "#1B263B",
     paddingHorizontal: 20,
     marginBottom: 16,
   },
@@ -518,7 +765,6 @@ const styles = StyleSheet.create({
   actionText: {
     fontSize: 12,
     fontFamily: "Poppins_500Medium",
-    color: "#415A77",
     textAlign: "center",
   },
   recentActivity: {
@@ -535,12 +781,10 @@ const styles = StyleSheet.create({
   viewAll: {
     fontSize: 14,
     fontFamily: "Poppins_600SemiBold",
-    color: "#38B2AC",
   },
   activityItem: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#FFFFFF",
     borderRadius: 16,
     padding: 16,
     marginBottom: 12,
@@ -570,24 +814,20 @@ const styles = StyleSheet.create({
   activityLabel: {
     fontSize: 13,
     fontFamily: "Poppins_400Regular",
-    color: "#778DA9",
   },
   activityRecipient: {
     fontSize: 15,
     fontFamily: "Poppins_600SemiBold",
-    color: "#1B263B",
     flexShrink: 1,
     maxWidth: "70%",
   },
   activityName: {
     fontSize: 15,
     fontFamily: "Poppins_600SemiBold",
-    color: "#1B263B",
   },
   activityDate: {
     fontSize: 12,
     fontFamily: "Poppins_400Regular",
-    color: "#778DA9",
     marginTop: 2,
   },
   activityAmount: {
@@ -606,6 +846,34 @@ const styles = StyleSheet.create({
     marginTop: 12,
     fontSize: 14,
     fontFamily: "Poppins_500Medium",
-    color: "#778DA9",
+  },
+  successBanner: {
+    marginHorizontal: 20,
+    marginBottom: 16,
+    borderRadius: 16,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 6,
+    overflow: "hidden",
+  },
+  successBannerContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 16,
+    borderLeftWidth: 4,
+  },
+  successBannerIconWrapper: {
+    marginRight: 12,
+  },
+  successBannerText: {
+    flex: 1,
+    fontSize: 14,
+    fontFamily: "Poppins_500Medium",
+    lineHeight: 20,
+  },
+  successBannerClose: {
+    padding: 4,
+    marginLeft: 8,
   },
 });

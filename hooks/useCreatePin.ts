@@ -21,10 +21,18 @@ export function useCreatePin() {
       setPinMessage(null);
     },
     onSuccess: (resp: CreatePinResponse) => {
-      setPinMessage(resp.message || "PIN created successfully");
+      const message = resp.message || "PIN created successfully";
+      setPinMessage(message);
       setIsCreating(false);
-      walletStore.getState().setHasPin(true);
-      router.replace("/(tabs)");
+
+      const store = walletStore.getState();
+      store.setHasPin(true);
+      store.setSuccessMessage(message);
+
+      // small delay ensures navigation sees updated store
+      setTimeout(() => {
+        router.replace("/(tabs)");
+      }, 250);
     },
     onError: (err: any) => {
       setPinError(err?.message || "Failed to create PIN");
@@ -36,9 +44,7 @@ export function useCreatePin() {
   });
 
   function createPin(pin: string) {
-    const createPinReq: CreatePinRequest = {
-      pin,
-    };
+    const createPinReq: CreatePinRequest = { pin };
     mutation.mutate(createPinReq);
   }
 

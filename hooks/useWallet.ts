@@ -25,7 +25,7 @@ export function useWallet() {
   const [walletData, setWalletData] = useState<WalletData | null>(null);
   const hasFetchedRef = useRef(false);
   const previousTokenRef = useRef<string | null>(null);
-  const [isLoadingMore, setIsLoadingMore] = useState(false); // NEW
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
 
   const walletState = walletStore();
   const {
@@ -35,15 +35,11 @@ export function useWallet() {
     isLoading: isLoadingWallet,
     setIsLoading,
     hasPin,
+    successMessage,
   } = walletState;
 
   const walletMutation = useMutation({
     mutationFn: getWalletDetails,
-    onMutate: () => {
-      // if (!balance) {
-      //   setIsLoading(true);
-      // }
-    },
     onSuccess: async (data) => {
       const {
         balance,
@@ -52,7 +48,6 @@ export function useWallet() {
         totalRedeemedAmount,
         hasPin,
       } = data;
-
       const {
         setBalance,
         setTotalLockedAmount,
@@ -60,7 +55,6 @@ export function useWallet() {
         setWalletNumber,
         setHasPin,
       } = walletStore.getState();
-
       setBalance(balance);
       setTotalLockedAmount(totalLockedAmount);
       setTotalRedeemedAmount(totalRedeemedAmount);
@@ -80,17 +74,11 @@ export function useWallet() {
     },
   });
 
-  type page = {
-    page?: number;
-  };
+  type page = { page?: number };
 
   const transactionsMutation = useMutation({
-    mutationFn: (opts: page) => {
-      return getWalletTransactions(opts.page ?? undefined);
-    },
-    onMutate: () => {
-      setIsLoadingTransactions(true);
-    },
+    mutationFn: (opts: page) => getWalletTransactions(opts.page ?? undefined),
+    onMutate: () => setIsLoadingTransactions(true),
     onSuccess: (data) => {
       setWalletData(data);
       setTransactions(data.transactions);
@@ -99,14 +87,11 @@ export function useWallet() {
       console.error("Failed to fetch transactions:", error);
       setTransactions([]);
     },
-    onSettled: () => {
-      setIsLoadingTransactions(false);
-    },
+    onSettled: () => setIsLoadingTransactions(false),
   });
 
   const weeklyInsightMutation = useMutation({
     mutationFn: getWeeklyTransactionInsights,
-    onMutate: () => {},
     onSuccess: (data) => {
       setInsights(data ?? { spentThisWeek: "0", receivedThisWeek: "0" });
       setIsLoadingInsights(false);
@@ -116,9 +101,7 @@ export function useWallet() {
       setInsights({ spentThisWeek: "0", receivedThisWeek: "0" });
       setIsLoadingInsights(false);
     },
-    onSettled: () => {
-      setIsLoadingInsights(false);
-    },
+    onSettled: () => setIsLoadingInsights(false),
   });
 
   const fetchWalletData = useCallback(() => {
@@ -135,7 +118,6 @@ export function useWallet() {
         fetchWalletData();
         hasFetchedRef.current = true;
       }
-
       return () => {
         hasFetchedRef.current = false;
       };
@@ -157,21 +139,14 @@ export function useWallet() {
   }, [accessToken, user, fetchWalletData]);
 
   const loadMore = useCallback(async () => {
-    if (isLoadingMore) return;
-    if (!walletData?.hasNext) return;
-
+    if (isLoadingMore || !walletData?.hasNext) return;
     try {
       setIsLoadingMore(true);
       const nextPage = (walletData.currentPage ?? 0) + 1;
       const data = await getWalletTransactions(nextPage);
-
-      // append new page to current state
       setWalletData((prev) => {
         const prevTx = prev?.transactions ?? [];
-        return {
-          ...data,
-          transactions: [...prevTx, ...data.transactions],
-        };
+        return { ...data, transactions: [...prevTx, ...data.transactions] };
       });
       setTransactions((prev) => [...prev, ...data.transactions]);
     } catch (e) {
@@ -195,5 +170,6 @@ export function useWallet() {
     loadMore,
     isLoadingMore,
     hasPin,
+    successMessage,
   };
 }

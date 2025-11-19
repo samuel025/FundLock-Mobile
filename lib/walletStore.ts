@@ -13,6 +13,8 @@ export interface WalletState {
   setWalletNumber: (walletNumber: string | null) => void;
   hasPin: boolean;
   setHasPin: (hasPin: boolean) => void;
+  successMessage: string | null;
+  setSuccessMessage: (message: string | null) => void;
 }
 
 export const walletStore = create<WalletState>((set) => ({
@@ -22,10 +24,12 @@ export const walletStore = create<WalletState>((set) => ({
   walletNumber: null,
   isLoading: false,
   hasPin: false,
+  successMessage: null,
   setIsLoading: (loading) => set({ isLoading: loading }),
   setBalance: (balance) => set({ balance }),
   setTotalLockedAmount: (totalLockedAmount) => set({ totalLockedAmount }),
   setTotalRedeemedAmount: (totalRedeemedAmount) => set({ totalRedeemedAmount }),
   setWalletNumber: (walletNumber) => set({ walletNumber }),
   setHasPin: (hasPin) => set({ hasPin }),
+  setSuccessMessage: (message) => set({ successMessage: message }),
 }));
