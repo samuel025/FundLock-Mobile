@@ -107,7 +107,6 @@ const dark: Theme = {
     success: "#34D399",
     gradientStart: "#071024",
     gradientEnd: "#0B1220",
-    // Home tab extras (dark)
     balanceCardStart: "#0F1724",
     balanceCardEnd: "#1B263B",
     balanceText: "#E6EEF6",

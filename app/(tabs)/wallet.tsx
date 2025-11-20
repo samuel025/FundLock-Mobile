@@ -24,6 +24,7 @@ import {
   TouchableOpacity,
   View,
   Platform,
+  StatusBar,
 } from "react-native";
 import { ActivityIndicator } from "react-native-paper";
 import { useTheme } from "@/theme";
@@ -222,7 +223,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: Platform.select({
       ios: 60,
-      android: 16,
+      android: (StatusBar.currentHeight || 0) + 8,
     }),
     paddingBottom: 20,
   },

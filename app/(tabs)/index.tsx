@@ -23,6 +23,7 @@ import {
   View,
   Platform,
   Animated,
+  StatusBar,
 } from "react-native";
 import { useTheme } from "@/theme";
 import { BlurView } from "expo-blur";
@@ -672,7 +673,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: Platform.select({
       ios: 60,
-      android: 16,
+      android: (StatusBar.currentHeight || 0) + 5,
     }),
     paddingBottom: 24,
   },

@@ -32,10 +32,13 @@ import {
   Text,
   TouchableOpacity,
   View,
+  StyleSheet,
 } from "react-native";
 import * as yup from "yup";
 import spendStyles from "../../styles/spend.styles";
 import { PinGuard } from "@/components/PinGuard";
+import { useTheme } from "@/theme";
+import { BlurView } from "expo-blur";
 
 const schema = yup.object({
   amount: yup
@@ -55,6 +58,9 @@ const schema = yup.object({
 type FormData = yup.InferType<typeof schema>;
 
 export default function Spend() {
+  const { theme, scheme } = useTheme();
+  const isDark = scheme === "dark";
+
   const [allowDirectOutlet, setAllowDirectOutlet] = useState(false);
   const scrollRef = useRef<any>(null);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
@@ -75,7 +81,6 @@ export default function Spend() {
     clearOutlets,
   } = useOutlet();
   const { spendLockedFunds, spendError, spendMessage, isSpending } = useSpend();
-
   const { locksList, fetchLocks } = useGetLocks();
 
   useEffect(() => {
@@ -104,7 +109,7 @@ export default function Spend() {
 
   useFocusEffect(
     useCallback(() => {
-      fetchLocks(); // fetch on screen focus
+      fetchLocks();
     }, [fetchLocks]),
   );
 
@@ -171,10 +176,28 @@ export default function Spend() {
 
   if (!fontsLoaded) return null;
 
+  const Glass = ({
+    children,
+    style,
+  }: {
+    children: React.ReactNode;
+    style?: any;
+  }) => {
+    if (!isDark) {
+      return <View style={style}>{children}</View>;
+    }
+    return (
+      <View style={[style, glassBase.container]}>
+        <BlurView intensity={30} tint="dark" style={glassBase.blur} />
+        {children}
+      </View>
+    );
+  };
+
   return (
     <PinGuard>
       <LinearGradient
-        colors={["#F8F9FA", "#E9ECEF"]}
+        colors={[theme.colors.gradientStart, theme.colors.gradientEnd]}
         style={spendStyles.container}
       >
         <KeyboardAvoidingView
@@ -201,49 +224,111 @@ export default function Spend() {
               />
             )}
 
+            {/* Header */}
             <View style={spendStyles.header}>
               <View>
-                <Text style={spendStyles.title}>Spend Locked Funds</Text>
-                <Text style={spendStyles.subtitle}>
+                <Text style={[spendStyles.title, { color: theme.colors.text }]}>
+                  Spend Budgeted Funds
+                </Text>
+                <Text
+                  style={[spendStyles.subtitle, { color: theme.colors.muted }]}
+                >
                   Pay vendors using budgeted category funds
                 </Text>
               </View>
-              <View style={spendStyles.iconBox}>
-                <Ionicons name="card" size={26} color="#38B2AC" />
-              </View>
+              <Glass
+                style={[
+                  spendStyles.iconBox,
+                  {
+                    backgroundColor: isDark
+                      ? "rgba(255,255,255,0.06)"
+                      : theme.colors.card,
+                    borderWidth: isDark ? 1 : 0,
+                    borderColor: isDark
+                      ? "rgba(255,255,255,0.12)"
+                      : "transparent",
+                  },
+                ]}
+              >
+                <Ionicons name="card" size={26} color={theme.colors.primary} />
+              </Glass>
             </View>
 
+            {/* Lock shortcut card */}
             <View style={spendStyles.lockActionWrap}>
               <TouchableOpacity
-                style={spendStyles.lockCard}
+                style={[
+                  spendStyles.lockCard,
+                  {
+                    backgroundColor: theme.colors.primary,
+                  },
+                ]}
                 onPress={() => router.push("/spendByOrgId")}
                 accessibilityRole="button"
               >
                 <View style={spendStyles.lockCardLeft}>
-                  <View style={spendStyles.lockIcon}>
-                    <Ionicons name="storefront" size={18} color="#fff" />
+                  <View
+                    style={[
+                      spendStyles.lockIcon,
+                      { backgroundColor: theme.colors.balanceCardStart },
+                    ]}
+                  >
+                    <Ionicons
+                      name="storefront"
+                      size={18}
+                      color={theme.colors.balanceText}
+                    />
                   </View>
                   <View style={spendStyles.lockText}>
-                    <Text style={spendStyles.lockTitle}>
+                    <Text
+                      style={[
+                        spendStyles.lockTitle,
+                        { color: theme.colors.balanceText },
+                      ]}
+                    >
                       Spend By Vendor&apos;s ID
                     </Text>
-                    <Text style={spendStyles.lockSubtitle}>
+                    <Text
+                      style={[
+                        spendStyles.lockSubtitle,
+                        { color: theme.colors.balanceLabel },
+                      ]}
+                    >
                       You can just search by the vendor&apos;s ID and spend
                     </Text>
                   </View>
                 </View>
-                <Ionicons name="chevron-forward" size={20} color="#2D3748" />
+                <Ionicons
+                  name="chevron-forward"
+                  size={20}
+                  color={theme.colors.text}
+                />
               </TouchableOpacity>
             </View>
 
-            {/* Categories: show spinner while loading */}
+            {/* Category Picker */}
             {isCategoryLoading ? (
-              <View style={spendStyles.loadingRow}>
-                <ActivityIndicator size="small" color="#38B2AC" />
-                <Text style={spendStyles.loadingText}>
+              <Glass
+                style={[
+                  spendStyles.loadingRow,
+                  {
+                    borderColor: theme.colors.border,
+                    backgroundColor: isDark
+                      ? "rgba(255,255,255,0.06)"
+                      : theme.colors.card,
+                  },
+                ]}
+              >
+                <ActivityIndicator size="small" color={theme.colors.primary} />
+                <Text
+                  style={[
+                    spendStyles.loadingText,
+                    { color: theme.colors.primary },
+                  ]}
+                >
                   Loading categories...
                 </Text>
-              </View>
+              </Glass>
             ) : (
               <CategoryPicker
                 categories={categories ?? []}
@@ -252,20 +337,57 @@ export default function Spend() {
                   setSelectedCategory(id);
                   setSelectedCompany(null);
                 }}
-                styles={spendStyles}
+                styles={{
+                  ...spendStyles,
+                  pickerButton: [
+                    spendStyles.pickerButton,
+                    {
+                      backgroundColor: isDark
+                        ? "rgba(255,255,255,0.05)"
+                        : theme.colors.card,
+                      borderColor: isDark
+                        ? "rgba(255,255,255,0.15)"
+                        : theme.colors.border,
+                    },
+                  ],
+                  pickerText: [
+                    spendStyles.pickerText,
+                    { color: theme.colors.text },
+                  ],
+                  catIcon: [
+                    spendStyles.catIcon,
+                    {
+                      backgroundColor: theme.colors.actionIconLockBg,
+                    },
+                  ],
+                }}
               />
             )}
 
-            {/* Mode selector: segmented pill */}
+            {/* Mode Switch */}
             {selectedCategory && (
-              <View style={spendStyles.modeSwitch} accessibilityRole="tablist">
+              <Glass
+                style={[
+                  spendStyles.modeSwitch,
+                  {
+                    backgroundColor: isDark
+                      ? "rgba(255,255,255,0.05)"
+                      : theme.colors.actionIconDepositBg,
+                    borderColor: isDark
+                      ? "rgba(255,255,255,0.12)"
+                      : theme.colors.actionIconDepositBg,
+                  },
+                ]}
+              >
                 <Pressable
                   onPress={() => setAllowDirectOutlet(false)}
                   accessibilityRole="button"
                   accessibilityState={{ selected: !allowDirectOutlet }}
                   style={({ pressed }) => [
                     spendStyles.modeOption,
-                    !allowDirectOutlet && spendStyles.modeOptionActive,
+                    !allowDirectOutlet && {
+                      backgroundColor: theme.colors.primary,
+                    },
                     pressed && spendStyles.modeOptionPressed,
                   ]}
                 >
@@ -279,12 +401,18 @@ export default function Spend() {
                     <Ionicons
                       name="business"
                       size={14}
-                      color={!allowDirectOutlet ? "#fff" : "#256A5A"}
+                      color={
+                        !allowDirectOutlet
+                          ? theme.colors.balanceText
+                          : theme.colors.primary
+                      }
                     />
                     <Text
                       style={[
                         spendStyles.modeOptionText,
-                        !allowDirectOutlet && spendStyles.modeOptionTextActive,
+                        !allowDirectOutlet
+                          ? { color: theme.colors.balanceText }
+                          : { color: theme.colors.primary },
                       ]}
                     >
                       By company
@@ -298,7 +426,9 @@ export default function Spend() {
                   accessibilityState={{ selected: allowDirectOutlet }}
                   style={({ pressed }) => [
                     spendStyles.modeOption,
-                    allowDirectOutlet && spendStyles.modeOptionActive,
+                    allowDirectOutlet && {
+                      backgroundColor: theme.colors.primary,
+                    },
                     pressed && spendStyles.modeOptionPressed,
                   ]}
                 >
@@ -312,23 +442,31 @@ export default function Spend() {
                     <Ionicons
                       name="storefront"
                       size={14}
-                      color={allowDirectOutlet ? "#fff" : "#256A5A"}
+                      color={
+                        allowDirectOutlet
+                          ? theme.colors.balanceText
+                          : theme.colors.primary
+                      }
                     />
                     <Text
                       style={[
                         spendStyles.modeOptionText,
-                        allowDirectOutlet && spendStyles.modeOptionTextActive,
+                        allowDirectOutlet
+                          ? { color: theme.colors.balanceText }
+                          : { color: theme.colors.primary },
                       ]}
                     >
                       Select outlet directly
                     </Text>
                   </View>
                 </Pressable>
-              </View>
+              </Glass>
             )}
 
             {selectedCategory && (
-              <Text style={spendStyles.helperText}>
+              <Text
+                style={[spendStyles.helperText, { color: theme.colors.muted }]}
+              >
                 {allowDirectOutlet
                   ? "Showing all outlets."
                   : selectedCompany
@@ -337,15 +475,34 @@ export default function Spend() {
               </Text>
             )}
 
+            {/* Company Picker */}
             {selectedCategory && !allowDirectOutlet && (
               <>
                 {isCompanyLoading ? (
-                  <View style={spendStyles.loadingRow}>
-                    <ActivityIndicator size="small" color="#38B2AC" />
-                    <Text style={spendStyles.loadingText}>
+                  <Glass
+                    style={[
+                      spendStyles.loadingRow,
+                      {
+                        borderColor: theme.colors.border,
+                        backgroundColor: isDark
+                          ? "rgba(255,255,255,0.06)"
+                          : theme.colors.card,
+                      },
+                    ]}
+                  >
+                    <ActivityIndicator
+                      size="small"
+                      color={theme.colors.primary}
+                    />
+                    <Text
+                      style={[
+                        spendStyles.loadingText,
+                        { color: theme.colors.primary },
+                      ]}
+                    >
                       Loading companies...
                     </Text>
-                  </View>
+                  </Glass>
                 ) : (
                   <CompanyPicker
                     companies={companies}
@@ -354,22 +511,63 @@ export default function Spend() {
                       setSelectedCompany(id);
                       setSelectedOutlet(null);
                     }}
-                    styles={spendStyles}
+                    styles={{
+                      ...spendStyles,
+                      pickerButton: [
+                        spendStyles.pickerButton,
+                        {
+                          backgroundColor: isDark
+                            ? "rgba(255,255,255,0.05)"
+                            : theme.colors.card,
+                          borderColor: isDark
+                            ? "rgba(255,255,255,0.15)"
+                            : theme.colors.border,
+                        },
+                      ],
+                      pickerText: [
+                        spendStyles.pickerText,
+                        { color: theme.colors.text },
+                      ],
+                      catIcon: [
+                        spendStyles.catIcon,
+                        {
+                          backgroundColor: theme.colors.actionIconLockBg,
+                        },
+                      ],
+                    }}
                   />
                 )}
               </>
             )}
 
-            {/* OutletPicker: show spinner while outlets load */}
+            {/* Outlet Picker */}
             {(selectedCompany || allowDirectOutlet) && (
               <>
                 {isOutletLoading ? (
-                  <View style={spendStyles.loadingRow}>
-                    <ActivityIndicator size="small" color="#38B2AC" />
-                    <Text style={spendStyles.loadingText}>
+                  <Glass
+                    style={[
+                      spendStyles.loadingRow,
+                      {
+                        borderColor: theme.colors.border,
+                        backgroundColor: isDark
+                          ? "rgba(255,255,255,0.06)"
+                          : theme.colors.card,
+                      },
+                    ]}
+                  >
+                    <ActivityIndicator
+                      size="small"
+                      color={theme.colors.primary}
+                    />
+                    <Text
+                      style={[
+                        spendStyles.loadingText,
+                        { color: theme.colors.primary },
+                      ]}
+                    >
                       Loading outlets...
                     </Text>
-                  </View>
+                  </Glass>
                 ) : (
                   <OutletPicker
                     outlets={outlets}
@@ -377,12 +575,36 @@ export default function Spend() {
                     onSelect={(id) => {
                       setSelectedOutlet(id);
                     }}
-                    styles={spendStyles}
+                    styles={{
+                      ...spendStyles,
+                      pickerButton: [
+                        spendStyles.pickerButton,
+                        {
+                          backgroundColor: isDark
+                            ? "rgba(255,255,255,0.05)"
+                            : theme.colors.card,
+                          borderColor: isDark
+                            ? "rgba(255,255,255,0.15)"
+                            : theme.colors.border,
+                        },
+                      ],
+                      pickerText: [
+                        spendStyles.pickerText,
+                        { color: theme.colors.text },
+                      ],
+                      catIcon: [
+                        spendStyles.catIcon,
+                        {
+                          backgroundColor: theme.colors.actionIconLockBg,
+                        },
+                      ],
+                    }}
                   />
                 )}
               </>
             )}
 
+            {/* Selected outlet summary */}
             {selectedOutlet && (
               <View style={{ marginTop: 8, marginBottom: 6 }}>
                 {(() => {
@@ -392,18 +614,23 @@ export default function Spend() {
                       o.id === selectedOutlet,
                   );
                   return (
-                    <Text style={spendStyles.helperText}>
+                    <Text
+                      style={[
+                        spendStyles.helperText,
+                        { color: theme.colors.muted },
+                      ]}
+                    >
                       Selected outlet:{" "}
                       <Text
                         style={{
                           fontFamily: "Poppins_600SemiBold",
-                          color: "#1B263B",
+                          color: theme.colors.text,
                         }}
                       >
                         {picked?.name ?? selectedOutlet}
                       </Text>
                       {picked?.name ? (
-                        <Text style={{ color: "#718096" }}>
+                        <Text style={{ color: theme.colors.muted }}>
                           {" "}
                           — {picked.name}
                         </Text>
@@ -414,17 +641,69 @@ export default function Spend() {
               </View>
             )}
 
+            {/* Amount & PIN sections */}
             {selectedOutlet && (
               <>
-                <AmountSection
-                  control={control}
-                  availableLocked={availableLocked}
-                  styles={spendStyles}
-                />
-                <PinSection control={control} styles={spendStyles} />
+                <Glass
+                  style={[
+                    spendStyles.inputCard,
+                    {
+                      backgroundColor: isDark
+                        ? "rgba(255,255,255,0.05)"
+                        : theme.colors.card,
+                      borderColor: isDark
+                        ? "rgba(255,255,255,0.15)"
+                        : theme.colors.border,
+                    },
+                  ]}
+                >
+                  <AmountSection
+                    control={control}
+                    availableLocked={availableLocked}
+                    styles={{
+                      ...spendStyles,
+                      currency: [
+                        spendStyles.currency,
+                        { color: theme.colors.primary },
+                      ],
+                      hint: [spendStyles.hint, { color: theme.colors.muted }],
+                      input: [spendStyles.input, { color: theme.colors.text }],
+                      inputError: [
+                        spendStyles.inputError,
+                        { color: theme.colors.danger },
+                      ],
+                    }}
+                  />
+                </Glass>
+                <Glass
+                  style={[
+                    spendStyles.inputCard,
+                    {
+                      backgroundColor: isDark
+                        ? "rgba(255,255,255,0.05)"
+                        : theme.colors.card,
+                      borderColor: isDark
+                        ? "rgba(255,255,255,0.15)"
+                        : theme.colors.border,
+                    },
+                  ]}
+                >
+                  <PinSection
+                    control={control}
+                    styles={{
+                      ...spendStyles,
+                      input: [spendStyles.input, { color: theme.colors.text }],
+                      inputError: [
+                        spendStyles.inputError,
+                        { color: theme.colors.danger },
+                      ],
+                    }}
+                  />
+                </Glass>
               </>
             )}
 
+            {/* Action button */}
             <TouchableOpacity
               style={[
                 spendStyles.actionButton,
@@ -435,20 +714,39 @@ export default function Spend() {
               disabled={isSpending || !formState.isValid}
             >
               <LinearGradient
-                colors={["#38B2AC", "#2C9A92"]}
+                colors={[theme.colors.primary, theme.colors.primary]}
                 style={spendStyles.actionGradient}
               >
                 {isSpending ? (
                   <>
-                    <ActivityIndicator size="small" color="#fff" />
-                    <Text style={[spendStyles.actionText, { marginLeft: 8 }]}>
+                    <ActivityIndicator
+                      size="small"
+                      color={theme.colors.balanceText}
+                    />
+                    <Text
+                      style={[
+                        spendStyles.actionText,
+                        { marginLeft: 8, color: theme.colors.balanceText },
+                      ]}
+                    >
                       Processing...
                     </Text>
                   </>
                 ) : (
                   <>
-                    <Text style={spendStyles.actionText}>Complete Payment</Text>
-                    <Ionicons name="card" size={18} color="#fff" />
+                    <Text
+                      style={[
+                        spendStyles.actionText,
+                        { color: theme.colors.balanceText },
+                      ]}
+                    >
+                      Complete Payment
+                    </Text>
+                    <Ionicons
+                      name="card"
+                      size={18}
+                      color={theme.colors.balanceText}
+                    />
                   </>
                 )}
               </LinearGradient>
@@ -459,3 +757,17 @@ export default function Spend() {
     </PinGuard>
   );
 }
+
+const glassBase = StyleSheet.create({
+  container: {
+    overflow: "hidden",
+    position: "relative",
+  },
+  blur: {
+    ...StyleSheet.absoluteFillObject,
+    borderRadius: 16,
+    backgroundColor: "rgba(255,255,255,0.05)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.10)",
+  },
+});

@@ -20,11 +20,15 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useTheme } from "@/theme";
+import { BlurView } from "expo-blur";
 
 export const options = { headerShown: false };
 
 export default function BudgetsPage() {
   const router = useRouter();
+  const { theme, scheme } = useTheme();
+  const isDark = scheme === "dark";
 
   const { isLocksLoading, locksList, fetchLocks } = useGetLocks();
 
@@ -47,48 +51,133 @@ export default function BudgetsPage() {
 
   if (!fontsLoaded) return null;
 
+  const Glass = ({
+    children,
+    style,
+    radius = 12,
+  }: {
+    children: React.ReactNode;
+    style?: any;
+    radius?: number;
+  }) => {
+    if (!isDark) {
+      return <View style={style}>{children}</View>;
+    }
+    return (
+      <View
+        style={[
+          style,
+          {
+            position: "relative",
+            overflow: "hidden",
+            borderRadius: radius,
+            backgroundColor: "rgba(255,255,255,0.05)",
+            borderWidth: 1,
+            borderColor: "rgba(255,255,255,0.10)",
+          },
+        ]}
+      >
+        <BlurView
+          intensity={30}
+          tint="dark"
+          style={StyleSheet.absoluteFillObject}
+        />
+        {children}
+      </View>
+    );
+  };
+
   return (
-    <LinearGradient colors={["#F8F9FA", "#E9ECEF"]} style={styles.container}>
+    <LinearGradient
+      colors={[theme.colors.gradientStart, theme.colors.gradientEnd]}
+      style={styles.container}
+    >
       <SafeAreaView edges={["top"]} style={styles.safe}>
         <View style={styles.header}>
           <View style={styles.headerCenter}>
-            <Text style={styles.title}>My Budgets</Text>
-            <Text style={styles.subtitle}>Active locked funds by category</Text>
+            <Text style={[styles.title, { color: theme.colors.text }]}>
+              My Budgets
+            </Text>
+            <Text style={[styles.subtitle, { color: theme.colors.muted }]}>
+              Active locked funds by category
+            </Text>
           </View>
 
-          <View style={styles.iconBox}>
-            <Ionicons name="pie-chart-sharp" size={26} color="#38B2AC" />
-          </View>
+          <Glass
+            radius={12}
+            style={[
+              styles.iconBox,
+              {
+                backgroundColor: isDark
+                  ? "rgba(255,255,255,0.05)"
+                  : theme.colors.card,
+              },
+            ]}
+          >
+            <Ionicons
+              name="pie-chart-sharp"
+              size={26}
+              color={theme.colors.primary}
+            />
+          </Glass>
         </View>
       </SafeAreaView>
 
-      {/* Lock Funds button — navigates to the lock form */}
+      {/* Lock Funds button */}
       <View style={styles.lockActionWrap}>
         <TouchableOpacity
-          style={styles.lockCard}
+          style={[styles.lockCard, { backgroundColor: theme.colors.primary }]}
           onPress={() => router.push("/budget")}
           accessibilityRole="button"
         >
           <View style={styles.lockCardLeft}>
-            <View style={styles.lockIcon}>
-              <Ionicons name="pie-chart" size={18} color="#fff" />
+            <View
+              style={[
+                styles.lockIcon,
+                { backgroundColor: theme.colors.balanceCardStart },
+              ]}
+            >
+              <Ionicons
+                name="pie-chart"
+                size={18}
+                color={theme.colors.balanceText}
+              />
             </View>
             <View style={styles.lockText}>
-              <Text style={styles.lockTitle}>Budget Funds</Text>
-              <Text style={styles.lockSubtitle}>
+              <Text
+                style={[styles.lockTitle, { color: theme.colors.balanceText }]}
+              >
+                Budget Funds
+              </Text>
+              <Text
+                style={[
+                  styles.lockSubtitle,
+                  { color: theme.colors.balanceLabel },
+                ]}
+              >
                 Create a new locked savings
               </Text>
             </View>
           </View>
-          <Ionicons name="chevron-forward" size={20} color="#2D3748" />
+          <Ionicons
+            name="chevron-forward"
+            size={20}
+            color={theme.colors.text}
+          />
         </TouchableOpacity>
       </View>
 
-      {/* List header / separator */}
+      {/* List header */}
       <View style={styles.listHeader}>
-        <Text style={styles.listHeaderTitle}>Your active budgets</Text>
-        <View style={styles.countBadge}>
-          <Text style={styles.countText}>{locksList.length}</Text>
+        <Text style={[styles.listHeaderTitle, { color: theme.colors.text }]}>
+          Your active budgets
+        </Text>
+        <View
+          style={[styles.countBadge, { backgroundColor: theme.colors.primary }]}
+        >
+          <Text style={[styles.countText, { color: theme.colors.balanceText }]}>
+            {locksList.length}
+          </Text>
         </View>
       </View>
 
@@ -99,14 +188,16 @@ export default function BudgetsPage() {
           <RefreshControl
             refreshing={isLocksLoading}
             onRefresh={onRefresh}
-            colors={["#38B2AC"]}
-            tintColor="#38B2AC"
+            colors={[theme.colors.primary]}
+            tintColor={theme.colors.primary}
           />
         }
         contentContainerStyle={locksList.length ? undefined : { flex: 1 }}
         ListEmptyComponent={
           <View style={styles.empty}>
-            <Text style={styles.emptyText}>No active budgets</Text>
+            <Text style={[styles.emptyText, { color: theme.colors.muted }]}>
+              No active budgets
+            </Text>
           </View>
         }
         renderItem={({ item }) => {
@@ -118,13 +209,29 @@ export default function BudgetsPage() {
               ? new Date(expiresRaw).toISOString().split("T")[0]
               : "No expiry";
           return (
-            <View style={styles.card}>
+            <Glass
+              radius={12}
+              style={[
+                styles.card,
+                {
+                  backgroundColor: isDark
+                    ? "rgba(255,255,255,0.05)"
+                    : theme.colors.card,
+                },
+              ]}
+            >
               <View style={styles.left}>
-                <Text style={styles.category}>{category}</Text>
-                <Text style={styles.expires}>Expires: {expires}</Text>
+                <Text style={[styles.category, { color: theme.colors.text }]}>
+                  {category}
+                </Text>
+                <Text style={[styles.expires, { color: theme.colors.muted }]}>
+                  Expires: {expires}
+                </Text>
               </View>
-              <Text style={styles.amount}>₦{amount.toLocaleString()}</Text>
-            </View>
+              <Text style={[styles.amount, { color: theme.colors.text }]}>
+                ₦{amount.toLocaleString()}
+              </Text>
+            </Glass>
           );
         }}
       />
@@ -151,49 +258,52 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   headerCenter: { flex: 1, paddingLeft: 4 },
-  title: { fontSize: 20, fontFamily: "Poppins_700Bold", color: "#1B263B" },
+  title: { fontSize: 20, fontFamily: "Poppins_700Bold" },
   subtitle: {
     fontSize: 12,
     fontFamily: "Poppins_400Regular",
-    color: "#778DA9",
     marginTop: 2,
   },
   iconBox: {
     width: 48,
     height: 48,
     borderRadius: 12,
-    backgroundColor: "#fff",
     justifyContent: "center",
     alignItems: "center",
     elevation: 3,
   },
   loading: { flex: 1, justifyContent: "center", alignItems: "center" },
   empty: { flex: 1, justifyContent: "center", alignItems: "center" },
-  emptyText: { color: "#778DA9", fontFamily: "Poppins_500Medium" },
+  emptyText: { fontFamily: "Poppins_500Medium" },
   card: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    backgroundColor: "#fff",
     padding: 16,
     borderRadius: 12,
     marginBottom: 12,
     elevation: 2,
+    overflow: "hidden",
   },
   left: { flex: 1 },
   category: {
     fontFamily: "Poppins_600SemiBold",
-    color: "#1B263B",
     fontSize: 16,
   },
-  expires: { fontFamily: "Poppins_400Regular", color: "#778DA9", marginTop: 4 },
-  amount: { fontFamily: "Poppins_600SemiBold", color: "#1B263B", fontSize: 16 },
+  expires: {
+    fontFamily: "Poppins_400Regular",
+    marginTop: 4,
+    fontSize: 12,
+  },
+  amount: {
+    fontFamily: "Poppins_600SemiBold",
+    fontSize: 16,
+  },
   lockActionWrap: { paddingHorizontal: 20, marginBottom: 12 },
   lockCard: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    backgroundColor: "#38B2AC",
     paddingVertical: 16,
     paddingHorizontal: 12,
     borderRadius: 12,
@@ -204,19 +314,16 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 10,
-    backgroundColor: "#2D3748",
     justifyContent: "center",
     alignItems: "center",
     marginRight: 12,
   },
   lockText: { flex: 1 },
   lockTitle: {
-    color: "#fff",
     fontFamily: "Poppins_600SemiBold",
     fontSize: 16,
   },
   lockSubtitle: {
-    color: "#E2E8F0",
     fontFamily: "Poppins_400Regular",
     fontSize: 12,
     marginTop: 4,
@@ -229,17 +336,14 @@ const styles = StyleSheet.create({
   },
   listHeaderTitle: {
     fontFamily: "Poppins_600SemiBold",
-    color: "#1B263B",
     fontSize: 18,
   },
   countBadge: {
-    backgroundColor: "#38B2AC",
     borderRadius: 12,
     paddingVertical: 4,
     paddingHorizontal: 8,
   },
   countText: {
-    color: "#fff",
     fontFamily: "Poppins_500Medium",
     fontSize: 14,
   },

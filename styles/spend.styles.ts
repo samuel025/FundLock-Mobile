@@ -1,4 +1,4 @@
-import { StyleSheet, Platform } from "react-native";
+import { StyleSheet, Platform, StatusBar } from "react-native";
 
 export default StyleSheet.create({
   container: { flex: 1 },
@@ -6,7 +6,7 @@ export default StyleSheet.create({
     padding: 20,
     paddingTop: Platform.select({
       ios: 60,
-      android: 16,
+      android: (StatusBar.currentHeight || 0) + 8,
     }),
     paddingBottom: 40,
   },

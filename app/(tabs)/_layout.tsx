@@ -29,7 +29,7 @@ export default function RootLayout() {
               overflow: "hidden", // ensures rounded edges clip correctly
             },
             tabBarItemStyle: {
-              width: 75,
+              width: 90,
             },
             tabBarLabelStyle: {
               fontSize: 10,

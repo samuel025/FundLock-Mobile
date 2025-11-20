@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "fundlock",
-    "slug": "fundlock",
+    "slug": "strixt",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -46,6 +46,13 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "29b9d12e-aaa5-4f12-b583-1e9c92a80c5f"
+      }
+    },
+    "owner": "strixt"
   }
 }

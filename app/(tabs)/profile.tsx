@@ -22,7 +22,14 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
-import { Alert, ScrollView, StyleSheet, Text, Platform } from "react-native";
+import {
+  Alert,
+  ScrollView,
+  StyleSheet,
+  Text,
+  Platform,
+  StatusBar,
+} from "react-native";
 import * as yup from "yup";
 
 const depositSchema = yup.object({
@@ -243,7 +250,7 @@ const styles = StyleSheet.create({
     padding: 20,
     paddingTop: Platform.select({
       ios: 60,
-      android: 16,
+      android: (StatusBar.currentHeight || 0) + 8,
     }),
     paddingBottom: 40,
   },
