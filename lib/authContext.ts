@@ -39,7 +39,7 @@ export const authActions = {
                 await SecureStore.setItemAsync(TOKEN_KEY, tokens.accessToken);
                 await SecureStore.setItemAsync(
                   REFRESH_TOKEN_KEY,
-                  tokens.refreshToken
+                  tokens.refreshToken,
                 );
                 setTokens(tokens.accessToken, tokens.refreshToken);
 
@@ -54,7 +54,7 @@ export const authActions = {
           } else {
             console.error(
               "Failed to fetch user profile, using cached data:",
-              error
+              error,
             );
           }
         }
@@ -96,14 +96,13 @@ export const authActions = {
         firstName: response.data.Profile.firstName,
         lastName: response.data.Profile.lastName,
         phone_number: response.data.Profile.phoneNumber,
+        bvn: response.data.Profile.hasBvn,
       };
-
       await SecureStore.setItemAsync(USER_DATA_KEY, JSON.stringify(userData));
-
       setUser(userData);
       return userData;
     } catch (error) {
-      console.error("Failed to get user:", error);
+      console.error("Failed to fetch user:", error);
       throw error;
     } finally {
       setIsLoadingUser(false);

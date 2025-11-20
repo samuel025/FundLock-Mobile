@@ -1,4 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
+import { router } from "expo-router";
 import React from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
@@ -8,12 +9,14 @@ export function AccountActions({
   onVirtual,
   onSignOut,
   virtualExists,
+  hasBvn,
 }: {
   onDeposit: () => void;
   onWithdraw: () => void;
   onVirtual: () => void;
   onSignOut?: () => void;
   virtualExists: boolean;
+  hasBvn: boolean | undefined;
 }) {
   return (
     <View style={styles.section}>
@@ -57,6 +60,25 @@ export function AccountActions({
               {virtualExists
                 ? "View virtual account"
                 : "Create a virtual account"}
+            </Text>
+          </View>
+          <Ionicons name="chevron-forward" size={20} color="#778DA9" />
+        </TouchableOpacity>
+
+        <View style={styles.divider} />
+
+        <TouchableOpacity
+          style={styles.row}
+          onPress={() => router.push("/addBvn")}
+          disabled={hasBvn}
+        >
+          <View style={[styles.actionIcon, { backgroundColor: "#FEE2E2" }]}>
+            <Ionicons name="shield-checkmark" size={20} color="#DC2626" />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.rowTitle}>Bank Verification Number</Text>
+            <Text style={styles.rowSubtitle}>
+              {hasBvn ? "You already have a BVN" : "Add your BVN"}
             </Text>
           </View>
           <Ionicons name="chevron-forward" size={20} color="#778DA9" />

@@ -206,6 +206,7 @@ export default function Profile() {
           onVirtual={handleCreateVirtual}
           onSignOut={handleSignOut}
           virtualExists={!!virtualAccount}
+          hasBvn={user?.bvn}
         />
 
         <DepositModal

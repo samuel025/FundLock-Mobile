@@ -1,22 +1,15 @@
 import { API } from "@/lib/api";
 import axios, { AxiosError } from "axios";
 
-type ProfileData = {
-  id: number;
-  email: string;
-  firstName: string;
-  lastName: string;
-  phoneNumber: string;
-  hasBvn: boolean;
-};
+export interface UpdateBvnRequest {
+  bvn: string;
+}
 
-type ProfileResponse = {
+export interface BvnResponse {
   status: string;
   message: string;
-  data: {
-    Profile: ProfileData;
-  };
-};
+  data: {};
+}
 
 type ErrorResponse = {
   status: string;
@@ -26,18 +19,17 @@ type ErrorResponse = {
   };
 };
 
-export async function getProfile(): Promise<ProfileResponse> {
+export async function updateBvn(bvn: string): Promise<BvnResponse> {
   try {
-    const response = await API.get<ProfileResponse>("/api/v1/fundlock/profile");
-
+    const response = await API.post<BvnResponse>("/api/v1/fundlock/setBvn", {
+      bvn,
+    });
     return response.data;
   } catch (error) {
     if (axios.isAxiosError(error)) {
       const axiosError = error as AxiosError<ErrorResponse>;
 
-      // Network error (no response from server)
       if (!axiosError.response) {
-        console.error("Network error while fetching profile");
         const customError: any = new Error(
           "Network error. Please check your internet connection and try again.",
         );
@@ -45,17 +37,13 @@ export async function getProfile(): Promise<ProfileResponse> {
         throw customError;
       }
 
-      // Server responded with an error
       const errorMessage =
-        axiosError.response?.data?.message || "Failed to fetch profile";
+        axiosError.response?.data?.message || "Failed to update BVN";
 
-      console.error("Failed to fetch profile:", errorMessage);
       const customError: any = new Error(errorMessage);
       customError.status = axiosError.response?.status;
       throw customError;
     }
-
-    console.error("Failed to fetch profile:", error);
-    throw new Error("An unexpected error occurred. Please try again.");
+    throw new Error("An unexpected error occurred. Please try again");
   }
 }

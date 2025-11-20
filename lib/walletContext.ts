@@ -18,6 +18,7 @@ export const walletActions = {
         totalLockedAmount: response.totalLockedAmount.toString(),
         totalRedeemedAmount: response.totalRedeemedAmount.toString(),
         walletNumber: response.walletNumber,
+        hasPin: response.hasPin,
       };
       setBalance(walletdata.balance);
       setTotalLockedAmount(walletdata.totalLockedAmount);

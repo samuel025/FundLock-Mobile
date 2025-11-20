@@ -860,11 +860,11 @@ const styles = StyleSheet.create({
   activityAmount: {
     fontSize: 16,
     fontFamily: "Poppins_600SemiBold",
-    minWidth: 92,
-    width: 92,
+    minWidth: 110,
     textAlign: "right",
     flexShrink: 0,
   },
+
   emptyState: {
     alignItems: "center",
     paddingVertical: 40,

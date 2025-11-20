@@ -21,6 +21,7 @@ export default function RootLayout() {
           <Stack.Screen name="budget" options={{ headerShown: false }} />
           <Stack.Screen name="spendByOrgId" options={{ headerShown: false }} />
           <Stack.Screen name="createPin" options={{ headerShown: false }} />
+          <Stack.Screen name="addBvn" options={{ headerShown: false }} />
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         </Stack>
       </QueryClientProvider>
