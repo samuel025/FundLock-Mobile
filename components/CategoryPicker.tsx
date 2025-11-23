@@ -1,6 +1,8 @@
+import { useTheme } from "@/theme";
 import { Ionicons } from "@expo/vector-icons";
-import React from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
+  Animated,
   FlatList,
   KeyboardAvoidingView,
   Modal,
@@ -9,6 +11,7 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
+  TouchableWithoutFeedback,
   View,
 } from "react-native";
 
@@ -25,49 +28,180 @@ export function CategoryPicker({
   onSelect: (id: string) => void;
   onClose: () => void;
 }) {
+  const { theme, scheme } = useTheme();
+  const isDark = scheme === "dark";
+
+  const [renderModal, setRenderModal] = useState(false);
+  const overlayOpacity = useRef(new Animated.Value(0)).current;
+  const sheetTranslate = useRef(new Animated.Value(40)).current;
+
+  // open / close animation driven by visible prop
+  useEffect(() => {
+    if (visible) {
+      setRenderModal(true);
+      requestAnimationFrame(() => {
+        Animated.parallel([
+          Animated.timing(overlayOpacity, {
+            toValue: 1,
+            duration: 180,
+            useNativeDriver: true,
+          }),
+          Animated.timing(sheetTranslate, {
+            toValue: 0,
+            duration: 220,
+            useNativeDriver: true,
+          }),
+        ]).start();
+      });
+    } else if (renderModal) {
+      Animated.parallel([
+        Animated.timing(overlayOpacity, {
+          toValue: 0,
+          duration: 160,
+          useNativeDriver: true,
+        }),
+        Animated.timing(sheetTranslate, {
+          toValue: 40,
+          duration: 180,
+          useNativeDriver: true,
+        }),
+      ]).start(() => setRenderModal(false));
+    }
+  }, [visible, renderModal, overlayOpacity, sheetTranslate]);
+
+  if (!renderModal) return null;
+
   return (
-    <Modal visible={visible} transparent animationType="slide">
-      <View style={styles.modalOverlay}>
+    <Modal visible transparent animationType="none">
+      <Animated.View
+        style={[
+          styles.modalOverlay,
+          {
+            backgroundColor: overlayOpacity.interpolate({
+              inputRange: [0, 1],
+              outputRange: [
+                "rgba(0,0,0,0.0)",
+                isDark ? "rgba(0,0,0,0.55)" : "rgba(0,0,0,0.35)",
+              ],
+            }),
+          },
+        ]}
+      >
+        <TouchableWithoutFeedback onPress={onClose}>
+          <View style={StyleSheet.absoluteFill} />
+        </TouchableWithoutFeedback>
+
         <KeyboardAvoidingView
           behavior={Platform.OS === "ios" ? "padding" : undefined}
           keyboardVerticalOffset={100}
           style={{ flex: 1, justifyContent: "flex-end" }}
         >
-          <View style={styles.modal}>
-            <Text style={styles.modalTitle}>Select Category</Text>
+          <Animated.View
+            style={[
+              styles.modal,
+              {
+                transform: [{ translateY: sheetTranslate }],
+                backgroundColor: isDark
+                  ? "rgba(30,41,59,0.92)"
+                  : theme.colors.surface,
+              },
+            ]}
+          >
+            <View
+              style={[
+                styles.handle,
+                {
+                  backgroundColor: isDark
+                    ? "rgba(255,255,255,0.25)"
+                    : "rgba(0,0,0,0.12)",
+                },
+              ]}
+            />
+            <Text style={[styles.modalTitle, { color: theme.colors.text }]}>
+              Select Category
+            </Text>
             <FlatList
               data={categories}
               keyExtractor={(i) => i.id}
               ItemSeparatorComponent={() => (
-                <View style={styles.itemSeparator} />
-              )}
-              renderItem={({ item }) => (
-                <Pressable
-                  onPress={() => {
-                    onSelect(item.id);
-                    onClose();
-                  }}
-                  style={({ pressed }) => [
-                    styles.modalItem,
-                    pressed && { opacity: 0.6 },
+                <View
+                  style={[
+                    styles.itemSeparator,
+                    {
+                      backgroundColor: isDark
+                        ? "rgba(255,255,255,0.08)"
+                        : "#F1F5F9",
+                    },
                   ]}
-                >
-                  <View style={styles.categoryIcon}>
-                    {/* You can add icon/color here if needed */}
-                  </View>
-                  <Text style={styles.modalItemText}>{item.name}</Text>
-                  {selectedCategoryId === item.id && (
-                    <Ionicons name="checkmark" size={18} color="#38B2AC" />
-                  )}
-                </Pressable>
+                />
               )}
+              renderItem={({ item }) => {
+                const active = selectedCategoryId === item.id;
+                return (
+                  <Pressable
+                    onPress={() => {
+                      onSelect(item.id);
+                      onClose();
+                    }}
+                    style={({ pressed }) => [
+                      styles.modalItem,
+                      pressed && {
+                        backgroundColor: isDark
+                          ? "rgba(255,255,255,0.06)"
+                          : "rgba(0,0,0,0.03)",
+                      },
+                    ]}
+                  >
+                    <View
+                      style={[
+                        styles.categoryIcon,
+                        {
+                          backgroundColor: isDark
+                            ? "rgba(56,178,172,0.18)"
+                            : "#E7F6F2",
+                        },
+                      ]}
+                    >
+                      <Ionicons
+                        name="pricetag-outline"
+                        size={18}
+                        color={theme.colors.primary}
+                      />
+                    </View>
+                    <Text
+                      style={[
+                        styles.modalItemText,
+                        { color: theme.colors.text },
+                      ]}
+                    >
+                      {item.name}
+                    </Text>
+                    {active && (
+                      <Ionicons
+                        name="checkmark"
+                        size={18}
+                        color={theme.colors.primary}
+                      />
+                    )}
+                  </Pressable>
+                );
+              }}
+              contentContainerStyle={{ paddingBottom: 18 }}
             />
-            <TouchableOpacity onPress={onClose} style={styles.modalClose}>
-              <Text style={styles.modalCloseText}>Cancel</Text>
+            <TouchableOpacity
+              onPress={onClose}
+              style={styles.modalClose}
+              accessibilityLabel="Close category picker"
+            >
+              <Text
+                style={[styles.modalCloseText, { color: theme.colors.primary }]}
+              >
+                Cancel
+              </Text>
             </TouchableOpacity>
-          </View>
+          </Animated.View>
         </KeyboardAvoidingView>
-      </View>
+      </Animated.View>
     </Modal>
   );
 }
@@ -75,22 +209,22 @@ export function CategoryPicker({
 const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.35)",
     justifyContent: "flex-end",
   },
-
   modal: {
-    backgroundColor: "#fff",
     maxHeight: "60%",
     borderTopLeftRadius: 16,
     borderTopRightRadius: 16,
     paddingHorizontal: 16,
     paddingBottom: 18,
     paddingTop: 8,
-    shadowColor: "#000",
-    shadowOpacity: 0.12,
-    shadowRadius: 10,
-    elevation: 8,
+  },
+  handle: {
+    width: 46,
+    height: 5,
+    borderRadius: 3,
+    alignSelf: "center",
+    marginBottom: 12,
   },
   modalTitle: {
     fontSize: 16,
@@ -100,23 +234,27 @@ const styles = StyleSheet.create({
   modalItem: {
     flexDirection: "row",
     alignItems: "center",
-    paddingVertical: 2,
+    paddingVertical: 6,
+    paddingHorizontal: 4,
+    borderRadius: 10,
   },
   modalItemText: {
     fontSize: 15,
     fontFamily: "Poppins_500Medium",
-    color: "#1B263B",
     flex: 1,
   },
   modalClose: { marginTop: 12, alignItems: "center" },
-  modalCloseText: { color: "#38B2AC", fontFamily: "Poppins_600SemiBold" },
+  modalCloseText: { fontFamily: "Poppins_600SemiBold" },
   categoryIcon: {
-    width: 35,
-    height: 40,
+    width: 36,
+    height: 36,
     borderRadius: 10,
     justifyContent: "center",
     alignItems: "center",
     marginRight: 12,
   },
-  itemSeparator: { height: 1, backgroundColor: "#F1F5F9", marginLeft: 56 },
+  itemSeparator: {
+    height: 1,
+    marginLeft: 52,
+  },
 });

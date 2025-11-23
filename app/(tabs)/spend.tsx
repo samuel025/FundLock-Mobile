@@ -1,4 +1,5 @@
 import { MessageBanner } from "@/components/MessageBanner";
+import { PinGuard } from "@/components/PinGuard";
 import AmountSection from "@/components/spendComponents/AmountSection";
 import CategoryPicker from "@/components/spendComponents/CategoryPicker";
 import CompanyPicker from "@/components/spendComponents/CompanyPicker";
@@ -9,6 +10,7 @@ import { useCompany } from "@/hooks/useCompany";
 import { useGetLocks } from "@/hooks/useGetLocks";
 import { useOutlet } from "@/hooks/useOutlet";
 import { useSpend } from "@/hooks/useSpend";
+import { useTheme } from "@/theme";
 import {
   Poppins_400Regular,
   Poppins_500Medium,
@@ -18,6 +20,7 @@ import {
 } from "@expo-google-fonts/poppins";
 import { Ionicons } from "@expo/vector-icons";
 import { yupResolver } from "@hookform/resolvers/yup";
+import { BlurView } from "expo-blur";
 import { LinearGradient } from "expo-linear-gradient";
 import { router, useFocusEffect } from "expo-router";
 import React, { useCallback, useEffect, useRef, useState } from "react";
@@ -29,22 +32,19 @@ import {
   Pressable,
   ScrollView,
   StatusBar,
+  StyleSheet,
   Text,
   TouchableOpacity,
   View,
-  StyleSheet,
 } from "react-native";
 import * as yup from "yup";
 import spendStyles from "../../styles/spend.styles";
-import { PinGuard } from "@/components/PinGuard";
-import { useTheme } from "@/theme";
-import { BlurView } from "expo-blur";
 
 const schema = yup.object({
   amount: yup
     .number()
     .transform((value, original) =>
-      original === "" ? undefined : Number(original),
+      original === "" ? undefined : Number(original)
     )
     .typeError("Enter a valid amount")
     .positive("Amount must be greater than 0")
@@ -110,7 +110,7 @@ export default function Spend() {
   useFocusEffect(
     useCallback(() => {
       fetchLocks();
-    }, [fetchLocks]),
+    }, [fetchLocks])
   );
 
   let [fontsLoaded] = useFonts({
@@ -138,8 +138,8 @@ export default function Spend() {
   }, [spendError, spendMessage]);
 
   const selectedCategoryName = selectedCategory
-    ? (categories?.find((c) => String(c.id) === String(selectedCategory))
-        ?.name ?? null)
+    ? categories?.find((c) => String(c.id) === String(selectedCategory))
+        ?.name ?? null
     : null;
 
   const availableLocked = selectedCategoryName
@@ -147,8 +147,8 @@ export default function Spend() {
         locksList.find(
           (l: any) =>
             String(l.categoryName).toLowerCase() ===
-            String(selectedCategoryName).toLowerCase(),
-        )?.amount ?? 0,
+            String(selectedCategoryName).toLowerCase()
+        )?.amount ?? 0
       )
     : 0;
 
@@ -204,7 +204,7 @@ export default function Spend() {
           style={{ flex: 1, justifyContent: "flex-end" }}
           behavior={Platform.OS === "ios" ? "padding" : "height"}
           keyboardVerticalOffset={
-            Platform.OS === "ios" ? 0 : (StatusBar.currentHeight ?? 0)
+            Platform.OS === "ios" ? 0 : StatusBar.currentHeight ?? 0
           }
         >
           <ScrollView
@@ -470,8 +470,8 @@ export default function Spend() {
                 {allowDirectOutlet
                   ? "Showing all outlets."
                   : selectedCompany
-                    ? "Showing outlets for the selected company."
-                    : "Pick a company to see its outlets."}
+                  ? "Showing outlets for the selected company."
+                  : "Pick a company to see its outlets."}
               </Text>
             )}
 
@@ -611,7 +611,7 @@ export default function Spend() {
                   const picked = outlets?.find(
                     (o: any) =>
                       String(o.id) === String(selectedOutlet) ||
-                      o.id === selectedOutlet,
+                      o.id === selectedOutlet
                   );
                   return (
                     <Text
@@ -644,62 +644,13 @@ export default function Spend() {
             {/* Amount & PIN sections */}
             {selectedOutlet && (
               <>
-                <Glass
-                  style={[
-                    spendStyles.inputCard,
-                    {
-                      backgroundColor: isDark
-                        ? "rgba(255,255,255,0.05)"
-                        : theme.colors.card,
-                      borderColor: isDark
-                        ? "rgba(255,255,255,0.15)"
-                        : theme.colors.border,
-                    },
-                  ]}
-                >
-                  <AmountSection
-                    control={control}
-                    availableLocked={availableLocked}
-                    styles={{
-                      ...spendStyles,
-                      currency: [
-                        spendStyles.currency,
-                        { color: theme.colors.primary },
-                      ],
-                      hint: [spendStyles.hint, { color: theme.colors.muted }],
-                      input: [spendStyles.input, { color: theme.colors.text }],
-                      inputError: [
-                        spendStyles.inputError,
-                        { color: theme.colors.danger },
-                      ],
-                    }}
-                  />
-                </Glass>
-                <Glass
-                  style={[
-                    spendStyles.inputCard,
-                    {
-                      backgroundColor: isDark
-                        ? "rgba(255,255,255,0.05)"
-                        : theme.colors.card,
-                      borderColor: isDark
-                        ? "rgba(255,255,255,0.15)"
-                        : theme.colors.border,
-                    },
-                  ]}
-                >
-                  <PinSection
-                    control={control}
-                    styles={{
-                      ...spendStyles,
-                      input: [spendStyles.input, { color: theme.colors.text }],
-                      inputError: [
-                        spendStyles.inputError,
-                        { color: theme.colors.danger },
-                      ],
-                    }}
-                  />
-                </Glass>
+                <AmountSection
+                  control={control}
+                  availableLocked={availableLocked}
+                  styles={spendStyles}
+                />
+
+                <PinSection control={control} styles={spendStyles} />
               </>
             )}
 

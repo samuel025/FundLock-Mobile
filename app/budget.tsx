@@ -6,6 +6,7 @@ import { useCategory } from "@/hooks/useCategory";
 import { useLock } from "@/hooks/useLock";
 import { useWallet } from "@/hooks/useWallet";
 import { walletStore } from "@/lib/walletStore";
+import { useTheme } from "@/theme";
 import {
   Poppins_400Regular,
   Poppins_500Medium,
@@ -15,6 +16,7 @@ import {
 } from "@expo-google-fonts/poppins";
 import { Ionicons } from "@expo/vector-icons";
 import { yupResolver } from "@hookform/resolvers/yup";
+import BlurView from "expo-blur/build/BlurView";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { ScrollView } from "moti";
@@ -36,7 +38,7 @@ const schema = yup.object({
   amount: yup
     .number()
     .transform((value, original) =>
-      original === "" ? undefined : Number(original),
+      original === "" ? undefined : Number(original)
     )
     .typeError("Enter a valid amount")
     .positive("Amount must be greater than 0")
@@ -56,9 +58,11 @@ const schema = yup.object({
 type FormData = yup.InferType<typeof schema>;
 
 export default function Budget() {
+  const { theme, scheme } = useTheme();
+  const isDark = scheme === "dark";
   const router = useRouter();
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(
-    null,
+    null
   );
   const [categoryModalVisible, setCategoryModalVisible] = useState(false);
   const [banner, setBanner] = useState<{
@@ -87,7 +91,7 @@ export default function Budget() {
 
   const selectedCategory = useMemo(
     () => categories?.find((c) => c.id === selectedCategoryId) || null,
-    [selectedCategoryId],
+    [selectedCategoryId]
   );
 
   const onSubmit = (data: FormData) => {
@@ -122,14 +126,53 @@ export default function Budget() {
 
   if (!fontsLoaded) return null;
 
+  const Glass = ({
+    children,
+    style,
+    radius = 12,
+  }: {
+    children: React.ReactNode;
+    style?: any;
+    radius?: number;
+  }) => {
+    if (!isDark) {
+      return <View style={style}>{children}</View>;
+    }
+    return (
+      <View
+        style={[
+          style,
+          {
+            position: "relative",
+            overflow: "hidden",
+            borderRadius: radius,
+            backgroundColor: "rgba(255,255,255,0.05)",
+            borderWidth: 1,
+            borderColor: "rgba(255,255,255,0.10)",
+          },
+        ]}
+      >
+        <BlurView
+          intensity={30}
+          tint="dark"
+          style={StyleSheet.absoluteFillObject}
+        />
+        {children}
+      </View>
+    );
+  };
+
   return (
     <PinGuard>
-      <LinearGradient colors={["#F8F9FA", "#E9ECEF"]} style={styles.container}>
+      <LinearGradient
+        colors={[theme.colors.gradientStart, theme.colors.gradientEnd]}
+        style={styles.container}
+      >
         <KeyboardAvoidingView
           behavior={Platform.OS === "ios" ? "padding" : undefined}
           style={{ flex: 1 }}
           keyboardVerticalOffset={
-            Platform.OS === "ios" ? 0 : (StatusBar.currentHeight ?? 0)
+            Platform.OS === "ios" ? 0 : StatusBar.currentHeight ?? 0
           }
         >
           <ScrollView
@@ -148,21 +191,50 @@ export default function Budget() {
             <View style={styles.header}>
               <TouchableOpacity
                 onPress={() => router.back()}
-                style={styles.backButton}
                 accessibilityLabel="Go back"
+                style={styles.backButton}
               >
-                <Ionicons name="chevron-back" size={22} color="#1B263B" />
+                <Glass
+                  radius={12}
+                  style={[
+                    styles.iconBox,
+                    {
+                      backgroundColor: isDark
+                        ? "rgba(255,255,255,0.05)"
+                        : theme.colors.card,
+                    },
+                  ]}
+                >
+                  <Ionicons
+                    name="chevron-back"
+                    size={22}
+                    color={theme.colors.primary}
+                  />
+                </Glass>
               </TouchableOpacity>
 
               <View style={styles.headerCenter}>
-                <Text style={styles.title}>Budget Funds</Text>
+                <Text style={[styles.lockTitle, { color: theme.colors.text }]}>
+                  Budget Funds
+                </Text>
                 <Text style={styles.subtitle}>
                   Set aside money for a category
                 </Text>
               </View>
-              <View style={styles.iconBox}>
+
+              <Glass
+                radius={12}
+                style={[
+                  styles.iconBox,
+                  {
+                    backgroundColor: isDark
+                      ? "rgba(255,255,255,0.05)"
+                      : theme.colors.card,
+                  },
+                ]}
+              >
                 <Ionicons name="lock-closed" size={26} color="#38B2AC" />
-              </View>
+              </Glass>
             </View>
 
             <View style={styles.section}>
@@ -171,12 +243,26 @@ export default function Budget() {
                 style={styles.pickerButton}
                 onPress={() => setCategoryModalVisible(true)}
               >
-                <Text style={styles.pickerText}>
-                  {selectedCategory
-                    ? selectedCategory.name
-                    : "Select a category"}
-                </Text>
-                <Ionicons name="chevron-down" size={20} color="#778DA9" />
+                <Glass
+                  style={[
+                    styles.loadingRow,
+                    {
+                      borderColor: theme.colors.border,
+                      backgroundColor: isDark
+                        ? "rgba(255,255,255,0.06)"
+                        : theme.colors.card,
+                    },
+                  ]}
+                >
+                  <Text
+                    style={[styles.pickerText, { color: theme.colors.text }]}
+                  >
+                    {selectedCategory
+                      ? selectedCategory.name
+                      : "Select a category"}
+                  </Text>
+                  <Ionicons name="chevron-down" size={20} color="#778DA9" />
+                </Glass>
               </TouchableOpacity>
               <CategoryPicker
                 visible={categoryModalVisible}
@@ -235,12 +321,47 @@ export default function Budget() {
                                 )}
                               />
                             }
-                            outlineColor="#E2E8F0"
-                            activeOutlineColor="#38B2AC"
-                            style={styles.input}
+                            outlineColor={
+                              isDark
+                                ? "rgba(255,255,255,0.2)"
+                                : theme.colors.border
+                            }
+                            activeOutlineColor={theme.colors.primary}
+                            textColor={theme.colors.text}
+                            style={[
+                              styles.input,
+                              {
+                                backgroundColor: isDark
+                                  ? "rgba(255, 255, 255, 0.08)"
+                                  : theme.colors.surface,
+                              },
+                            ]}
+                            outlineStyle={{
+                              borderRadius: 12,
+                            }}
                             theme={{
                               fonts: {
                                 regular: { fontFamily: "Poppins_500Medium" },
+                              },
+                              colors: {
+                                primary: theme.colors.primary,
+                                placeholder: isDark
+                                  ? "rgba(255,255,255,0.5)"
+                                  : theme.colors.muted,
+                                text: theme.colors.text,
+                                onSurfaceVariant: isDark
+                                  ? "rgba(255,255,255,0.6)"
+                                  : theme.colors.muted,
+                                background: isDark
+                                  ? theme.colors.background
+                                  : theme.colors.surface,
+                                onSurface: theme.colors.text,
+                                outline: isDark
+                                  ? "rgba(255,255,255,0.2)"
+                                  : theme.colors.border,
+                                surfaceVariant: isDark
+                                  ? theme.colors.background
+                                  : theme.colors.surface,
                               },
                             }}
                           />
@@ -289,17 +410,72 @@ export default function Budget() {
                             }
                             keyboardType="number-pad"
                             secureTextEntry
-                            outlineColor="#E2E8F0"
-                            activeOutlineColor="#38B2AC"
-                            style={styles.input}
+                            left={
+                              <TextInput.Icon
+                                icon={() => (
+                                  <Ionicons
+                                    name="lock-closed-outline"
+                                    size={20}
+                                    color={
+                                      isDark
+                                        ? "rgba(255,255,255,0.6)"
+                                        : theme.colors.muted
+                                    }
+                                  />
+                                )}
+                              />
+                            }
+                            outlineColor={
+                              isDark
+                                ? "rgba(255,255,255,0.2)"
+                                : theme.colors.border
+                            }
+                            activeOutlineColor={theme.colors.primary}
+                            textColor={theme.colors.text}
+                            style={[
+                              styles.input,
+                              {
+                                backgroundColor: isDark
+                                  ? "rgba(255, 255, 255, 0.08)"
+                                  : theme.colors.surface,
+                              },
+                            ]}
+                            outlineStyle={{
+                              borderRadius: 12,
+                            }}
                             theme={{
                               fonts: {
                                 regular: { fontFamily: "Poppins_500Medium" },
                               },
+                              colors: {
+                                text: theme.colors.text,
+                                placeholder: isDark
+                                  ? "rgba(255,255,255,0.5)"
+                                  : theme.colors.muted,
+                                primary: theme.colors.primary,
+                                onSurfaceVariant: isDark
+                                  ? "rgba(255,255,255,0.6)"
+                                  : theme.colors.muted,
+                                background: isDark
+                                  ? theme.colors.background
+                                  : theme.colors.surface,
+                                onSurface: theme.colors.text,
+                                outline: isDark
+                                  ? "rgba(255,255,255,0.2)"
+                                  : theme.colors.border,
+                                surfaceVariant: isDark
+                                  ? theme.colors.background
+                                  : theme.colors.surface,
+                              },
                             }}
                           />
                           {fieldState.error && (
-                            <Text style={styles.inputError}>
+                            <Text
+                              style={[
+                                styles.inputError,
+                                { color: theme.colors.danger },
+                              ]}
+                            >
                               {fieldState.error.message}
                             </Text>
                           )}
@@ -346,14 +522,14 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   backButton: {
-    width: 44,
-    height: 44,
+    width: 20,
+    height: 20,
     borderRadius: 10,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#FFFFFF",
     elevation: 2,
-    marginRight: 8,
+    marginRight: 20,
+    marginLeft: 15,
   },
   headerCenter: { flex: 1, paddingLeft: 4 },
   title: { fontSize: 26, fontFamily: "Poppins_700Bold", color: "#1B263B" },
@@ -364,8 +540,8 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   iconBox: {
-    width: 56,
-    height: 56,
+    width: 45,
+    height: 45,
     borderRadius: 14,
     backgroundColor: "#fff",
     justifyContent: "center",
@@ -382,14 +558,9 @@ const styles = StyleSheet.create({
   pickerButton: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#FFFFFF",
-    borderRadius: 12,
-    padding: 12,
-    borderWidth: 1,
-    borderColor: "#E9ECEF",
   },
   pickerLeft: { marginRight: 12 },
-  pickerText: { flex: 1, fontFamily: "Poppins_500Medium", color: "#1B263B" },
+  pickerText: { flex: 1, fontFamily: "Poppins_500Medium" },
   modalOverlay: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.35)",
@@ -427,11 +598,7 @@ const styles = StyleSheet.create({
     marginRight: 12,
   },
   inputCard: {
-    backgroundColor: "#fff",
-    borderRadius: 12,
-    padding: 8,
-    borderWidth: 1,
-    borderColor: "#E9ECEF",
+    padding: 0,
   },
   input: { backgroundColor: "transparent", fontSize: 16 },
   currency: {
@@ -466,4 +633,19 @@ const styles = StyleSheet.create({
     fontFamily: "Poppins_500Medium",
   },
   itemSeparator: { height: 1, backgroundColor: "#F1F5F9", marginLeft: 56 },
+
+  lockTitle: {
+    fontFamily: "Poppins_600SemiBold",
+    fontSize: 20,
+  },
+  loadingRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    padding: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#E9ECEF",
+    marginBottom: 8,
+  },
 });

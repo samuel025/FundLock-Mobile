@@ -40,7 +40,6 @@ export function useOutlet() {
       );
     },
     onError: (error) => {
-      console.error("Failed to fetch outlets", error);
       setOutlets([]);
     },
     onSettled: () => {

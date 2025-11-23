@@ -1,6 +1,14 @@
 import { MessageBanner } from "@/components/MessageBanner";
 import { useSpendByOrgId } from "@/hooks/useSpendByOrgId";
 import { getOutletByOrgId, OutletByOrgId } from "@/services/outlet";
+import { useTheme } from "@/theme";
+import {
+  Poppins_400Regular,
+  Poppins_500Medium,
+  Poppins_600SemiBold,
+  Poppins_700Bold,
+  useFonts,
+} from "@expo-google-fonts/poppins";
 import { Ionicons } from "@expo/vector-icons";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { LinearGradient } from "expo-linear-gradient";
@@ -24,6 +32,9 @@ const schema = yup.object({
   orgId: yup.string().required("Org ID is required"),
   amount: yup
     .number()
+    .transform((value, original) =>
+      original === "" ? undefined : Number(original)
+    )
     .typeError("Enter a valid amount")
     .positive("Amount must be greater than 0")
     .required("Amount is required"),
@@ -36,13 +47,24 @@ const schema = yup.object({
 type FormData = yup.InferType<typeof schema>;
 
 export default function SpendByOrgId() {
+  const { theme, scheme } = useTheme();
+  const isDark = scheme === "dark";
+
   const [outlet, setOutlet] = useState<OutletByOrgId | null>(null);
   const [loading, setLoading] = useState(false);
+  const [showPin, setShowPin] = useState(false);
   const [banner, setBanner] = useState<{
     message: string;
     type: "success" | "error" | "info";
   } | null>(null);
   const scrollRef = useRef<any>(null);
+
+  let [fontsLoaded] = useFonts({
+    Poppins_400Regular,
+    Poppins_500Medium,
+    Poppins_600SemiBold,
+    Poppins_700Bold,
+  });
 
   const { control, handleSubmit, watch, formState, reset } = useForm<FormData>({
     resolver: yupResolver(schema),
@@ -62,14 +84,14 @@ export default function SpendByOrgId() {
     if (spendMessage) {
       setBanner({ message: spendMessage, type: "success" });
       reset();
+      setOutlet(null);
     }
-  }, [spendError, spendMessage]);
+  }, [spendError, spendMessage, reset]);
 
   useEffect(() => {
     if (banner) {
       scrollRef.current?.scrollTo?.({ y: 0, animated: true });
       const timer = setTimeout(() => setBanner(null), 5000);
-      setOutlet(null);
       return () => clearTimeout(timer);
     }
   }, [banner]);
@@ -81,27 +103,51 @@ export default function SpendByOrgId() {
       const data = await getOutletByOrgId(orgId.trim().toUpperCase());
       setOutlet(data);
     } catch (err: any) {
-      setBanner({ message: "Failed to fetch outlet", type: "error" });
+      setBanner({
+        message: err?.message || "Failed to fetch outlet",
+        type: "error",
+      });
     } finally {
       setLoading(false);
     }
   };
 
   const onSubmit = async (data: FormData) => {
-    spendLockedFundsByOrgID(data);
-    reset();
+    await spendLockedFundsByOrgID(data);
   };
 
+  if (!fontsLoaded) return null;
+
+  const inputTheme = (error: boolean) => ({
+    roundness: 12,
+    colors: {
+      primary: theme.colors.primary,
+      outline: error
+        ? theme.colors.danger
+        : isDark
+        ? "rgba(255,255,255,0.2)"
+        : theme.colors.border,
+      placeholder: isDark ? "rgba(255,255,255,0.5)" : theme.colors.muted,
+      text: theme.colors.text,
+      onSurfaceVariant: isDark ? "rgba(255,255,255,0.6)" : theme.colors.muted,
+      background: isDark ? "rgba(255, 255, 255, 0.08)" : theme.colors.surface,
+      surfaceVariant: isDark ? theme.colors.background : theme.colors.surface,
+      onSurface: theme.colors.text,
+    },
+  });
+
   return (
-    <LinearGradient colors={["#F8F9FA", "#FFFFFF"]} style={styles.container}>
+    <LinearGradient
+      colors={[theme.colors.gradientStart, theme.colors.gradientEnd]}
+      style={[styles.container, { backgroundColor: theme.colors.background }]}
+    >
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : undefined}
         style={{ flex: 1 }}
-        keyboardVerticalOffset={
-          Platform.OS === "ios" ? 0 : (StatusBar.currentHeight ?? 0)
-        }
+        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
       >
         <ScrollView
+          ref={scrollRef}
           contentContainerStyle={styles.content}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
@@ -113,30 +159,63 @@ export default function SpendByOrgId() {
               onClose={() => setBanner(null)}
             />
           )}
+
           <View style={styles.header}>
             <TouchableOpacity
               onPress={() => router.back()}
-              style={styles.backButton}
+              style={[
+                styles.backButton,
+                {
+                  backgroundColor: isDark ? "rgba(255,255,255,0.1)" : "#FFFFFF",
+                },
+              ]}
               accessibilityLabel="Go back"
             >
-              <Ionicons name="chevron-back" size={20} color="#1B263B" />
+              <Ionicons
+                name="chevron-back"
+                size={20}
+                color={theme.colors.text}
+              />
             </TouchableOpacity>
 
             <View style={styles.headerCenter}>
-              <Text style={styles.title}>Spend by Org ID</Text>
-              <Text style={styles.subtitle}>
+              <Text style={[styles.title, { color: theme.colors.text }]}>
+                Spend by Org ID
+              </Text>
+              <Text style={[styles.subtitle, { color: theme.colors.muted }]}>
                 Quickly pay vendors using their Org ID
               </Text>
             </View>
 
-            <View style={styles.iconBox}>
+            <View
+              style={[
+                styles.iconBox,
+                {
+                  backgroundColor: isDark ? "rgba(56,178,172,0.15)" : "#E7F6F2",
+                },
+              ]}
+            >
               <Ionicons name="storefront" size={20} color="#38B2AC" />
             </View>
           </View>
 
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Org ID</Text>
-            <View style={styles.inputContainer}>
+            <Text style={[styles.sectionTitle, { color: theme.colors.muted }]}>
+              Org ID
+            </Text>
+            <View
+              style={[
+                styles.inputContainer,
+                {
+                  backgroundColor: isDark
+                    ? "rgba(255,255,255,0.05)"
+                    : "#FFFFFF",
+                  borderColor: isDark
+                    ? "rgba(255,255,255,0.1)"
+                    : theme.colors.border,
+                },
+              ]}
+            >
               <Controller
                 control={control}
                 name="orgId"
@@ -144,21 +223,38 @@ export default function SpendByOrgId() {
                   <>
                     <TextInput
                       mode="outlined"
-                      label="Enter Org ID"
+                      placeholder="Enter Org ID"
                       value={value}
                       onChangeText={(text) => onChange(text.toUpperCase())}
-                      outlineColor="#E6EEF0"
-                      activeOutlineColor="#38B2AC"
-                      style={styles.input}
+                      outlineColor={
+                        isDark ? "rgba(255,255,255,0.2)" : theme.colors.border
+                      }
+                      activeOutlineColor={theme.colors.primary}
+                      textColor={theme.colors.text}
+                      style={[
+                        styles.input,
+                        {
+                          backgroundColor: isDark
+                            ? "rgba(255, 255, 255, 0.08)"
+                            : theme.colors.surface,
+                        },
+                      ]}
+                      outlineStyle={{ borderRadius: 12 }}
                       theme={{
                         fonts: {
                           regular: { fontFamily: "Poppins_500Medium" },
                         },
+                        colors: inputTheme(!!fieldState.error).colors,
                       }}
                       editable={!loading}
                     />
                     {fieldState.error && (
-                      <Text style={styles.inputError}>
+                      <Text
+                        style={[
+                          styles.inputError,
+                          { color: theme.colors.danger },
+                        ]}
+                      >
                         {fieldState.error.message}
                       </Text>
                     )}
@@ -169,13 +265,14 @@ export default function SpendByOrgId() {
               <TouchableOpacity
                 style={[
                   styles.fetchButton,
-                  (loading || !orgId) && styles.disabledButton,
+                  (loading || !orgId || orgId.length < 3) &&
+                    styles.disabledButton,
                 ]}
                 onPress={handleFetchOutlet}
-                disabled={loading || !orgId}
+                disabled={loading || !orgId || orgId.length < 3}
               >
                 <LinearGradient
-                  colors={["#38B2AC", "#2C9A92"]}
+                  colors={[theme.colors.primary, "#2C9A92"]}
                   style={styles.fetchGradient}
                 >
                   <Ionicons name="search" size={16} color="#fff" />
@@ -188,16 +285,50 @@ export default function SpendByOrgId() {
           </View>
 
           {outlet && (
-            <View style={styles.outletCard}>
-              <View style={styles.outletInfoRow}>
-                <View style={styles.outletIconContainer}>
+            <View
+              style={[
+                styles.outletCard,
+                {
+                  backgroundColor: isDark
+                    ? "rgba(255,255,255,0.08)"
+                    : "#FFFFFF",
+                  borderColor: isDark
+                    ? "rgba(255,255,255,0.1)"
+                    : theme.colors.border,
+                },
+              ]}
+            >
+              <View
+                style={[
+                  styles.outletInfoRow,
+                  {
+                    borderBottomColor: isDark
+                      ? "rgba(255,255,255,0.1)"
+                      : theme.colors.border,
+                  },
+                ]}
+              >
+                <View
+                  style={[
+                    styles.outletIconContainer,
+                    {
+                      backgroundColor: isDark
+                        ? "rgba(56,178,172,0.15)"
+                        : "#E6F7F5",
+                    },
+                  ]}
+                >
                   <Ionicons name="storefront" size={20} color="#2C9A92" />
                 </View>
                 <View style={styles.outletMeta}>
-                  <Text style={styles.outletName}>
+                  <Text
+                    style={[styles.outletName, { color: theme.colors.text }]}
+                  >
                     {(outlet as any).name ?? (outlet as any).outlet?.name}
                   </Text>
-                  <Text style={styles.outletDetail}>
+                  <Text
+                    style={[styles.outletDetail, { color: theme.colors.muted }]}
+                  >
                     {(outlet as any).address ?? (outlet as any).outlet?.address}
                     {", "}
                     {(outlet as any).state ?? (outlet as any).outlet?.state}
@@ -205,9 +336,13 @@ export default function SpendByOrgId() {
                 </View>
               </View>
 
-              {/* Stack fields vertically */}
               <View style={styles.verticalForm}>
                 <View style={styles.fullWidthFormItem}>
+                  <Text
+                    style={[styles.fieldLabel, { color: theme.colors.muted }]}
+                  >
+                    Amount
+                  </Text>
                   <Controller
                     control={control}
                     name="amount"
@@ -215,32 +350,61 @@ export default function SpendByOrgId() {
                       <>
                         <TextInput
                           mode="outlined"
-                          label="Amount"
+                          placeholder="Amount to spend"
                           value={value !== undefined ? String(value) : ""}
-                          onChangeText={(t) =>
-                            onChange(t.replace(/[^0-9.]/g, ""))
-                          }
+                          onChangeText={(t) => {
+                            const cleaned = t
+                              .replace(/[^0-9.]/g, "")
+                              .replace(/(\..*)\./g, "$1");
+                            onChange(cleaned);
+                          }}
                           keyboardType={
                             Platform.OS === "ios" ? "decimal-pad" : "numeric"
                           }
                           left={
                             <TextInput.Icon
                               icon={() => (
-                                <Text style={styles.currency}>₦</Text>
+                                <Text
+                                  style={[
+                                    styles.currency,
+                                    { color: theme.colors.primary },
+                                  ]}
+                                >
+                                  ₦
+                                </Text>
                               )}
                             />
                           }
-                          outlineColor="#E6EEF0"
-                          activeOutlineColor="#38B2AC"
-                          style={styles.input}
+                          outlineColor={
+                            isDark
+                              ? "rgba(255,255,255,0.2)"
+                              : theme.colors.border
+                          }
+                          activeOutlineColor={theme.colors.primary}
+                          textColor={theme.colors.text}
+                          style={[
+                            styles.input,
+                            {
+                              backgroundColor: isDark
+                                ? "rgba(255, 255, 255, 0.08)"
+                                : theme.colors.surface,
+                            },
+                          ]}
+                          outlineStyle={{ borderRadius: 12 }}
                           theme={{
                             fonts: {
                               regular: { fontFamily: "Poppins_500Medium" },
                             },
+                            colors: inputTheme(!!fieldState.error).colors,
                           }}
                         />
                         {fieldState.error && (
-                          <Text style={styles.inputError}>
+                          <Text
+                            style={[
+                              styles.inputError,
+                              { color: theme.colors.danger },
+                            ]}
+                          >
                             {fieldState.error.message}
                           </Text>
                         )}
@@ -250,6 +414,11 @@ export default function SpendByOrgId() {
                 </View>
 
                 <View style={styles.fullWidthFormItem}>
+                  <Text
+                    style={[styles.fieldLabel, { color: theme.colors.muted }]}
+                  >
+                    PIN
+                  </Text>
                   <Controller
                     control={control}
                     name="pin"
@@ -257,25 +426,65 @@ export default function SpendByOrgId() {
                       <>
                         <TextInput
                           mode="outlined"
-                          label="PIN"
+                          placeholder="4-digit PIN"
                           value={value}
                           onChangeText={(t) =>
                             onChange(t.replace(/[^0-9]/g, "").slice(0, 4))
                           }
                           keyboardType="number-pad"
-                          secureTextEntry
-                          outlineColor="#E6EEF0"
-                          activeOutlineColor="#38B2AC"
-                          style={styles.input}
+                          secureTextEntry={!showPin}
+                          left={
+                            <TextInput.Icon
+                              icon={() => (
+                                <Ionicons
+                                  name="lock-closed-outline"
+                                  size={20}
+                                  color={
+                                    isDark
+                                      ? "rgba(255,255,255,0.6)"
+                                      : theme.colors.muted
+                                  }
+                                />
+                              )}
+                            />
+                          }
+                          right={
+                            <TextInput.Icon
+                              icon={showPin ? "eye-off" : "eye"}
+                              onPress={() => setShowPin((s) => !s)}
+                            />
+                          }
+                          outlineColor={
+                            isDark
+                              ? "rgba(255,255,255,0.2)"
+                              : theme.colors.border
+                          }
+                          activeOutlineColor={theme.colors.primary}
+                          textColor={theme.colors.text}
+                          style={[
+                            styles.input,
+                            {
+                              backgroundColor: isDark
+                                ? "rgba(255, 255, 255, 0.08)"
+                                : theme.colors.surface,
+                            },
+                          ]}
+                          outlineStyle={{ borderRadius: 12 }}
                           theme={{
                             fonts: {
                               regular: { fontFamily: "Poppins_500Medium" },
                             },
+                            colors: inputTheme(!!fieldState.error).colors,
                           }}
                           maxLength={4}
                         />
                         {fieldState.error && (
-                          <Text style={styles.inputError}>
+                          <Text
+                            style={[
+                              styles.inputError,
+                              { color: theme.colors.danger },
+                            ]}
+                          >
                             {fieldState.error.message}
                           </Text>
                         )}
@@ -298,7 +507,7 @@ export default function SpendByOrgId() {
                   style={styles.actionGradient}
                 >
                   <Text style={styles.actionText}>
-                    {isSpending ? "Processing..." : "Pay vendor"}
+                    {isSpending ? "Processing..." : "Pay Vendor"}
                   </Text>
                   <Ionicons name="card" size={16} color="#fff" />
                 </LinearGradient>
@@ -317,7 +526,7 @@ const styles = StyleSheet.create({
     padding: 20,
     paddingTop: Platform.select({
       ios: 60,
-      android: 20,
+      android: (StatusBar.currentHeight || 0) + 20,
     }),
     paddingBottom: 40,
   },
@@ -334,7 +543,6 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#FFFFFF",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
@@ -345,19 +553,16 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 22,
     fontFamily: "Poppins_700Bold",
-    color: "#1B263B",
     marginBottom: 2,
   },
   subtitle: {
     fontSize: 13,
     fontFamily: "Poppins_400Regular",
-    color: "#778DA9",
   },
   iconBox: {
     width: 56,
     height: 56,
     borderRadius: 16,
-    backgroundColor: "#fff",
     justifyContent: "center",
     alignItems: "center",
     shadowColor: "#000",
@@ -371,14 +576,13 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 14,
     fontFamily: "Poppins_600SemiBold",
-    color: "#415A77",
     marginBottom: 8,
   },
 
   inputContainer: {
-    backgroundColor: "#fff",
-    borderRadius: 12,
-    padding: 8,
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 1,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.04,
@@ -387,12 +591,10 @@ const styles = StyleSheet.create({
   },
 
   input: {
-    backgroundColor: "transparent",
     fontSize: 15,
     fontFamily: "Poppins_500Medium",
   },
   inputError: {
-    color: "#DC2626",
     fontSize: 12,
     marginTop: 6,
     fontFamily: "Poppins_400Regular",
@@ -423,14 +625,12 @@ const styles = StyleSheet.create({
     marginTop: 20,
     padding: 20,
     borderRadius: 20,
-    backgroundColor: "#FFFFFF",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.1,
     shadowRadius: 20,
     elevation: 6,
     borderWidth: 1,
-    borderColor: "#F1F5F9",
   },
   outletInfoRow: {
     flexDirection: "row",
@@ -438,13 +638,11 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     paddingBottom: 16,
     borderBottomWidth: 1,
-    borderBottomColor: "#F1F5F9",
   },
   outletIconContainer: {
     width: 48,
     height: 48,
     borderRadius: 12,
-    backgroundColor: "#E6F7F5",
     justifyContent: "center",
     alignItems: "center",
     marginRight: 12,
@@ -453,11 +651,9 @@ const styles = StyleSheet.create({
   outletName: {
     fontSize: 18,
     fontFamily: "Poppins_700Bold",
-    color: "#1B263B",
     marginBottom: 4,
   },
   outletDetail: {
-    color: "#64748B",
     fontSize: 13,
     fontFamily: "Poppins_400Regular",
     lineHeight: 18,
@@ -465,14 +661,16 @@ const styles = StyleSheet.create({
 
   verticalForm: {
     flexDirection: "column",
-    gap: 16,
+    gap: 20,
     marginBottom: 20,
   },
   fullWidthFormItem: {
     width: "100%",
-    backgroundColor: "#fff",
-    borderRadius: 12,
-    padding: 8,
+  },
+  fieldLabel: {
+    fontSize: 14,
+    fontFamily: "Poppins_600SemiBold",
+    marginBottom: 8,
   },
 
   actionButton: {
@@ -500,6 +698,5 @@ const styles = StyleSheet.create({
   currency: {
     fontSize: 16,
     fontFamily: "Poppins_700Bold",
-    color: "#2C9A92",
   },
 });

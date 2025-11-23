@@ -81,7 +81,7 @@ export default function AddBvn() {
       Alert.alert("Success", "Your BVN has been added successfully", [
         {
           text: "OK",
-          onPress: () => router.back(),
+          onPress: () => router.replace("/(tabs)/profile"),
         },
       ]);
     } catch (err: any) {

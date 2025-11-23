@@ -18,8 +18,8 @@ export function MessageBanner({
         type === "success"
           ? styles.success
           : type === "error"
-          ? styles.error
-          : styles.info,
+            ? styles.error
+            : styles.info,
       ]}
     >
       <Text style={styles.text}>{message}</Text>

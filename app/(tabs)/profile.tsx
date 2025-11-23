@@ -1,3 +1,4 @@
+import { PinGuard } from "@/components/PinGuard";
 import { AccountActions } from "@/components/profileComponents/AccountActions";
 import { DepositModal } from "@/components/profileComponents/DepositModal";
 import { ProfileHeader } from "@/components/profileComponents/ProfileHeader";
@@ -7,9 +8,10 @@ import { authActions } from "@/lib/authContext"; // <-- added import
 import { useAuthStore } from "@/lib/useAuthStore";
 import { postDeposit } from "@/services/deposit";
 import {
-  createRemitaVirtualAccount,
-  getVirtualAccountDetails,
-} from "@/services/remita";
+  createKoraVirtualAccount,
+  getKoraVirtualAccountDetails,
+} from "@/services/kora";
+import { useTheme } from "@/theme";
 import {
   Poppins_400Regular,
   Poppins_500Medium,
@@ -24,11 +26,11 @@ import React, { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import {
   Alert,
+  Platform,
   ScrollView,
+  StatusBar,
   StyleSheet,
   Text,
-  Platform,
-  StatusBar,
 } from "react-native";
 import * as yup from "yup";
 
@@ -63,7 +65,9 @@ export default function Profile() {
   const [virtualLoading, setVirtualLoading] = useState(false);
   const [creatingVirtual, setCreatingVirtual] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
-
+  const [refreshKey, setRefreshKey] = useState(0);
+  const { theme, scheme } = useTheme();
+  const isDark = scheme === "dark";
   const user = useAuthStore((state) => state.user);
 
   let [fontsLoaded] = useFonts({
@@ -78,7 +82,7 @@ export default function Profile() {
       `${user?.firstName?.charAt(0) ?? "U"}${
         user?.lastName?.charAt(0) ?? ""
       }`.toUpperCase(),
-    [],
+    []
   );
 
   const {
@@ -119,7 +123,7 @@ export default function Profile() {
     setWithdrawModal(false);
     Alert.alert(
       "Withdrawal requested",
-      `₦${data.amount?.toLocaleString()} withdrawal initiated`,
+      `₦${data.amount?.toLocaleString()} withdrawal initiated`
     );
   };
 
@@ -129,7 +133,7 @@ export default function Profile() {
     (async () => {
       setVirtualLoading(true);
       try {
-        const details = await getVirtualAccountDetails();
+        const details = await getKoraVirtualAccountDetails();
         if (mounted && details?.account_number) {
           setVirtualAccount({
             accountNumber: details.account_number,
@@ -154,14 +158,19 @@ export default function Profile() {
   const createVirtual = async () => {
     setCreatingVirtual(true);
     try {
-      const res = await createRemitaVirtualAccount();
-      setVirtualAccount({
-        accountNumber: res.account_number,
-        bank: res.bank_name,
-      });
+      await createKoraVirtualAccount();
+      const details = await getKoraVirtualAccountDetails();
+      if (details?.account_number) {
+        setVirtualAccount({
+          accountNumber: details.account_number,
+          bank: details.bank_name,
+        });
+        setRefreshKey((prev) => prev + 1);
+        Alert.alert("Success", "Virtual account created successfully!");
+      }
+      setCreatingVirtual(false);
     } catch (err: any) {
       Alert.alert("Error", err?.message ?? "Failed to create virtual account");
-    } finally {
       setCreatingVirtual(false);
     }
   };
@@ -186,62 +195,87 @@ export default function Profile() {
 
   if (!fontsLoaded) return null;
 
+  // Reusable style to pass to children for disabled touchables (apply via style={[baseStyle, disabled && disabledStyle]})
+
+  const disabledStyle = {
+    opacity: 0.45,
+    // subtle backdrop indicating disabled state
+    backgroundColor: isDark ? "rgba(255,255,255,0.06)" : theme.colors.border,
+    borderColor: isDark ? "rgba(255,255,255,0.15)" : theme.colors.border,
+    borderWidth: 1,
+  };
+
   return (
-    <LinearGradient colors={["#F8F9FA", "#E9ECEF"]} style={styles.container}>
-      <ScrollView
-        contentContainerStyle={styles.content}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
+    <PinGuard>
+      <LinearGradient
+        colors={[theme.colors.gradientStart, theme.colors.gradientEnd]}
+        style={[styles.container, { backgroundColor: theme.colors.background }]}
       >
-        <ProfileHeader
-          initials={userInitials}
-          firstName={user?.firstName}
-          lastName={user?.lastName}
-          email={user?.email}
-        />
+        <ScrollView
+          contentContainerStyle={[
+            styles.content,
+            {
+              // adapt spacing if desired
+              backgroundColor: "transparent",
+            },
+          ]}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
+          <ProfileHeader
+            initials={userInitials}
+            firstName={user?.firstName}
+            lastName={user?.lastName}
+            email={user?.email}
+          />
 
-        <AccountActions
-          onDeposit={() => setDepositModal(true)}
-          onWithdraw={() => setWithdrawModal(true)}
-          onVirtual={handleCreateVirtual}
-          onSignOut={handleSignOut}
-          virtualExists={!!virtualAccount}
-          hasBvn={user?.bvn}
-        />
+          <AccountActions
+            onDeposit={() => setDepositModal(true)}
+            onWithdraw={() => setWithdrawModal(true)}
+            onVirtual={handleCreateVirtual}
+            onSignOut={handleSignOut}
+            virtualExists={!!virtualAccount}
+            hasBvn={user?.bvn}
+            disabledStyle={disabledStyle as any}
+          />
 
-        <DepositModal
-          visible={depositModal}
-          onClose={() => {
-            setDepositModal(false);
-            setDepositLink(null);
-          }}
-          control={depositControl}
-          handleSubmit={handleDepositSubmit}
-          onGenerate={generateDepositLink}
-          isGenerating={isGenerating}
-          depositLink={depositLink}
-        />
+          <DepositModal
+            visible={depositModal}
+            onClose={() => {
+              setDepositModal(false);
+              setDepositLink(null);
+            }}
+            control={depositControl}
+            handleSubmit={handleDepositSubmit}
+            onGenerate={generateDepositLink}
+            isGenerating={isGenerating}
+            depositLink={depositLink}
+          />
 
-        <WithdrawModal
-          visible={withdrawModal}
-          onClose={() => setWithdrawModal(false)}
-          control={withdrawControl}
-          handleSubmit={handleWithdrawSubmit}
-          onWithdraw={handleWithdraw}
-        />
+          <WithdrawModal
+            visible={withdrawModal}
+            onClose={() => setWithdrawModal(false)}
+            control={withdrawControl}
+            handleSubmit={handleWithdrawSubmit}
+            onWithdraw={handleWithdraw}
+          />
 
-        <VirtualAccountModal
-          visible={virtualModal}
-          onClose={() => setVirtualModal(false)}
-          virtualAccount={virtualAccount}
-          onCreate={createVirtual}
-          isLoading={virtualLoading}
-          isCreating={creatingVirtual}
-        />
+          <VirtualAccountModal
+            key={`virtual-modal-${refreshKey}`}
+            visible={virtualModal}
+            onClose={() => setVirtualModal(false)}
+            virtualAccount={virtualAccount}
+            onCreate={createVirtual}
+            isLoading={virtualLoading}
+            isCreating={creatingVirtual}
+          />
 
-        <Text style={styles.version}>FundLock v1.0.0</Text>
-      </ScrollView>
-    </LinearGradient>
+          <Text style={[styles.version, { color: theme.colors.muted }]}>
+            FundLock v1.0.0
+          </Text>
+        </ScrollView>
+      </LinearGradient>
+    </PinGuard>
   );
 }
 
@@ -257,7 +291,6 @@ const styles = StyleSheet.create({
   },
   version: {
     textAlign: "center",
-    color: "#9CA3AF",
     fontFamily: "Poppins_400Regular",
     marginTop: 28,
   },

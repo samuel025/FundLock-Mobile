@@ -1,8 +1,8 @@
 import { AuthGuard } from "@/components/RouteGuard";
+import { useTheme } from "@/theme";
 import { Ionicons } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
 import { Platform, View } from "react-native";
-import { useTheme } from "@/theme";
 
 export default function RootLayout() {
   const { theme } = useTheme();
@@ -32,7 +32,7 @@ export default function RootLayout() {
               width: 90,
             },
             tabBarLabelStyle: {
-              fontSize: 10,
+              fontSize: 9,
               textAlign: "center",
               fontFamily: "Poppins_500Medium",
               includeFontPadding: Platform.OS === "android",

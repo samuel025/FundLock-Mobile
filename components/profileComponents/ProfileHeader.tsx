@@ -1,3 +1,4 @@
+import { useTheme } from "@/theme";
 import React from "react";
 import { StyleSheet, Text, View } from "react-native";
 
@@ -12,6 +13,8 @@ export function ProfileHeader({
   lastName?: string;
   email?: string;
 }) {
+  const { theme } = useTheme();
+
   return (
     <View style={styles.header}>
       <View style={styles.profileInfo}>
@@ -19,7 +22,7 @@ export function ProfileHeader({
           <Text style={styles.avatarText}>{initials}</Text>
         </View>
         <View style={{ marginLeft: 12 }}>
-          <Text style={styles.name}>
+          <Text style={[styles.name, { color: theme.colors.text }]}>
             {firstName} {lastName}
           </Text>
           <Text style={styles.email}>{email}</Text>
@@ -41,7 +44,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#F0FDFA",
   },
   avatarText: { fontFamily: "Poppins_700Bold", color: "#1B263B", fontSize: 26 },
-  name: { fontFamily: "Poppins_600SemiBold", color: "#1B263B", fontSize: 16 },
+  name: { fontFamily: "Poppins_600SemiBold", fontSize: 16 },
   email: {
     fontFamily: "Poppins_400Regular",
     color: "#778DA9",

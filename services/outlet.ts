@@ -43,7 +43,6 @@ export async function getOutlets(
       }
       const errorMessage =
         axiosError.response?.data?.message || "Failed to fetch outlets";
-      console.error("Failed to fetch outlets:", errorMessage);
       const customError: any = new Error(errorMessage);
       customError.status = axiosError.response?.status;
       throw customError;
@@ -82,7 +81,6 @@ export async function getOutletByOrgId(orgId: string): Promise<OutletByOrgId> {
       }
       const errorMessage =
         axiosError.response?.data?.message || "Failed to fetch outlet";
-      console.error("Failed to fetch outlet:", errorMessage);
       const customError: any = new Error(errorMessage);
       customError.status = axiosError.response?.status;
       throw customError;
