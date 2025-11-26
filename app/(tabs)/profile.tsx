@@ -4,7 +4,7 @@ import { DepositModal } from "@/components/profileComponents/DepositModal";
 import { ProfileHeader } from "@/components/profileComponents/ProfileHeader";
 import { VirtualAccountModal } from "@/components/profileComponents/VirtualAccountModal";
 import { WithdrawModal } from "@/components/profileComponents/WithdrawModal";
-import { authActions } from "@/lib/authContext"; // <-- added import
+import { authActions } from "@/lib/authContext";
 import { useAuthStore } from "@/lib/useAuthStore";
 import { postDeposit } from "@/services/deposit";
 import {
@@ -82,7 +82,7 @@ export default function Profile() {
       `${user?.firstName?.charAt(0) ?? "U"}${
         user?.lastName?.charAt(0) ?? ""
       }`.toUpperCase(),
-    []
+    [],
   );
 
   const {
@@ -123,7 +123,7 @@ export default function Profile() {
     setWithdrawModal(false);
     Alert.alert(
       "Withdrawal requested",
-      `₦${data.amount?.toLocaleString()} withdrawal initiated`
+      `₦${data.amount?.toLocaleString()} withdrawal initiated`,
     );
   };
 

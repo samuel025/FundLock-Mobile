@@ -5,6 +5,7 @@ import WalletBalanceCard from "@/components/WalletBalanceCard";
 import { useWallet } from "@/hooks/useWallet";
 import { authActions } from "@/lib/authContext";
 import { useAuthStore } from "@/lib/useAuthStore";
+import { useTheme } from "@/theme";
 import {
   Poppins_400Regular,
   Poppins_500Medium,
@@ -17,17 +18,18 @@ import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import { useState } from "react";
 import {
+  NativeScrollEvent,
+  NativeSyntheticEvent,
+  Platform,
   RefreshControl,
   ScrollView,
+  StatusBar,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
-  Platform,
-  StatusBar,
 } from "react-native";
 import { ActivityIndicator } from "react-native-paper";
-import { useTheme } from "@/theme";
 
 export default function Wallet() {
   const { theme } = useTheme();
@@ -47,6 +49,7 @@ export default function Wallet() {
     fetchWalletData,
     walletData,
     loadMore,
+    isLoadingMore,
   } = useWallet();
 
   let [fontsLoaded] = useFonts({
@@ -85,6 +88,24 @@ export default function Wallet() {
     }
   };
 
+ 
+  const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const { layoutMeasurement, contentOffset, contentSize } = event.nativeEvent;
+    const paddingToBottom = 100; 
+    const isCloseToBottom =
+      layoutMeasurement.height + contentOffset.y >=
+      contentSize.height - paddingToBottom;
+
+    if (
+      isCloseToBottom &&
+      !isLoadingMore &&
+      !isLoadingTransactions &&
+      walletData?.hasNext
+    ) {
+      loadMore();
+    }
+  };
+
   if (!fontsLoaded || (isLoadingUser && !user)) {
     return (
       <View
@@ -105,6 +126,8 @@ export default function Wallet() {
     >
       <ScrollView
         showsVerticalScrollIndicator={false}
+        onScroll={handleScroll}
+        scrollEventThrottle={400}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -186,15 +209,13 @@ export default function Wallet() {
             <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
               Transactions
             </Text>
-            {/*<TouchableOpacity>
-              <Ionicons name="options-outline" size={24} color={theme.colors.text} />
-            </TouchableOpacity>*/}
           </View>
 
           <ModernTransactionList
             transactions={walletData?.transactions || []}
             isLoading={isLoadingTransactions}
-            onLoadMore={loadMore}
+            isLoadingMore={isLoadingMore}
+            hasNext={walletData?.hasNext ?? false}
           />
         </View>
       </ScrollView>

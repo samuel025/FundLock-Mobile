@@ -26,7 +26,7 @@ export default function RootLayout() {
               paddingBottom: 8,
               paddingTop: 8,
               borderRadius: 16,
-              overflow: "hidden", // ensures rounded edges clip correctly
+              overflow: "hidden",
             },
             tabBarItemStyle: {
               width: 90,
@@ -48,7 +48,7 @@ export default function RootLayout() {
             options={{
               title: "Home",
               tabBarIcon: ({ color }) => (
-                <Ionicons name="home" size={20} color={color} />
+                <Ionicons name="home" size={18} color={color} />
               ),
             }}
           />
@@ -62,20 +62,20 @@ export default function RootLayout() {
             }}
           />
           <Tabs.Screen
-            name="spend"
-            options={{
-              title: "Spend",
-              tabBarIcon: ({ color }) => (
-                <Ionicons name="card" size={20} color={color} />
-              ),
-            }}
-          />
-          <Tabs.Screen
             name="budgets"
             options={{
               title: "Budget",
               tabBarIcon: ({ color }) => (
                 <Ionicons name="pie-chart" size={20} color={color} />
+              ),
+            }}
+          />
+          <Tabs.Screen
+            name="spend"
+            options={{
+              title: "Spend",
+              tabBarIcon: ({ color }) => (
+                <Ionicons name="card" size={20} color={color} />
               ),
             }}
           />

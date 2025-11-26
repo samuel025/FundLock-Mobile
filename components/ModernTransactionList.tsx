@@ -1,5 +1,7 @@
 import { Transaction } from "@/services/wallet";
+import { useTheme } from "@/theme";
 import { Feather, Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
+import { BlurView } from "expo-blur";
 import { MotiView } from "moti";
 import React from "react";
 import {
@@ -9,8 +11,6 @@ import {
   Text,
   View,
 } from "react-native";
-import { useTheme } from "@/theme";
-import { BlurView } from "expo-blur";
 
 interface ModernTransactionListProps {
   transactions: Transaction[];
@@ -26,6 +26,7 @@ export default function ModernTransactionList({
   isLoading,
   isLoadingMore = false,
   onLoadMore,
+  hasNext = false,
 }: ModernTransactionListProps) {
   const { theme, scheme } = useTheme();
   const isDark = scheme === "dark";
@@ -163,6 +164,26 @@ export default function ModernTransactionList({
       }
     })();
 
+    const getStatusColor = (status: string) => {
+      const statusLower = status.toLowerCase();
+      if (
+        statusLower.includes("success") ||
+        statusLower.includes("completed")
+      ) {
+        return theme.colors.primary;
+      }
+      if (
+        statusLower.includes("pending") ||
+        statusLower.includes("processing")
+      ) {
+        return "#F59E0B"; // amber/warning color
+      }
+      if (statusLower.includes("failed") || statusLower.includes("error")) {
+        return theme.colors.danger;
+      }
+      return theme.colors.muted;
+    };
+
     return (
       <MotiView
         from={{ opacity: 0, translateY: 12 }}
@@ -222,13 +243,36 @@ export default function ModernTransactionList({
                 {getRecipient(transaction)}
               </Text>
             </View>
-            <Text
-              style={[styles.transactionDate, { color: theme.colors.muted }]}
-              numberOfLines={1}
-              ellipsizeMode="tail"
-            >
-              {formatDateTime(transaction.createdAt)}
-            </Text>
+            <View style={styles.transactionDateRow}>
+              <Text
+                style={[styles.transactionDate, { color: theme.colors.muted }]}
+                numberOfLines={1}
+                ellipsizeMode="tail"
+              >
+                {formatDateTime(transaction.createdAt)}
+              </Text>
+              {transaction.status && (
+                <View
+                  style={[
+                    styles.statusBadge,
+                    {
+                      backgroundColor: isDark
+                        ? `${getStatusColor(transaction.status)}20`
+                        : `${getStatusColor(transaction.status)}15`,
+                    },
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.statusText,
+                      { color: getStatusColor(transaction.status) },
+                    ]}
+                  >
+                    {transaction.status}
+                  </Text>
+                </View>
+              )}
+            </View>
           </View>
         </View>
 
@@ -251,29 +295,26 @@ export default function ModernTransactionList({
     );
   };
 
-  const renderFooter = () => {
-    if (!isLoadingMore) return null;
-    return (
-      <View style={styles.footerLoader}>
-        <ActivityIndicator size="small" color={theme.colors.primary} />
-        <Text style={[styles.footerText, { color: theme.colors.muted }]}>
-          Loading more...
-        </Text>
-      </View>
-    );
-  };
-
   return (
-    <FlatList
-      data={transactions}
-      keyExtractor={(item, index) => `${item.reference}-${index}`}
-      renderItem={renderTransaction}
-      scrollEnabled={false}
-      contentContainerStyle={styles.listContent}
-      onEndReached={onLoadMore}
-      onEndReachedThreshold={0.5}
-      ListFooterComponent={renderFooter}
-    />
+    <View>
+      <FlatList
+        data={transactions}
+        keyExtractor={(item, index) => `${item.reference}-${index}`}
+        renderItem={renderTransaction}
+        scrollEnabled={false}
+        contentContainerStyle={styles.listContent}
+      />
+
+      {/* Auto-loading footer */}
+      {isLoadingMore && (
+        <View style={styles.footerLoader}>
+          <ActivityIndicator size="small" color={theme.colors.primary} />
+          <Text style={[styles.footerText, { color: theme.colors.muted }]}>
+            Loading more...
+          </Text>
+        </View>
+      )}
+    </View>
   );
 }
 
@@ -351,10 +392,25 @@ const styles = StyleSheet.create({
     flexShrink: 1,
     maxWidth: "70%",
   },
+  transactionDateRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginTop: 2,
+  },
   transactionDate: {
     fontSize: 12,
     fontFamily: "Poppins_400Regular",
-    marginTop: 2,
+  },
+  statusBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 6,
+  },
+  statusText: {
+    fontSize: 10,
+    fontFamily: "Poppins_600SemiBold",
+    textTransform: "capitalize",
   },
   transactionAmount: {
     fontSize: 16,
@@ -363,6 +419,28 @@ const styles = StyleSheet.create({
     width: 92,
     textAlign: "right",
     flexShrink: 0,
+  },
+  loadMoreContainer: {
+    marginTop: 8,
+    marginBottom: 16,
+  },
+  loadMoreButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  loadMoreText: {
+    fontFamily: "Poppins_600SemiBold",
+    fontSize: 14,
   },
   footerLoader: {
     flexDirection: "row",

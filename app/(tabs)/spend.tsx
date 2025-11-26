@@ -3,8 +3,12 @@ import { PinGuard } from "@/components/PinGuard";
 import AmountSection from "@/components/spendComponents/AmountSection";
 import CategoryPicker from "@/components/spendComponents/CategoryPicker";
 import CompanyPicker from "@/components/spendComponents/CompanyPicker";
+import LoadingRow from "@/components/spendComponents/LoadingRow";
+import ModeSwitch from "@/components/spendComponents/ModeSwitch";
 import OutletPicker from "@/components/spendComponents/OutletPicker";
 import PinSection from "@/components/spendComponents/PinSection";
+import SpendHeader from "@/components/spendComponents/SpendHeader";
+import VendorIdShortcut from "@/components/spendComponents/VendorIdShortcut";
 import { useCategory } from "@/hooks/useCategory";
 import { useCompany } from "@/hooks/useCompany";
 import { useGetLocks } from "@/hooks/useGetLocks";
@@ -22,14 +26,13 @@ import { Ionicons } from "@expo/vector-icons";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { BlurView } from "expo-blur";
 import { LinearGradient } from "expo-linear-gradient";
-import { router, useFocusEffect } from "expo-router";
+import { useFocusEffect } from "expo-router";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
-  Pressable,
   ScrollView,
   StatusBar,
   StyleSheet,
@@ -224,111 +227,17 @@ export default function Spend() {
               />
             )}
 
-            {/* Header */}
-            <View style={spendStyles.header}>
-              <View>
-                <Text style={[spendStyles.title, { color: theme.colors.text }]}>
-                  Spend Budgeted Funds
-                </Text>
-                <Text
-                  style={[spendStyles.subtitle, { color: theme.colors.muted }]}
-                >
-                  Pay vendors using budgeted category funds
-                </Text>
-              </View>
-              <Glass
-                style={[
-                  spendStyles.iconBox,
-                  {
-                    backgroundColor: isDark
-                      ? "rgba(255,255,255,0.06)"
-                      : theme.colors.card,
-                    borderWidth: isDark ? 1 : 0,
-                    borderColor: isDark
-                      ? "rgba(255,255,255,0.12)"
-                      : "transparent",
-                  },
-                ]}
-              >
-                <Ionicons name="card" size={26} color={theme.colors.primary} />
-              </Glass>
-            </View>
-
-            {/* Lock shortcut card */}
-            <View style={spendStyles.lockActionWrap}>
-              <TouchableOpacity
-                style={[
-                  spendStyles.lockCard,
-                  {
-                    backgroundColor: theme.colors.primary,
-                  },
-                ]}
-                onPress={() => router.push("/spendByOrgId")}
-                accessibilityRole="button"
-              >
-                <View style={spendStyles.lockCardLeft}>
-                  <View
-                    style={[
-                      spendStyles.lockIcon,
-                      { backgroundColor: theme.colors.balanceCardStart },
-                    ]}
-                  >
-                    <Ionicons
-                      name="storefront"
-                      size={18}
-                      color={theme.colors.balanceText}
-                    />
-                  </View>
-                  <View style={spendStyles.lockText}>
-                    <Text
-                      style={[
-                        spendStyles.lockTitle,
-                        { color: theme.colors.balanceText },
-                      ]}
-                    >
-                      Spend By Vendor&apos;s ID
-                    </Text>
-                    <Text
-                      style={[
-                        spendStyles.lockSubtitle,
-                        { color: theme.colors.balanceLabel },
-                      ]}
-                    >
-                      You can just search by the vendor&apos;s ID and spend
-                    </Text>
-                  </View>
-                </View>
-                <Ionicons
-                  name="chevron-forward"
-                  size={20}
-                  color={theme.colors.text}
-                />
-              </TouchableOpacity>
-            </View>
+            <SpendHeader theme={theme} isDark={isDark} styles={spendStyles} />
+            <VendorIdShortcut theme={theme} styles={spendStyles} />
 
             {/* Category Picker */}
             {isCategoryLoading ? (
-              <Glass
-                style={[
-                  spendStyles.loadingRow,
-                  {
-                    borderColor: theme.colors.border,
-                    backgroundColor: isDark
-                      ? "rgba(255,255,255,0.06)"
-                      : theme.colors.card,
-                  },
-                ]}
-              >
-                <ActivityIndicator size="small" color={theme.colors.primary} />
-                <Text
-                  style={[
-                    spendStyles.loadingText,
-                    { color: theme.colors.primary },
-                  ]}
-                >
-                  Loading categories...
-                </Text>
-              </Glass>
+              <LoadingRow
+                theme={theme}
+                isDark={isDark}
+                styles={spendStyles}
+                message="Loading categories..."
+              />
             ) : (
               <CategoryPicker
                 categories={categories ?? []}
@@ -356,9 +265,7 @@ export default function Spend() {
                   ],
                   catIcon: [
                     spendStyles.catIcon,
-                    {
-                      backgroundColor: theme.colors.actionIconLockBg,
-                    },
+                    { backgroundColor: theme.colors.actionIconLockBg },
                   ],
                 }}
               />
@@ -366,101 +273,13 @@ export default function Spend() {
 
             {/* Mode Switch */}
             {selectedCategory && (
-              <Glass
-                style={[
-                  spendStyles.modeSwitch,
-                  {
-                    backgroundColor: isDark
-                      ? "rgba(255,255,255,0.05)"
-                      : theme.colors.actionIconDepositBg,
-                    borderColor: isDark
-                      ? "rgba(255,255,255,0.12)"
-                      : theme.colors.actionIconDepositBg,
-                  },
-                ]}
-              >
-                <Pressable
-                  onPress={() => setAllowDirectOutlet(false)}
-                  accessibilityRole="button"
-                  accessibilityState={{ selected: !allowDirectOutlet }}
-                  style={({ pressed }) => [
-                    spendStyles.modeOption,
-                    !allowDirectOutlet && {
-                      backgroundColor: theme.colors.primary,
-                    },
-                    pressed && spendStyles.modeOptionPressed,
-                  ]}
-                >
-                  <View
-                    style={{
-                      flexDirection: "row",
-                      alignItems: "center",
-                      gap: 8,
-                    }}
-                  >
-                    <Ionicons
-                      name="business"
-                      size={14}
-                      color={
-                        !allowDirectOutlet
-                          ? theme.colors.balanceText
-                          : theme.colors.primary
-                      }
-                    />
-                    <Text
-                      style={[
-                        spendStyles.modeOptionText,
-                        !allowDirectOutlet
-                          ? { color: theme.colors.balanceText }
-                          : { color: theme.colors.primary },
-                      ]}
-                    >
-                      By company
-                    </Text>
-                  </View>
-                </Pressable>
-
-                <Pressable
-                  onPress={() => setAllowDirectOutlet(true)}
-                  accessibilityRole="button"
-                  accessibilityState={{ selected: allowDirectOutlet }}
-                  style={({ pressed }) => [
-                    spendStyles.modeOption,
-                    allowDirectOutlet && {
-                      backgroundColor: theme.colors.primary,
-                    },
-                    pressed && spendStyles.modeOptionPressed,
-                  ]}
-                >
-                  <View
-                    style={{
-                      flexDirection: "row",
-                      alignItems: "center",
-                      gap: 8,
-                    }}
-                  >
-                    <Ionicons
-                      name="storefront"
-                      size={14}
-                      color={
-                        allowDirectOutlet
-                          ? theme.colors.balanceText
-                          : theme.colors.primary
-                      }
-                    />
-                    <Text
-                      style={[
-                        spendStyles.modeOptionText,
-                        allowDirectOutlet
-                          ? { color: theme.colors.balanceText }
-                          : { color: theme.colors.primary },
-                      ]}
-                    >
-                      Select outlet directly
-                    </Text>
-                  </View>
-                </Pressable>
-              </Glass>
+              <ModeSwitch
+                theme={theme}
+                isDark={isDark}
+                styles={spendStyles}
+                allowDirectOutlet={allowDirectOutlet}
+                onModeChange={setAllowDirectOutlet}
+              />
             )}
 
             {selectedCategory && (
@@ -479,30 +298,12 @@ export default function Spend() {
             {selectedCategory && !allowDirectOutlet && (
               <>
                 {isCompanyLoading ? (
-                  <Glass
-                    style={[
-                      spendStyles.loadingRow,
-                      {
-                        borderColor: theme.colors.border,
-                        backgroundColor: isDark
-                          ? "rgba(255,255,255,0.06)"
-                          : theme.colors.card,
-                      },
-                    ]}
-                  >
-                    <ActivityIndicator
-                      size="small"
-                      color={theme.colors.primary}
-                    />
-                    <Text
-                      style={[
-                        spendStyles.loadingText,
-                        { color: theme.colors.primary },
-                      ]}
-                    >
-                      Loading companies...
-                    </Text>
-                  </Glass>
+                  <LoadingRow
+                    theme={theme}
+                    isDark={isDark}
+                    styles={spendStyles}
+                    message="Loading companies..."
+                  />
                 ) : (
                   <CompanyPicker
                     companies={companies}
@@ -530,9 +331,7 @@ export default function Spend() {
                       ],
                       catIcon: [
                         spendStyles.catIcon,
-                        {
-                          backgroundColor: theme.colors.actionIconLockBg,
-                        },
+                        { backgroundColor: theme.colors.actionIconLockBg },
                       ],
                     }}
                   />
@@ -544,37 +343,17 @@ export default function Spend() {
             {(selectedCompany || allowDirectOutlet) && (
               <>
                 {isOutletLoading ? (
-                  <Glass
-                    style={[
-                      spendStyles.loadingRow,
-                      {
-                        borderColor: theme.colors.border,
-                        backgroundColor: isDark
-                          ? "rgba(255,255,255,0.06)"
-                          : theme.colors.card,
-                      },
-                    ]}
-                  >
-                    <ActivityIndicator
-                      size="small"
-                      color={theme.colors.primary}
-                    />
-                    <Text
-                      style={[
-                        spendStyles.loadingText,
-                        { color: theme.colors.primary },
-                      ]}
-                    >
-                      Loading outlets...
-                    </Text>
-                  </Glass>
+                  <LoadingRow
+                    theme={theme}
+                    isDark={isDark}
+                    styles={spendStyles}
+                    message="Loading outlets..."
+                  />
                 ) : (
                   <OutletPicker
                     outlets={outlets}
                     selected={selectedOutlet}
-                    onSelect={(id) => {
-                      setSelectedOutlet(id);
-                    }}
+                    onSelect={(id) => setSelectedOutlet(id)}
                     styles={{
                       ...spendStyles,
                       pickerButton: [
@@ -594,9 +373,7 @@ export default function Spend() {
                       ],
                       catIcon: [
                         spendStyles.catIcon,
-                        {
-                          backgroundColor: theme.colors.actionIconLockBg,
-                        },
+                        { backgroundColor: theme.colors.actionIconLockBg },
                       ],
                     }}
                   />
@@ -649,7 +426,6 @@ export default function Spend() {
                   availableLocked={availableLocked}
                   styles={spendStyles}
                 />
-
                 <PinSection control={control} styles={spendStyles} />
               </>
             )}

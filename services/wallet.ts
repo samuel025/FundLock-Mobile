@@ -26,7 +26,7 @@ export interface ApiResponse<T> {
 export async function getWalletDetails(): Promise<WalletDetails> {
   try {
     const response = await API.get<ApiResponse<WalletDetails>>(
-      "/api/v1/fundlock/wallet-details"
+      "/api/v1/fundlock/wallet-details",
     );
     return response.data.data;
   } catch (error) {
@@ -35,7 +35,7 @@ export async function getWalletDetails(): Promise<WalletDetails> {
 
       if (!axiosError.response) {
         const customError: any = new Error(
-          "Network error. Please check your internet connection and try again."
+          "Network error. Please check your internet connection and try again.",
         );
         customError.status = 0;
         throw customError;
@@ -60,6 +60,7 @@ export interface Transaction {
   amount: number;
   recipientName: string;
   entryType: string;
+  status: string;
 }
 
 export interface WalletData {
@@ -78,11 +79,11 @@ export interface WalletResponse {
 }
 
 export async function getWalletTransactions(
-  page: number = 0
+  page: number = 0,
 ): Promise<WalletData> {
   try {
     const response = await API.get<ApiResponse<WalletData>>(
-      `api/v1/fundlock/transactions?page=${page}`
+      `api/v1/fundlock/transactions?page=${page}`,
     );
     return response.data.data;
   } catch (error) {
@@ -91,7 +92,7 @@ export async function getWalletTransactions(
 
       if (!axiosError.response) {
         const customError: any = new Error(
-          "Network error. Please check your internet connection and try again."
+          "Network error. Please check your internet connection and try again.",
         );
         customError.status = 0;
         throw customError;
@@ -122,7 +123,7 @@ export interface WeeklyTransactionInsight {
 export async function getWeeklyTransactionInsights(): Promise<Insights> {
   try {
     const response = await API.get<WeeklyTransactionInsight>(
-      "api/v1/fundlock/weekly-transactions"
+      "api/v1/fundlock/weekly-transactions",
     );
     return response.data.data;
   } catch (error) {
@@ -130,7 +131,7 @@ export async function getWeeklyTransactionInsights(): Promise<Insights> {
       const axiosError = error as AxiosError<ErrorResponse>;
       if (!axiosError.response) {
         const customError: any = new Error(
-          "Network error. Please check your internet connection and try again."
+          "Network error. Please check your internet connection and try again.",
         );
         customError.status = 0;
         throw customError;

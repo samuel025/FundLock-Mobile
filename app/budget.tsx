@@ -38,7 +38,7 @@ const schema = yup.object({
   amount: yup
     .number()
     .transform((value, original) =>
-      original === "" ? undefined : Number(original)
+      original === "" ? undefined : Number(original),
     )
     .typeError("Enter a valid amount")
     .positive("Amount must be greater than 0")
@@ -62,7 +62,7 @@ export default function Budget() {
   const isDark = scheme === "dark";
   const router = useRouter();
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(
-    null
+    null,
   );
   const [categoryModalVisible, setCategoryModalVisible] = useState(false);
   const [banner, setBanner] = useState<{
@@ -91,7 +91,7 @@ export default function Budget() {
 
   const selectedCategory = useMemo(
     () => categories?.find((c) => c.id === selectedCategoryId) || null,
-    [selectedCategoryId]
+    [selectedCategoryId],
   );
 
   const onSubmit = (data: FormData) => {
@@ -172,7 +172,7 @@ export default function Budget() {
           behavior={Platform.OS === "ios" ? "padding" : undefined}
           style={{ flex: 1 }}
           keyboardVerticalOffset={
-            Platform.OS === "ios" ? 0 : StatusBar.currentHeight ?? 0
+            Platform.OS === "ios" ? 0 : (StatusBar.currentHeight ?? 0)
           }
         >
           <ScrollView
@@ -498,7 +498,7 @@ export default function Budget() {
                     style={styles.actionGradient}
                   >
                     <Text style={styles.actionText}>
-                      {isLocking ? "Locking..." : "Budget Funds"}
+                      {isLocking ? "Budgeting..." : "Budget Funds"}
                     </Text>
                     <Ionicons name="lock-closed" size={18} color="#fff" />
                   </LinearGradient>

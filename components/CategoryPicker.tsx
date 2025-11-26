@@ -35,7 +35,6 @@ export function CategoryPicker({
   const overlayOpacity = useRef(new Animated.Value(0)).current;
   const sheetTranslate = useRef(new Animated.Value(40)).current;
 
-  // open / close animation driven by visible prop
   useEffect(() => {
     if (visible) {
       setRenderModal(true);
