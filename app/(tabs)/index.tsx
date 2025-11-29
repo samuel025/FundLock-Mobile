@@ -3,6 +3,7 @@ import { useWallet } from "@/hooks/useWallet";
 import { authActions } from "@/lib/authContext";
 import { useAuthStore } from "@/lib/useAuthStore";
 import { walletStore } from "@/lib/walletStore";
+import { useTheme } from "@/theme";
 import {
   Poppins_400Regular,
   Poppins_500Medium,
@@ -11,22 +12,21 @@ import {
   useFonts,
 } from "@expo-google-fonts/poppins";
 import { Ionicons } from "@expo/vector-icons";
+import { BlurView } from "expo-blur";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import { useEffect, useState } from "react";
 import {
+  Animated,
+  Platform,
   RefreshControl,
   ScrollView,
+  StatusBar,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
-  Platform,
-  Animated,
-  StatusBar,
 } from "react-native";
-import { useTheme } from "@/theme";
-import { BlurView } from "expo-blur";
 
 export default function Index() {
   const { theme, scheme } = useTheme();
@@ -134,7 +134,7 @@ export default function Index() {
       {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
-      },
+      }
     )}`;
 
   const formatCurrency = (val: any) =>
@@ -550,8 +550,9 @@ export default function Index() {
                   styles.activityItem,
                   isDark
                     ? {
-                        // Parent is transparent; clipping only
-                        backgroundColor: "transparent",
+                        backgroundColor: "rgba(255,255,255,0.05)",
+                        borderWidth: 1,
+                        borderColor: "rgba(255,255,255,0.10)",
                       }
                     : {
                         backgroundColor: theme.colors.surface,
@@ -820,6 +821,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.04,
     shadowRadius: 8,
     elevation: 2,
+    overflow: "hidden",
   },
   activityIcon: {
     width: 44,
@@ -905,9 +907,5 @@ const styles = StyleSheet.create({
   },
   activityBlur: {
     ...StyleSheet.absoluteFillObject,
-    borderRadius: 16,
-    backgroundColor: "rgba(255,255,255,0.05)",
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.10)",
   },
 });

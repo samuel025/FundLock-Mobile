@@ -6,6 +6,7 @@ import { useWallet } from "@/hooks/useWallet";
 import { authActions } from "@/lib/authContext";
 import { useAuthStore } from "@/lib/useAuthStore";
 import { useTheme } from "@/theme";
+import { formatCurrency } from "@/utils/formatCurrency";
 import {
   Poppins_400Regular,
   Poppins_500Medium,
@@ -181,9 +182,9 @@ export default function Wallet() {
 
         {/* Balance Card */}
         <WalletBalanceCard
-          balance={balance || "0.00"}
-          totalRedeemed={totalRedeemedAmount || "0.00"}
-          totalLocked={totalLockedAmount || "0.00"}
+          balance={formatCurrency(balance || "0.00")}
+          totalRedeemed={formatCurrency(totalRedeemedAmount || "0.00")}
+          totalLocked={formatCurrency(totalLockedAmount || "0.00")}
           isLoading={isLoadingWallet}
           showBalance={showBalance}
           onToggleShowBalance={() => setShowBalance((s) => !s)}
@@ -199,7 +200,7 @@ export default function Wallet() {
 
         {/* Recent Statistics */}
         <RecentStatistics
-          totalSpent={balance || "0"}
+          totalSpent={formatCurrency(balance || "0")}
           isLoading={isLoadingWallet}
           transactions={transactions}
         />

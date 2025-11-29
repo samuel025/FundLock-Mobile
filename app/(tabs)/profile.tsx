@@ -1,10 +1,11 @@
-import { MessageBanner } from "@/components/MessageBanner";
 import { PinGuard } from "@/components/PinGuard";
 import { AccountActions } from "@/components/profileComponents/AccountActions";
 import { DepositModal } from "@/components/profileComponents/DepositModal";
 import { ProfileHeader } from "@/components/profileComponents/ProfileHeader";
 import { VirtualAccountModal } from "@/components/profileComponents/VirtualAccountModal";
 import { WithdrawModal } from "@/components/profileComponents/WithdrawModal";
+import { useToastConfig } from "@/config/toastConfig";
+import { useWallet } from "@/hooks/useWallet";
 import { authActions } from "@/lib/authContext";
 import { useAuthStore } from "@/lib/useAuthStore";
 import { postDeposit } from "@/services/deposit";
@@ -34,6 +35,7 @@ import {
   StyleSheet,
   Text,
 } from "react-native";
+import Toast from "react-native-toast-message";
 import * as yup from "yup";
 
 const depositSchema = yup.object({
@@ -67,15 +69,14 @@ export default function Profile() {
   const [virtualLoading, setVirtualLoading] = useState(false);
   const [creatingVirtual, setCreatingVirtual] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
+  const toastConfig = useToastConfig();
   const [refreshKey, setRefreshKey] = useState(0);
-  const [banner, setBanner] = useState<{
-    message: string;
-    type: "success" | "error" | "info";
-  } | null>(null);
+
   const [isWithdrawing, setIsWithdrawing] = useState(false);
   const { theme, scheme } = useTheme();
   const isDark = scheme === "dark";
   const user = useAuthStore((state) => state.user);
+  const { balance } = useWallet();
 
   let [fontsLoaded] = useFonts({
     Poppins_400Regular,
@@ -140,16 +141,21 @@ export default function Profile() {
       });
 
       setWithdrawModal(false);
-      setBanner({
-        message:
-          response.message || "Withdrawal request submitted successfully",
+      Toast.show({
         type: "success",
+        text1: "Success",
+        text2: response.message,
+        position: "top",
+        topOffset: 60,
       });
       resetWithdraw();
     } catch (err: any) {
-      setBanner({
-        message: err?.message ?? "Failed to process withdrawal",
+      Toast.show({
         type: "error",
+        text1: "Error",
+        text2: err?.message ?? "Failed to process withdrawal",
+        position: "top",
+        topOffset: 60,
       });
     } finally {
       setIsWithdrawing(false);
@@ -221,12 +227,6 @@ export default function Profile() {
     }
   }, [openDeposit, router]);
 
-  React.useEffect(() => {
-    if (banner) {
-      scrollRef.current?.scrollTo?.({ y: 0, animated: true });
-    }
-  }, [banner]);
-
   if (!fontsLoaded) return null;
 
   const disabledStyle = {
@@ -253,14 +253,6 @@ export default function Profile() {
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          {banner && (
-            <MessageBanner
-              message={banner.message}
-              type={banner.type}
-              onClose={() => setBanner(null)}
-            />
-          )}
-
           <ProfileHeader
             initials={userInitials}
             firstName={user?.firstName}
@@ -300,7 +292,8 @@ export default function Profile() {
             handleSubmit={handleWithdrawSubmit}
             onWithdraw={handleWithdraw}
             isWithdrawing={isWithdrawing}
-            formState={withdrawState} // Pass formState to modal
+            availableBalance={Number(balance || "0")} // Convert string to number
+            formState={withdrawState}
           />
 
           <VirtualAccountModal
@@ -317,6 +310,7 @@ export default function Profile() {
             FundLock v1.0.0
           </Text>
         </ScrollView>
+        <Toast config={toastConfig} />
       </LinearGradient>
     </PinGuard>
   );

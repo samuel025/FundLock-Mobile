@@ -16,6 +16,13 @@ export default function AmountSection({
   const { theme, scheme } = useTheme();
   const isDark = scheme === "dark";
 
+  const formatWithCommas = (val: string) => {
+    if (!val || val === "" || val === ".") return val;
+    const parts = val.split(".");
+    const integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    return parts.length > 1 ? `${integerPart}.${parts[1]}` : integerPart;
+  };
+
   return (
     <View style={styles.section}>
       <Text style={[styles.sectionTitle, { color: theme.colors.muted }]}>
@@ -29,7 +36,7 @@ export default function AmountSection({
             <TextInput
               mode="outlined"
               label="Amount to spend"
-              value={value !== undefined ? String(value) : ""}
+              value={formatWithCommas(value !== undefined ? String(value) : "")}
               onChangeText={(t) => {
                 const cleaned = t
                   .replace(/[^0-9.]/g, "")
@@ -43,6 +50,8 @@ export default function AmountSection({
                   } else {
                     onChange(cleaned);
                   }
+                } else if (cleaned === "" || cleaned === ".") {
+                  onChange(cleaned);
                 } else {
                   onChange(cleaned);
                 }

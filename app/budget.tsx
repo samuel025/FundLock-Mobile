@@ -112,10 +112,10 @@ export default function Budget() {
     if (existingBudget) {
       // Use existing budget's expiration date
       const existingDate = new Date(existingBudget.expiresAt);
-      control._reset({ 
-        amount: undefined as any, 
-        pin: "", 
-        expireAt: existingDate 
+      control._reset({
+        amount: undefined as any,
+        pin: "",
+        expireAt: existingDate,
       });
     }
   }, [existingBudget, control]);
@@ -379,99 +379,111 @@ export default function Budget() {
                     <Controller
                       control={control}
                       name="amount"
-                      render={({ field: { onChange, value }, fieldState }) => (
-                        <>
-                          <TextInput
-                            mode="outlined"
-                            label="Amount to budget"
-                            value={value !== undefined ? String(value) : ""}
-                            onChangeText={(t) => {
-                              let cleaned = t.replace(/[^0-9.]/g, "");
-                              cleaned = cleaned.replace(/\.(?=.*\.)/g, "");
+                      render={({ field: { onChange, value }, fieldState }) => {
+                        // Format value for display with commas
+                        const displayValue =
+                          value !== undefined && value !== null
+                            ? Number(value).toLocaleString("en-US", {
+                                minimumFractionDigits: 0,
+                                maximumFractionDigits: 2,
+                              })
+                            : "";
 
-                              const numericBalance = Number(balance) || 0;
-                              const parsed = Number(cleaned);
+                        return (
+                          <>
+                            <TextInput
+                              mode="outlined"
+                              label="Amount to budget"
+                              value={displayValue}
+                              onChangeText={(t) => {
+                                // Remove commas and clean input
+                                let cleaned = t
+                                  .replace(/,/g, "")
+                                  .replace(/[^0-9.]/g, "");
+                                cleaned = cleaned.replace(/\.(?=.*\.)/g, "");
 
-                              if (!cleaned) {
-                                onChange(undefined as any);
-                                return;
+                                const numericBalance = Number(balance) || 0;
+                                const parsed = Number(cleaned);
+
+                                if (!cleaned) {
+                                  onChange(undefined as any);
+                                  return;
+                                }
+                                if (!isNaN(parsed) && parsed > numericBalance) {
+                                  onChange(numericBalance);
+                                  return;
+                                }
+
+                                onChange(cleaned);
+                              }}
+                              keyboardType={
+                                Platform.OS === "ios"
+                                  ? "decimal-pad"
+                                  : "numeric"
                               }
-                              if (!isNaN(parsed) && parsed > numericBalance) {
-                                const capped =
-                                  Number.isInteger(numericBalance) ||
-                                  cleaned.indexOf(".") === -1
-                                    ? String(numericBalance)
-                                    : String(Math.min(parsed, numericBalance));
-                                onChange(capped);
-                                return;
+                              left={
+                                <TextInput.Icon
+                                  icon={() => (
+                                    <Text style={styles.currency}>₦</Text>
+                                  )}
+                                />
                               }
-
-                              onChange(cleaned);
-                            }}
-                            keyboardType={
-                              Platform.OS === "ios" ? "decimal-pad" : "numeric"
-                            }
-                            left={
-                              <TextInput.Icon
-                                icon={() => (
-                                  <Text style={styles.currency}>₦</Text>
-                                )}
-                              />
-                            }
-                            outlineColor={
-                              isDark
-                                ? "rgba(255,255,255,0.2)"
-                                : theme.colors.border
-                            }
-                            activeOutlineColor={theme.colors.primary}
-                            textColor={theme.colors.text}
-                            style={[
-                              styles.input,
-                              {
-                                backgroundColor: isDark
-                                  ? "rgba(255, 255, 255, 0.08)"
-                                  : theme.colors.surface,
-                              },
-                            ]}
-                            outlineStyle={{
-                              borderRadius: 12,
-                            }}
-                            theme={{
-                              fonts: {
-                                regular: { fontFamily: "Poppins_500Medium" },
-                              },
-                              colors: {
-                                primary: theme.colors.primary,
-                                placeholder: isDark
-                                  ? "rgba(255,255,255,0.5)"
-                                  : theme.colors.muted,
-                                text: theme.colors.text,
-                                onSurfaceVariant: isDark
-                                  ? "rgba(255,255,255,0.6)"
-                                  : theme.colors.muted,
-                                background: isDark
-                                  ? theme.colors.background
-                                  : theme.colors.surface,
-                                onSurface: theme.colors.text,
-                                outline: isDark
+                              outlineColor={
+                                isDark
                                   ? "rgba(255,255,255,0.2)"
-                                  : theme.colors.border,
-                                surfaceVariant: isDark
-                                  ? theme.colors.background
-                                  : theme.colors.surface,
-                              },
-                            }}
-                          />
-                          {fieldState.error && (
-                            <Text style={styles.inputError}>
-                              {fieldState.error.message}
+                                  : theme.colors.border
+                              }
+                              activeOutlineColor={theme.colors.primary}
+                              textColor={theme.colors.text}
+                              style={[
+                                styles.input,
+                                {
+                                  backgroundColor: isDark
+                                    ? "rgba(255, 255, 255, 0.08)"
+                                    : theme.colors.surface,
+                                },
+                              ]}
+                              outlineStyle={{
+                                borderRadius: 12,
+                              }}
+                              theme={{
+                                fonts: {
+                                  regular: { fontFamily: "Poppins_500Medium" },
+                                },
+                                colors: {
+                                  primary: theme.colors.primary,
+                                  placeholder: isDark
+                                    ? "rgba(255,255,255,0.5)"
+                                    : theme.colors.muted,
+                                  text: theme.colors.text,
+                                  onSurfaceVariant: isDark
+                                    ? "rgba(255,255,255,0.6)"
+                                    : theme.colors.muted,
+                                  background: isDark
+                                    ? theme.colors.background
+                                    : theme.colors.surface,
+                                  onSurface: theme.colors.text,
+                                  outline: isDark
+                                    ? "rgba(255,255,255,0.2)"
+                                    : theme.colors.border,
+                                  surfaceVariant: isDark
+                                    ? theme.colors.background
+                                    : theme.colors.surface,
+                                },
+                              }}
+                            />
+                            {fieldState.error && (
+                              <Text style={styles.inputError}>
+                                {fieldState.error.message}
+                              </Text>
+                            )}
+                            <Text style={styles.hint}>
+                              Available: ₦
+                              {Number(balance || 0).toLocaleString()}
                             </Text>
-                          )}
-                          <Text style={styles.hint}>
-                            Available: ₦{Number(balance || 0).toLocaleString()}
-                          </Text>
-                        </>
-                      )}
+                          </>
+                        );
+                      }}
                     />
                   </View>
                 </View>

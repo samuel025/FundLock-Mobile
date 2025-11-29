@@ -1,5 +1,6 @@
 import { Transaction } from "@/services/wallet";
 import { useTheme } from "@/theme";
+import { formatCurrency } from "@/utils/formatCurrency";
 import { Feather, Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { BlurView } from "expo-blur";
 import { MotiView } from "moti";
@@ -243,15 +244,15 @@ export default function ModernTransactionList({
                 {getRecipient(transaction)}
               </Text>
             </View>
-            <View style={styles.transactionDateRow}>
-              <Text
-                style={[styles.transactionDate, { color: theme.colors.muted }]}
-                numberOfLines={1}
-                ellipsizeMode="tail"
-              >
-                {formatDateTime(transaction.createdAt)}
-              </Text>
-              {transaction.status && (
+            <Text
+              style={[styles.transactionDate, { color: theme.colors.muted }]}
+              numberOfLines={1}
+              ellipsizeMode="tail"
+            >
+              {formatDateTime(transaction.createdAt)}
+            </Text>
+            {transaction.status && (
+              <View style={styles.statusBadgeRow}>
                 <View
                   style={[
                     styles.statusBadge,
@@ -271,8 +272,8 @@ export default function ModernTransactionList({
                     {transaction.status}
                   </Text>
                 </View>
-              )}
-            </View>
+              </View>
+            )}
           </View>
         </View>
 
@@ -280,15 +281,19 @@ export default function ModernTransactionList({
           from={{ opacity: 0, translateX: 10 }}
           animate={{ opacity: 1, translateX: 0 }}
           transition={{ delay: index * 50 + 150, duration: 300 }}
+          style={styles.amountContainer}
         >
           <Text
             style={[
               styles.transactionAmount,
               { color: amountColor(transaction) },
             ]}
+            numberOfLines={1}
+            adjustsFontSizeToFit
+            minimumFontScale={0.8}
           >
             {transaction.entryType === "CREDIT" ? "+" : "-"}₦
-            {transaction.amount}
+            {formatCurrency(transaction.amount)}
           </Text>
         </MotiView>
       </MotiView>
@@ -358,7 +363,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 12,
     flex: 1,
-    marginRight: 12,
+    marginRight: 8,
   },
   transactionIcon: {
     width: 48,
@@ -392,33 +397,34 @@ const styles = StyleSheet.create({
     flexShrink: 1,
     maxWidth: "70%",
   },
-  transactionDateRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    marginTop: 2,
-  },
   transactionDate: {
     fontSize: 12,
     fontFamily: "Poppins_400Regular",
+    marginTop: 2,
+  },
+  statusBadgeRow: {
+    marginTop: 4,
   },
   statusBadge: {
     paddingHorizontal: 8,
     paddingVertical: 2,
     borderRadius: 6,
+    alignSelf: "flex-start",
   },
   statusText: {
     fontSize: 10,
     fontFamily: "Poppins_600SemiBold",
     textTransform: "capitalize",
   },
+  amountContainer: {
+    flexShrink: 0,
+    minWidth: 100,
+    maxWidth: 140,
+  },
   transactionAmount: {
     fontSize: 16,
     fontFamily: "Poppins_600SemiBold",
-    minWidth: 92,
-    width: 92,
     textAlign: "right",
-    flexShrink: 0,
   },
   loadMoreContainer: {
     marginTop: 8,

@@ -13,7 +13,7 @@ import { BlurView } from "expo-blur";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { MotiView } from "moti";
-import React from "react";
+import React, { useRef } from "react";
 import {
   FlatList,
   Platform,
@@ -31,6 +31,7 @@ export default function BudgetsPage() {
   const router = useRouter();
   const { theme, scheme } = useTheme();
   const isDark = scheme === "dark";
+  const flatListRef = useRef<FlatList>(null);
 
   const { isLocksLoading, locksList, fetchLocks } = useGetLocks();
 
@@ -43,11 +44,19 @@ export default function BudgetsPage() {
 
   async function onRefresh() {
     fetchLocks();
+    setTimeout(() => {
+      if (locksList.length > 0) {
+        flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
+      }
+    }, 100);
   }
 
   useFocusEffect(
     React.useCallback(() => {
       fetchLocks();
+      setTimeout(() => {
+        flatListRef.current?.scrollToOffset({ offset: 0, animated: false });
+      }, 100);
     }, [fetchLocks])
   );
 
@@ -261,6 +270,7 @@ export default function BudgetsPage() {
         </View>
 
         <FlatList
+          ref={flatListRef}
           data={locksList}
           keyExtractor={(item, index) => `${item.categoryName ?? index}`}
           refreshControl={

@@ -144,10 +144,16 @@ export default function Spend() {
         position: "top",
         topOffset: 60,
       });
-      reset();
-      fetchLocks();
+
+      setTimeout(() => {
+        reset();
+        setSelectedCategory(null);
+        setSelectedCompany(null);
+        setSelectedOutlet(null);
+        fetchLocks();
+      }, 100);
     }
-  }, [spendError, spendMessage]);
+  }, [spendError, spendMessage, reset, fetchLocks]);
 
   const selectedCategoryName = selectedCategory
     ? categories?.find((c) => String(c.id) === String(selectedCategory))
