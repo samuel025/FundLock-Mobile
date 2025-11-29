@@ -1,8 +1,9 @@
 import { CategoryPicker } from "@/components/CategoryPicker";
 import { ExpireDatePicker } from "@/components/ExpireDatePicker";
-import { MessageBanner } from "@/components/MessageBanner";
 import { PinGuard } from "@/components/PinGuard";
+import { useToastConfig } from "@/config/toastConfig";
 import { useCategory } from "@/hooks/useCategory";
+import { useGetLocks } from "@/hooks/useGetLocks";
 import { useLock } from "@/hooks/useLock";
 import { useWallet } from "@/hooks/useWallet";
 import { walletStore } from "@/lib/walletStore";
@@ -18,9 +19,9 @@ import { Ionicons } from "@expo/vector-icons";
 import { yupResolver } from "@hookform/resolvers/yup";
 import BlurView from "expo-blur/build/BlurView";
 import { LinearGradient } from "expo-linear-gradient";
-import { useRouter } from "expo-router";
+import { useFocusEffect, useRouter } from "expo-router";
 import { ScrollView } from "moti";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import {
   KeyboardAvoidingView,
@@ -32,13 +33,14 @@ import {
   View,
 } from "react-native";
 import { TextInput } from "react-native-paper";
+import Toast from "react-native-toast-message";
 import * as yup from "yup";
 
 const schema = yup.object({
   amount: yup
     .number()
     .transform((value, original) =>
-      original === "" ? undefined : Number(original),
+      original === "" ? undefined : Number(original)
     )
     .typeError("Enter a valid amount")
     .positive("Amount must be greater than 0")
@@ -61,20 +63,16 @@ export default function Budget() {
   const { theme, scheme } = useTheme();
   const isDark = scheme === "dark";
   const router = useRouter();
+  const toastConfig = useToastConfig();
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(
-    null,
+    null
   );
   const [categoryModalVisible, setCategoryModalVisible] = useState(false);
-  const [banner, setBanner] = useState<{
-    message: string;
-    type: "success" | "error" | "info";
-  } | null>(null);
 
   const { categories } = useCategory();
   const { isLocking, lockError, lockMessage, lockFunds } = useLock();
   const { fetchWalletData } = useWallet();
-
-  const balance = walletStore((state) => state.balance);
+  const { locksList, fetchLocks } = useGetLocks();
 
   let [fontsLoaded] = useFonts({
     Poppins_400Regular,
@@ -82,6 +80,12 @@ export default function Budget() {
     Poppins_600SemiBold,
     Poppins_700Bold,
   });
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchLocks();
+    }, [fetchLocks])
+  );
 
   const { control, handleSubmit, formState, reset } = useForm<FormData>({
     resolver: yupResolver(schema),
@@ -91,17 +95,51 @@ export default function Budget() {
 
   const selectedCategory = useMemo(
     () => categories?.find((c) => c.id === selectedCategoryId) || null,
-    [selectedCategoryId],
+    [selectedCategoryId, categories]
   );
+
+  const existingBudget = useMemo(() => {
+    if (!selectedCategory || !locksList) return null;
+    return locksList.find(
+      (lock: any) =>
+        String(lock.categoryName).toLowerCase() ===
+        String(selectedCategory.name).toLowerCase()
+    );
+  }, [selectedCategory, locksList]);
+
+  // Auto-populate expireAt when existing budget is found
+  useEffect(() => {
+    if (existingBudget) {
+      // Use existing budget's expiration date
+      const existingDate = new Date(existingBudget.expiresAt);
+      control._reset({ 
+        amount: undefined as any, 
+        pin: "", 
+        expireAt: existingDate 
+      });
+    }
+  }, [existingBudget, control]);
 
   const onSubmit = (data: FormData) => {
     if (!selectedCategory) {
-      setBanner({ message: "Select a category", type: "error" });
+      Toast.show({
+        type: "error",
+        text1: "Error",
+        text2: "Select a category",
+        position: "top",
+        topOffset: 60,
+      });
       return;
     }
     const numericBalance = Number(balance) || 0;
     if (data.amount > numericBalance) {
-      setBanner({ message: "Insufficient balance", type: "error" });
+      Toast.show({
+        type: "error",
+        text1: "Error",
+        text2: "Insufficient balance",
+        position: "top",
+        topOffset: 60,
+      });
       return;
     }
     lockFunds({
@@ -112,15 +150,30 @@ export default function Budget() {
     });
   };
 
+  const balance = walletStore((state) => state.balance);
+
   useEffect(() => {
     if (lockError) {
-      setBanner({ message: lockError, type: "error" });
+      Toast.show({
+        type: "error",
+        text1: "Error",
+        text2: lockError,
+        position: "top",
+        topOffset: 60,
+      });
     }
     if (lockMessage) {
-      setBanner({ message: lockMessage, type: "success" });
+      Toast.show({
+        type: "success",
+        text1: "Success",
+        text2: lockMessage,
+        position: "top",
+        topOffset: 60,
+      });
       reset();
       setSelectedCategoryId(null);
       fetchWalletData();
+      fetchLocks();
     }
   }, [lockError, lockMessage]);
 
@@ -172,7 +225,7 @@ export default function Budget() {
           behavior={Platform.OS === "ios" ? "padding" : undefined}
           style={{ flex: 1 }}
           keyboardVerticalOffset={
-            Platform.OS === "ios" ? 0 : (StatusBar.currentHeight ?? 0)
+            Platform.OS === "ios" ? 0 : StatusBar.currentHeight ?? 0
           }
         >
           <ScrollView
@@ -180,14 +233,6 @@ export default function Budget() {
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}
           >
-            {banner && (
-              <MessageBanner
-                message={banner.message}
-                type={banner.type}
-                onClose={() => setBanner(null)}
-              />
-            )}
-
             <View style={styles.header}>
               <TouchableOpacity
                 onPress={() => router.back()}
@@ -275,6 +320,59 @@ export default function Budget() {
 
             {selectedCategory && (
               <>
+                {/* Show info banner if budget exists */}
+                {existingBudget && (
+                  <View
+                    style={[
+                      styles.infoBanner,
+                      {
+                        backgroundColor: isDark
+                          ? "rgba(59, 130, 246, 0.15)"
+                          : "#EFF6FF",
+                        borderLeftColor: theme.colors.primary,
+                      },
+                    ]}
+                  >
+                    <Ionicons
+                      name="information-circle"
+                      size={20}
+                      color={theme.colors.primary}
+                      style={styles.infoBannerIcon}
+                    />
+                    <View style={styles.infoBannerContent}>
+                      <Text
+                        style={[
+                          styles.infoBannerTitle,
+                          { color: theme.colors.text },
+                        ]}
+                      >
+                        Existing Budget Found
+                      </Text>
+                      <Text
+                        style={[
+                          styles.infoBannerText,
+                          { color: theme.colors.muted },
+                        ]}
+                      >
+                        Current balance: ₦
+                        {Number(existingBudget.amount || 0).toLocaleString()}
+                        {"\n"}
+                        Expires:{" "}
+                        {new Date(existingBudget.expiresAt).toLocaleDateString(
+                          "en-US",
+                          {
+                            year: "numeric",
+                            month: "short",
+                            day: "numeric",
+                          }
+                        )}
+                        {"\n"}
+                        This will top up your existing budget.
+                      </Text>
+                    </View>
+                  </View>
+                )}
+
                 <View style={styles.section}>
                   <Text style={styles.sectionTitle}>Amount</Text>
                   <View style={styles.inputCard}>
@@ -288,9 +386,8 @@ export default function Budget() {
                             label="Amount to budget"
                             value={value !== undefined ? String(value) : ""}
                             onChangeText={(t) => {
-                              // allow only digits and decimal point, limit extra dots
                               let cleaned = t.replace(/[^0-9.]/g, "");
-                              cleaned = cleaned.replace(/\.(?=.*\.)/g, ""); // remove extra dots
+                              cleaned = cleaned.replace(/\.(?=.*\.)/g, "");
 
                               const numericBalance = Number(balance) || 0;
                               const parsed = Number(cleaned);
@@ -379,19 +476,21 @@ export default function Budget() {
                   </View>
                 </View>
 
-                <View style={styles.section}>
-                  <Controller
-                    control={control}
-                    name="expireAt"
-                    render={({ field: { onChange, value }, fieldState }) => (
-                      <ExpireDatePicker
-                        value={value}
-                        onChange={onChange}
-                        error={fieldState.error?.message}
-                      />
-                    )}
-                  />
-                </View>
+                {!existingBudget && (
+                  <View style={styles.section}>
+                    <Controller
+                      control={control}
+                      name="expireAt"
+                      render={({ field: { onChange, value }, fieldState }) => (
+                        <ExpireDatePicker
+                          value={value}
+                          onChange={onChange}
+                          error={fieldState.error?.message}
+                        />
+                      )}
+                    />
+                  </View>
+                )}
 
                 <View style={styles.section}>
                   <Text style={styles.sectionTitle}>PIN</Text>
@@ -498,7 +597,11 @@ export default function Budget() {
                     style={styles.actionGradient}
                   >
                     <Text style={styles.actionText}>
-                      {isLocking ? "Budgeting..." : "Budget Funds"}
+                      {isLocking
+                        ? "Processing..."
+                        : existingBudget
+                        ? "Top Up Budget"
+                        : "Budget Funds"}
                     </Text>
                     <Ionicons name="lock-closed" size={18} color="#fff" />
                   </LinearGradient>
@@ -507,6 +610,8 @@ export default function Budget() {
             )}
           </ScrollView>
         </KeyboardAvoidingView>
+
+        <Toast config={toastConfig} />
       </LinearGradient>
     </PinGuard>
   );
@@ -532,7 +637,6 @@ const styles = StyleSheet.create({
     marginLeft: 15,
   },
   headerCenter: { flex: 1, paddingLeft: 4 },
-  title: { fontSize: 26, fontFamily: "Poppins_700Bold", color: "#1B263B" },
   subtitle: {
     fontSize: 13,
     fontFamily: "Poppins_400Regular",
@@ -548,7 +652,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     elevation: 3,
   },
-  section: { marginBottom: 18 },
+  section: { marginBottom: 10 },
   sectionTitle: {
     fontSize: 14,
     fontFamily: "Poppins_600SemiBold",
@@ -559,44 +663,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
   },
-  pickerLeft: { marginRight: 12 },
   pickerText: { flex: 1, fontFamily: "Poppins_500Medium" },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.35)",
-    justifyContent: "flex-end",
-  },
-  modal: {
-    backgroundColor: "#fff",
-    padding: 16,
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
-  },
-  modalTitle: {
-    fontSize: 16,
-    fontFamily: "Poppins_600SemiBold",
-    marginBottom: 8,
-  },
-  modalItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: 2,
-  },
-  modalItemText: {
-    fontSize: 15,
-    fontFamily: "Poppins_500Medium",
-    color: "#1B263B",
-  },
-  modalClose: { marginTop: 12, alignItems: "center" },
-  modalCloseText: { color: "#38B2AC", fontFamily: "Poppins_600SemiBold" },
-  categoryIcon: {
-    width: 35,
-    height: 40,
-    borderRadius: 10,
-    justifyContent: "center",
-    alignItems: "center",
-    marginRight: 12,
-  },
   inputCard: {
     padding: 0,
   },
@@ -632,8 +699,6 @@ const styles = StyleSheet.create({
     marginTop: 6,
     fontFamily: "Poppins_500Medium",
   },
-  itemSeparator: { height: 1, backgroundColor: "#F1F5F9", marginLeft: 56 },
-
   lockTitle: {
     fontFamily: "Poppins_600SemiBold",
     fontSize: 20,
@@ -647,5 +712,30 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#E9ECEF",
     marginBottom: 8,
+  },
+  infoBanner: {
+    flexDirection: "row",
+    padding: 12,
+    borderRadius: 12,
+    borderLeftWidth: 4,
+    marginBottom: 16,
+    alignItems: "flex-start",
+  },
+  infoBannerIcon: {
+    marginRight: 12,
+    marginTop: 2,
+  },
+  infoBannerContent: {
+    flex: 1,
+  },
+  infoBannerTitle: {
+    fontFamily: "Poppins_600SemiBold",
+    fontSize: 14,
+    marginBottom: 4,
+  },
+  infoBannerText: {
+    fontFamily: "Poppins_400Regular",
+    fontSize: 12,
+    lineHeight: 18,
   },
 });

@@ -16,7 +16,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import {
   NativeScrollEvent,
   NativeSyntheticEvent,
@@ -38,6 +38,7 @@ export default function Wallet() {
   const isLoadingUser = useAuthStore((state) => state.isLoadingUser);
   const [refreshing, setRefreshing] = useState(false);
   const [showBalance, setShowBalance] = useState(true);
+  const scrollViewRef = useRef<ScrollView>(null);
 
   const {
     balance,
@@ -79,19 +80,17 @@ export default function Wallet() {
   const onRefresh = async () => {
     setRefreshing(true);
     try {
-      await authActions.getUser();
       fetchWalletData();
     } catch (error) {
-      console.error("Failed to refresh user data:", error);
+      console.error("Failed to refresh wallet data:", error);
     } finally {
       setRefreshing(false);
     }
   };
 
- 
   const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
     const { layoutMeasurement, contentOffset, contentSize } = event.nativeEvent;
-    const paddingToBottom = 100; 
+    const paddingToBottom = 100;
     const isCloseToBottom =
       layoutMeasurement.height + contentOffset.y >=
       contentSize.height - paddingToBottom;
@@ -125,9 +124,11 @@ export default function Wallet() {
       style={styles.container}
     >
       <ScrollView
+        ref={scrollViewRef}
         showsVerticalScrollIndicator={false}
-        onScroll={handleScroll}
-        scrollEventThrottle={400}
+        onScrollEndDrag={handleScroll}
+        onMomentumScrollEnd={handleScroll}
+        scrollEventThrottle={16}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}

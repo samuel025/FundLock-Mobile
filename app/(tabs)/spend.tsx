@@ -1,4 +1,3 @@
-import { MessageBanner } from "@/components/MessageBanner";
 import { PinGuard } from "@/components/PinGuard";
 import AmountSection from "@/components/spendComponents/AmountSection";
 import CategoryPicker from "@/components/spendComponents/CategoryPicker";
@@ -9,6 +8,7 @@ import OutletPicker from "@/components/spendComponents/OutletPicker";
 import PinSection from "@/components/spendComponents/PinSection";
 import SpendHeader from "@/components/spendComponents/SpendHeader";
 import VendorIdShortcut from "@/components/spendComponents/VendorIdShortcut";
+import { useToastConfig } from "@/config/toastConfig";
 import { useCategory } from "@/hooks/useCategory";
 import { useCompany } from "@/hooks/useCompany";
 import { useGetLocks } from "@/hooks/useGetLocks";
@@ -24,7 +24,6 @@ import {
 } from "@expo-google-fonts/poppins";
 import { Ionicons } from "@expo/vector-icons";
 import { yupResolver } from "@hookform/resolvers/yup";
-import { BlurView } from "expo-blur";
 import { LinearGradient } from "expo-linear-gradient";
 import { useFocusEffect } from "expo-router";
 import React, { useCallback, useEffect, useRef, useState } from "react";
@@ -40,6 +39,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import Toast from "react-native-toast-message";
 import * as yup from "yup";
 import spendStyles from "../../styles/spend.styles";
 
@@ -69,10 +69,7 @@ export default function Spend() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedCompany, setSelectedCompany] = useState<string | null>(null);
   const [selectedOutlet, setSelectedOutlet] = useState<string | null>(null);
-  const [banner, setBanner] = useState<{
-    message: string;
-    type: "success" | "error" | "info";
-  } | null>(null);
+  const toastConfig = useToastConfig();
 
   const { isCategoryLoading, categories } = useCategory();
   const { isCompanyLoading, companies, fetchCompanies } = useCompany();
@@ -131,10 +128,22 @@ export default function Spend() {
 
   useEffect(() => {
     if (spendError) {
-      setBanner({ message: spendError, type: "error" });
+      Toast.show({
+        type: "error",
+        text1: "Error",
+        text2: spendError,
+        position: "top",
+        topOffset: 60,
+      });
     }
     if (spendMessage) {
-      setBanner({ message: spendMessage, type: "success" });
+      Toast.show({
+        type: "success",
+        text1: "Success",
+        text2: spendMessage,
+        position: "top",
+        topOffset: 60,
+      });
       reset();
       fetchLocks();
     }
@@ -157,11 +166,23 @@ export default function Spend() {
 
   const onSubmit = (data: FormData) => {
     if (!selectedCategory) {
-      setBanner({ message: "Select a category", type: "error" });
+      Toast.show({
+        type: "error",
+        text1: "Error",
+        text2: "Select a category",
+        position: "top",
+        topOffset: 60,
+      });
       return;
     }
     if (!selectedOutlet) {
-      setBanner({ message: "Select an outlet", type: "error" });
+      Toast.show({
+        type: "error",
+        text1: "Error",
+        text2: "Select an Outlet",
+        position: "top",
+        topOffset: 60,
+      });
       return;
     }
     spendLockedFunds({
@@ -171,31 +192,7 @@ export default function Spend() {
     });
   };
 
-  useEffect(() => {
-    if (banner) {
-      scrollRef.current?.scrollTo?.({ y: 0, animated: true });
-    }
-  }, [banner]);
-
   if (!fontsLoaded) return null;
-
-  const Glass = ({
-    children,
-    style,
-  }: {
-    children: React.ReactNode;
-    style?: any;
-  }) => {
-    if (!isDark) {
-      return <View style={style}>{children}</View>;
-    }
-    return (
-      <View style={[style, glassBase.container]}>
-        <BlurView intensity={30} tint="dark" style={glassBase.blur} />
-        {children}
-      </View>
-    );
-  };
 
   return (
     <PinGuard>
@@ -219,14 +216,6 @@ export default function Spend() {
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
           >
-            {banner && (
-              <MessageBanner
-                message={banner.message}
-                type={banner.type}
-                onClose={() => setBanner(null)}
-              />
-            )}
-
             <SpendHeader theme={theme} isDark={isDark} styles={spendStyles} />
             <VendorIdShortcut theme={theme} styles={spendStyles} />
 
@@ -480,6 +469,8 @@ export default function Spend() {
             </TouchableOpacity>
           </ScrollView>
         </KeyboardAvoidingView>
+
+        <Toast config={toastConfig} />
       </LinearGradient>
     </PinGuard>
   );

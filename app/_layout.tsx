@@ -12,19 +12,28 @@ export default function RootLayout() {
   }, []);
 
   return (
-    <ThemeProvider>
-      <QueryClientProvider client={queryClient}>
-        <Stack>
-          <Stack.Screen name="signUp" options={{ headerShown: false }} />
-          <Stack.Screen name="signIn" options={{ headerShown: false }} />
-          <Stack.Screen name="index" options={{ headerShown: false }} />
-          <Stack.Screen name="budget" options={{ headerShown: false }} />
-          <Stack.Screen name="spendByOrgId" options={{ headerShown: false }} />
-          <Stack.Screen name="createPin" options={{ headerShown: false }} />
-          <Stack.Screen name="addBvn" options={{ headerShown: false }} />
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        </Stack>
-      </QueryClientProvider>
-    </ThemeProvider>
+    <>
+      <ThemeProvider>
+        <QueryClientProvider client={queryClient}>
+          <Stack>
+            <Stack.Screen name="signUp" options={{ headerShown: false }} />
+            <Stack.Screen name="signIn" options={{ headerShown: false }} />
+            <Stack.Screen name="index" options={{ headerShown: false }} />
+            <Stack.Screen name="budget" options={{ headerShown: false }} />
+            <Stack.Screen
+              name="spendByOrgId"
+              options={{ headerShown: false }}
+            />
+            <Stack.Screen name="createPin" options={{ headerShown: false }} />
+            <Stack.Screen name="addBvn" options={{ headerShown: false }} />
+            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+            <Stack.Screen
+              name="addBankDetails"
+              options={{ headerShown: false }}
+            />
+          </Stack>
+        </QueryClientProvider>
+      </ThemeProvider>
+    </>
   );
 }

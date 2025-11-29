@@ -1,3 +1,4 @@
+import { MessageBanner } from "@/components/MessageBanner";
 import { PinGuard } from "@/components/PinGuard";
 import { AccountActions } from "@/components/profileComponents/AccountActions";
 import { DepositModal } from "@/components/profileComponents/DepositModal";
@@ -11,6 +12,7 @@ import {
   createKoraVirtualAccount,
   getKoraVirtualAccountDetails,
 } from "@/services/kora";
+import { postWithdraw } from "@/services/withdraw";
 import { useTheme } from "@/theme";
 import {
   Poppins_400Regular,
@@ -66,6 +68,11 @@ export default function Profile() {
   const [creatingVirtual, setCreatingVirtual] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [banner, setBanner] = useState<{
+    message: string;
+    type: "success" | "error" | "info";
+  } | null>(null);
+  const [isWithdrawing, setIsWithdrawing] = useState(false);
   const { theme, scheme } = useTheme();
   const isDark = scheme === "dark";
   const user = useAuthStore((state) => state.user);
@@ -82,13 +89,16 @@ export default function Profile() {
       `${user?.firstName?.charAt(0) ?? "U"}${
         user?.lastName?.charAt(0) ?? ""
       }`.toUpperCase(),
-    [],
+    []
   );
+
+  const scrollRef = React.useRef<ScrollView | null>(null);
 
   const {
     control: depositControl,
     handleSubmit: handleDepositSubmit,
     formState: depositState,
+    reset: resetDeposit,
   } = useForm<DepositForm>({
     resolver: yupResolver(depositSchema),
     mode: "onChange",
@@ -98,6 +108,7 @@ export default function Profile() {
     control: withdrawControl,
     handleSubmit: handleWithdrawSubmit,
     formState: withdrawState,
+    reset: resetWithdraw,
   } = useForm<DepositForm>({
     resolver: yupResolver(withdrawSchema),
     mode: "onChange",
@@ -112,6 +123,7 @@ export default function Profile() {
         pin: data.pin,
       });
       setDepositLink(res.authorization_url);
+      resetDeposit(); // Reset form after generating link
     } catch (err: any) {
       Alert.alert("Error", err?.message ?? "Failed to generate deposit link");
     } finally {
@@ -119,15 +131,31 @@ export default function Profile() {
     }
   };
 
-  const handleWithdraw = (data: DepositForm) => {
-    setWithdrawModal(false);
-    Alert.alert(
-      "Withdrawal requested",
-      `₦${data.amount?.toLocaleString()} withdrawal initiated`,
-    );
+  const handleWithdraw = async (data: DepositForm) => {
+    setIsWithdrawing(true);
+    try {
+      const response = await postWithdraw({
+        amount: String(data.amount),
+        pin: data.pin,
+      });
+
+      setWithdrawModal(false);
+      setBanner({
+        message:
+          response.message || "Withdrawal request submitted successfully",
+        type: "success",
+      });
+      resetWithdraw();
+    } catch (err: any) {
+      setBanner({
+        message: err?.message ?? "Failed to process withdrawal",
+        type: "error",
+      });
+    } finally {
+      setIsWithdrawing(false);
+    }
   };
 
-  // fetch existing virtual account on mount
   React.useEffect(() => {
     let mounted = true;
     (async () => {
@@ -193,13 +221,16 @@ export default function Profile() {
     }
   }, [openDeposit, router]);
 
-  if (!fontsLoaded) return null;
+  React.useEffect(() => {
+    if (banner) {
+      scrollRef.current?.scrollTo?.({ y: 0, animated: true });
+    }
+  }, [banner]);
 
-  // Reusable style to pass to children for disabled touchables (apply via style={[baseStyle, disabled && disabledStyle]})
+  if (!fontsLoaded) return null;
 
   const disabledStyle = {
     opacity: 0.45,
-    // subtle backdrop indicating disabled state
     backgroundColor: isDark ? "rgba(255,255,255,0.06)" : theme.colors.border,
     borderColor: isDark ? "rgba(255,255,255,0.15)" : theme.colors.border,
     borderWidth: 1,
@@ -212,16 +243,24 @@ export default function Profile() {
         style={[styles.container, { backgroundColor: theme.colors.background }]}
       >
         <ScrollView
+          ref={scrollRef}
           contentContainerStyle={[
             styles.content,
             {
-              // adapt spacing if desired
               backgroundColor: "transparent",
             },
           ]}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
+          {banner && (
+            <MessageBanner
+              message={banner.message}
+              type={banner.type}
+              onClose={() => setBanner(null)}
+            />
+          )}
+
           <ProfileHeader
             initials={userInitials}
             firstName={user?.firstName}
@@ -236,6 +275,7 @@ export default function Profile() {
             onSignOut={handleSignOut}
             virtualExists={!!virtualAccount}
             hasBvn={user?.bvn}
+            hasBankDetails={user?.bankDetails}
             disabledStyle={disabledStyle as any}
           />
 
@@ -250,6 +290,7 @@ export default function Profile() {
             onGenerate={generateDepositLink}
             isGenerating={isGenerating}
             depositLink={depositLink}
+            formState={depositState} // Pass formState to modal
           />
 
           <WithdrawModal
@@ -258,6 +299,8 @@ export default function Profile() {
             control={withdrawControl}
             handleSubmit={handleWithdrawSubmit}
             onWithdraw={handleWithdraw}
+            isWithdrawing={isWithdrawing}
+            formState={withdrawState} // Pass formState to modal
           />
 
           <VirtualAccountModal

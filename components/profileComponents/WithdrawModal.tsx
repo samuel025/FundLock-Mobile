@@ -1,6 +1,7 @@
 import React from "react";
 import { Controller } from "react-hook-form";
 import {
+  ActivityIndicator,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -17,12 +18,16 @@ export function WithdrawModal({
   control,
   handleSubmit,
   onWithdraw,
+  isWithdrawing,
+  formState, // Add formState prop
 }: {
   visible: boolean;
   onClose: () => void;
   control: any;
   handleSubmit: any;
   onWithdraw: (data: any) => void;
+  isWithdrawing?: boolean;
+  formState?: any; // Add formState type
 }) {
   return (
     <Modal visible={visible} transparent animationType="slide">
@@ -88,16 +93,29 @@ export function WithdrawModal({
             />
 
             <View style={{ flexDirection: "row", gap: 12 }}>
-              <TouchableOpacity style={styles.modalButton} onPress={onClose}>
+              <TouchableOpacity
+                style={styles.modalButton}
+                onPress={onClose}
+                disabled={isWithdrawing}
+              >
                 <Text style={styles.modalButtonTextSecondary}>Cancel</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={styles.modalButtonPrimary}
+                style={[
+                  styles.modalButtonPrimary,
+                  (isWithdrawing || !formState?.isValid) &&
+                    styles.modalButtonDisabled,
+                ]}
                 onPress={handleSubmit(onWithdraw)}
+                disabled={isWithdrawing || !formState?.isValid}
               >
-                <Text style={styles.modalButtonTextPrimary}>
-                  Request Withdraw
-                </Text>
+                {isWithdrawing ? (
+                  <ActivityIndicator size="small" color="#fff" />
+                ) : (
+                  <Text style={styles.modalButtonTextPrimary}>
+                    Request Withdraw
+                  </Text>
+                )}
               </TouchableOpacity>
             </View>
           </View>
@@ -151,5 +169,8 @@ const styles = StyleSheet.create({
     color: "#D9534F",
     marginTop: 4,
     fontSize: 12,
+  },
+  modalButtonDisabled: {
+    opacity: 0.6,
   },
 });

@@ -5,4 +5,5 @@ export interface User {
   lastName: string;
   phone_number: string;
   bvn: boolean;
+  bankDetails: boolean;
 }

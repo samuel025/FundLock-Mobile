@@ -36,22 +36,11 @@ export function ExpireDatePicker({
   return (
     <View style={styles.section}>
       <Text
-        style={[
-          styles.sectionTitle,
-          { color: isDark ? theme.colors.balanceLabel : "#415A77" },
-        ]}
+        style={[styles.sectionTitle, { color: isDark ? "#415A77" : "#415A77" }]}
       >
         Expire At
       </Text>
-      <Text
-        style={[
-          styles.subtitle,
-          { color: isDark ? "rgba(255,255,255,0.5)" : "#778DA9" },
-        ]}
-      >
-        Note that this will be ignored if there is an existing budget in the
-        category you choose and your money will be added to the existing budget.
-      </Text>
+
       <TouchableOpacity
         style={[
           styles.datePickerButton,
@@ -129,7 +118,7 @@ export function ExpireDatePicker({
 }
 
 const styles = StyleSheet.create({
-  section: { marginBottom: 24 },
+  section: { marginBottom: 15 },
   sectionTitle: {
     fontSize: 15,
     fontFamily: "Poppins_600SemiBold",

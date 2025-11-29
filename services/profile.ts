@@ -8,6 +8,7 @@ type ProfileData = {
   lastName: string;
   phoneNumber: string;
   hasBvn: boolean;
+  hasBankDetails: boolean;
 };
 
 type ProfileResponse = {
@@ -39,7 +40,7 @@ export async function getProfile(): Promise<ProfileResponse> {
       if (!axiosError.response) {
         console.error("Network error while fetching profile");
         const customError: any = new Error(
-          "Network error. Please check your internet connection and try again.",
+          "Network error. Please check your internet connection and try again."
         );
         customError.status = 0;
         throw customError;

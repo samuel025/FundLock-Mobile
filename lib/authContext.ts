@@ -39,7 +39,7 @@ export const authActions = {
                 await SecureStore.setItemAsync(TOKEN_KEY, tokens.accessToken);
                 await SecureStore.setItemAsync(
                   REFRESH_TOKEN_KEY,
-                  tokens.refreshToken,
+                  tokens.refreshToken
                 );
                 setTokens(tokens.accessToken, tokens.refreshToken);
 
@@ -54,7 +54,7 @@ export const authActions = {
           } else {
             console.error(
               "Failed to fetch user profile, using cached data:",
-              error,
+              error
             );
           }
         }
@@ -97,6 +97,7 @@ export const authActions = {
         lastName: response.data.Profile.lastName,
         phone_number: response.data.Profile.phoneNumber,
         bvn: response.data.Profile.hasBvn,
+        bankDetails: response.data.Profile.hasBankDetails,
       };
       await SecureStore.setItemAsync(USER_DATA_KEY, JSON.stringify(userData));
       setUser(userData);

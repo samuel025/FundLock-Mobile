@@ -1,34 +1,62 @@
 import { API } from "@/lib/api";
 import axios, { AxiosError } from "axios";
+import { ErrorResponse } from "./wallet";
 
-export interface ErrorResponse {
+export interface Bank {
+  name: string;
+  slug: string;
+  code: string;
+  nibss_bank_code: string;
+  country: string;
+}
+
+export interface BankListData {
+  status: boolean;
+  message: string;
+  data: Bank[];
+}
+
+export interface BankListResponse {
   status: string;
   message: string;
   data: {
-    error: string;
+    "Bank-List": BankListData;
   };
 }
 
-export interface WalletDetails {
-  balance: string;
-  totalLockedAmount: string;
-  totalRedeemedAmount: string;
-  walletNumber: string;
-  hasPin: boolean;
+export interface SaveBankDetailsRequest {
+  bankCode: string;
+  bankAccountNumber: string;
 }
 
-export interface ApiResponse<T> {
-  status: string | number;
+export interface SaveBankDetailsResponse {
+  status: string;
   message: string;
-  data: T;
+  data: {};
 }
 
-export async function getWalletDetails(): Promise<WalletDetails> {
+export interface VerifyAccountRequest {
+  bank: string;
+  account: string;
+}
+
+export interface VerifyAccountResponse {
+  status: boolean;
+  message: string;
+  data: {
+    bank_name: string;
+    bank_code: string;
+    account_number: string;
+    account_name: string;
+  };
+}
+
+export async function getKoraBankList(): Promise<Bank[]> {
   try {
-    const response = await API.get<ApiResponse<WalletDetails>>(
-      "/api/v1/fundlock/wallet-details"
+    const response = await API.get<BankListResponse>(
+      "/api/v1/fundlock/koraBankList"
     );
-    return response.data.data;
+    return response.data.data["Bank-List"].data;
   } catch (error) {
     if (axios.isAxiosError(error)) {
       const axiosError = error as AxiosError<ErrorResponse>;
@@ -42,7 +70,7 @@ export async function getWalletDetails(): Promise<WalletDetails> {
       }
 
       const errorMessage =
-        axiosError.response?.data?.message || "Failed to fetch wallet details";
+        axiosError.response?.data?.message || "Failed to fetch bank list";
 
       const customError: any = new Error(errorMessage);
       customError.status = axiosError.response?.status;
@@ -52,40 +80,15 @@ export async function getWalletDetails(): Promise<WalletDetails> {
   }
 }
 
-export interface Transaction {
-  id: string;
-  type: string;
-  createdAt: string;
-  reference: string;
-  amount: number;
-  recipientName: string;
-  entryType: string;
-  status: string;
-}
-
-export interface WalletData {
-  hasNext: boolean;
-  name: string;
-  totalItems: number;
-  transactions: Transaction[];
-  totalPages: number;
-  currentPage: number;
-}
-
-export interface WalletResponse {
-  status: string;
-  message: string;
-  data: WalletData;
-}
-
-export async function getWalletTransactions(
-  page: number = 0
-): Promise<WalletData> {
+export async function saveBankDetails(
+  data: SaveBankDetailsRequest
+): Promise<SaveBankDetailsResponse> {
   try {
-    const response = await API.get<ApiResponse<WalletData>>(
-      `api/v1/fundlock/transactions?page=${page}`
+    const response = await API.post<SaveBankDetailsResponse>(
+      "/api/v1/fundlock/saveBankDetails",
+      data
     );
-    return response.data.data;
+    return response.data;
   } catch (error) {
     if (axios.isAxiosError(error)) {
       const axiosError = error as AxiosError<ErrorResponse>;
@@ -99,7 +102,7 @@ export async function getWalletTransactions(
       }
 
       const errorMessage =
-        axiosError.response?.data?.message || "Failed to fetch transactions";
+        axiosError.response?.data?.message || "Failed to save bank details";
 
       const customError: any = new Error(errorMessage);
       customError.status = axiosError.response?.status;
@@ -109,26 +112,24 @@ export async function getWalletTransactions(
   }
 }
 
-export interface Insights {
-  spentThisWeek: string;
-  receivedThisWeek: string;
-}
-
-export interface WeeklyTransactionInsight {
-  status: string;
-  message: string;
-  data: Insights;
-}
-
-export async function getWeeklyTransactionInsights(): Promise<Insights> {
+export async function verifyKoraBankAccount(
+  data: VerifyAccountRequest
+): Promise<string> {
   try {
-    const response = await API.get<WeeklyTransactionInsight>(
-      "api/v1/fundlock/weekly-transactions"
+    const response = await axios.post<VerifyAccountResponse>(
+      "https://api.korapay.com/merchant/api/v1/misc/banks/resolve",
+      data,
+      {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
     );
-    return response.data.data;
+    return response.data.data.account_name;
   } catch (error) {
     if (axios.isAxiosError(error)) {
       const axiosError = error as AxiosError<ErrorResponse>;
+
       if (!axiosError.response) {
         const customError: any = new Error(
           "Network error. Please check your internet connection and try again."
@@ -138,7 +139,7 @@ export async function getWeeklyTransactionInsights(): Promise<Insights> {
       }
 
       const errorMessage =
-        axiosError.response?.data?.message || "Failed to fetch insights";
+        axiosError.response?.data?.message || "Failed to verify account";
 
       const customError: any = new Error(errorMessage);
       customError.status = axiosError.response?.status;

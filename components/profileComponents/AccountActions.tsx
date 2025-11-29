@@ -1,4 +1,4 @@
-import { useTheme } from "@/theme"; // + use theme
+import { useTheme } from "@/theme";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import React from "react";
@@ -12,6 +12,7 @@ export function AccountActions({
   virtualExists,
   hasBvn,
   disabledStyle,
+  hasBankDetails,
 }: {
   onDeposit: () => void;
   onWithdraw: () => void;
@@ -19,7 +20,8 @@ export function AccountActions({
   onSignOut?: () => void;
   virtualExists: boolean;
   hasBvn: boolean | undefined;
-  disabledStyle?: any; // make optional
+  disabledStyle?: any;
+  hasBankDetails: boolean | undefined;
 }) {
   const { theme, scheme } = useTheme();
   const isDark = scheme === "dark";
@@ -157,6 +159,55 @@ export function AccountActions({
           />
         </TouchableOpacity>
 
+        <View
+          style={[styles.divider, { backgroundColor: theme.colors.border }]}
+        />
+
+        <TouchableOpacity
+          style={[styles.row, hasBankDetails && disabledStyle]}
+          onPress={() => router.push("/addBankDetails")}
+          disabled={hasBankDetails}
+          accessibilityState={{ disabled: !!hasBankDetails }}
+        >
+          <View
+            style={[
+              styles.actionIcon,
+              {
+                backgroundColor: isDark ? "rgba(16,185,129,0.15)" : "#D1FAE5",
+              },
+            ]}
+          >
+            <Ionicons name="card-outline" size={20} color="#10B981" />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text
+              style={[
+                styles.rowTitle,
+                { color: theme.colors.text },
+                hasBankDetails && { opacity: 0.6 },
+              ]}
+            >
+              Bank Account Details
+            </Text>
+            <Text
+              style={[
+                styles.rowSubtitle,
+                { color: theme.colors.muted },
+                hasBankDetails && { opacity: 0.6 },
+              ]}
+            >
+              {hasBankDetails
+                ? "Bank details already added"
+                : "Add your bank account"}
+            </Text>
+          </View>
+          <Ionicons
+            name="chevron-forward"
+            size={20}
+            color={hasBankDetails ? theme.colors.border : chevronColor}
+          />
+        </TouchableOpacity>
+
         {onSignOut && (
           <>
             <View
@@ -203,26 +254,37 @@ const styles = StyleSheet.create({
   },
   card: {
     borderRadius: 14,
-    padding: 8,
-    overflow: "hidden",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
     elevation: 2,
+    overflow: "hidden",
   },
-  row: { flexDirection: "row", alignItems: "center", padding: 14 },
+  row: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 16,
+    gap: 12,
+  },
   actionIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: 12,
+    width: 40,
+    height: 40,
+    borderRadius: 10,
     justifyContent: "center",
     alignItems: "center",
-    marginRight: 12,
   },
   rowTitle: {
+    fontSize: 15,
     fontFamily: "Poppins_600SemiBold",
-    fontSize: 14,
   },
   rowSubtitle: {
-    fontFamily: "Poppins_400Regular",
     fontSize: 12,
+    fontFamily: "Poppins_400Regular",
+    marginTop: 2,
   },
-  divider: { height: 1, marginHorizontal: 8 },
+  divider: {
+    height: 1,
+    marginLeft: 68,
+  },
 });

@@ -22,14 +22,16 @@ export function DepositModal({
   onGenerate,
   isGenerating,
   depositLink,
+  formState, // Add formState prop
 }: {
   visible: boolean;
   onClose: () => void;
   control: any;
   handleSubmit: any;
   onGenerate: (data: any) => void;
-  isGenerating: boolean;
-  depositLink?: string | null;
+  isGenerating?: boolean;
+  depositLink: string | null;
+  formState?: any; // Add formState type
 }) {
   const [showWebView, setShowWebView] = React.useState(false);
 
@@ -114,9 +116,13 @@ export function DepositModal({
                 <Text style={styles.modalButtonTextSecondary}>Close</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={styles.modalButtonPrimary}
+                style={[
+                  styles.modalButtonPrimary,
+                  (isGenerating || !formState?.isValid) &&
+                    styles.modalButtonDisabled,
+                ]}
                 onPress={handleSubmit(onGenerate)}
-                disabled={isGenerating}
+                disabled={isGenerating || !formState?.isValid}
               >
                 <Text style={styles.modalButtonTextPrimary}>
                   {isGenerating ? "Generating..." : "Generate link"}
@@ -233,6 +239,9 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   modalButtonTextPrimary: { fontFamily: "Poppins_600SemiBold", color: "#fff" },
+  modalButtonDisabled: {
+    backgroundColor: "#E9ECEF",
+  },
   inputError: {
     fontFamily: "Poppins_400Regular",
     color: "#D9534F",
