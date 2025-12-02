@@ -1,7 +1,7 @@
 import { useTheme } from "@/theme";
 import { Ionicons } from "@expo/vector-icons";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import { BaseToastProps } from "react-native-toast-message";
+import Toast, { BaseToastProps } from "react-native-toast-message";
 
 export const useToastConfig = () => {
   const { theme, scheme } = useTheme();
@@ -13,9 +13,7 @@ export const useToastConfig = () => {
         style={[
           styles.toastContainer,
           {
-            backgroundColor: isDark
-              ? "#14B8A6" // Solid teal for dark mode
-              : "#E7F6F2", // Light green background
+            backgroundColor: isDark ? "#14B8A6" : "#E7F6F2",
             borderLeftColor: theme.colors.success,
           },
         ]}
@@ -45,7 +43,7 @@ export const useToastConfig = () => {
             </Text>
           )}
         </View>
-        <TouchableOpacity onPress={props.onPress}>
+        <TouchableOpacity onPress={() => Toast.hide()}>
           <Ionicons
             name="close"
             size={20}
@@ -59,7 +57,7 @@ export const useToastConfig = () => {
         style={[
           styles.toastContainer,
           {
-            backgroundColor: isDark ? "#DC2626" : "#FEE2E2", // Solid red for dark mode
+            backgroundColor: isDark ? "#DC2626" : "#FEE2E2",
             borderLeftColor: theme.colors.danger,
           },
         ]}
@@ -89,7 +87,7 @@ export const useToastConfig = () => {
             </Text>
           )}
         </View>
-        <TouchableOpacity onPress={props.onPress}>
+        <TouchableOpacity onPress={() => Toast.hide()}>
           <Ionicons
             name="close"
             size={20}
@@ -103,7 +101,7 @@ export const useToastConfig = () => {
         style={[
           styles.toastContainer,
           {
-            backgroundColor: isDark ? "#3B82F6" : "#DBEAFE", // Solid blue for dark mode
+            backgroundColor: isDark ? "#3B82F6" : "#DBEAFE",
             borderLeftColor: theme.colors.primary,
           },
         ]}
@@ -133,7 +131,7 @@ export const useToastConfig = () => {
             </Text>
           )}
         </View>
-        <TouchableOpacity onPress={props.onPress}>
+        <TouchableOpacity onPress={() => Toast.hide()}>
           <Ionicons
             name="close"
             size={20}

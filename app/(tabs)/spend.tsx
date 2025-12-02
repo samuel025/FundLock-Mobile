@@ -475,9 +475,8 @@ export default function Spend() {
             </TouchableOpacity>
           </ScrollView>
         </KeyboardAvoidingView>
-
-        <Toast config={toastConfig} />
       </LinearGradient>
+      <Toast config={toastConfig} />
     </PinGuard>
   );
 }
