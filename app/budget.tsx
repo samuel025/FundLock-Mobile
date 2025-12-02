@@ -53,8 +53,14 @@ const schema = yup.object({
     .date()
     .nullable()
     .typeError("Select a valid date")
-    .min(new Date(), "Expiration must be in the future")
-    .required("Expiration date is required"),
+    .when("$isTopUp", {
+      is: false,
+      then: (schema) =>
+        schema
+          .required("Expiration date is required")
+          .min(new Date(), "Expiration must be in the future"),
+      otherwise: (schema) => schema.optional(),
+    }),
 });
 
 type FormData = yup.InferType<typeof schema>;
@@ -87,12 +93,6 @@ export default function Budget() {
     }, [fetchLocks])
   );
 
-  const { control, handleSubmit, formState, reset } = useForm<FormData>({
-    resolver: yupResolver(schema),
-    defaultValues: { amount: undefined as any, pin: "", expireAt: null as any },
-    mode: "onChange",
-  });
-
   const selectedCategory = useMemo(
     () => categories?.find((c) => c.id === selectedCategoryId) || null,
     [selectedCategoryId, categories]
@@ -107,18 +107,42 @@ export default function Budget() {
     );
   }, [selectedCategory, locksList]);
 
+  const { control, handleSubmit, formState, reset, trigger } =
+    useForm<FormData>({
+      resolver: yupResolver(schema) as any,
+      context: { isTopUp: !!existingBudget },
+      defaultValues: {
+        amount: undefined as any,
+        pin: "",
+        expireAt: null as any,
+      },
+      mode: "onChange",
+    });
+
   // Auto-populate expireAt when existing budget is found
   useEffect(() => {
     if (existingBudget) {
       // Use existing budget's expiration date
       const existingDate = new Date(existingBudget.expiresAt);
-      control._reset({
-        amount: undefined as any,
-        pin: "",
-        expireAt: existingDate,
-      });
+      reset(
+        {
+          amount: undefined as any,
+          pin: "",
+          expireAt: existingDate,
+        },
+        {
+          keepErrors: false,
+          keepDirty: false,
+          keepIsSubmitted: false,
+          keepTouched: false,
+          keepIsValid: false,
+          keepSubmitCount: false,
+        }
+      );
+      // Recompute form validity after reset with new context
+      setTimeout(() => trigger(), 0);
     }
-  }, [existingBudget, control]);
+  }, [existingBudget, reset, trigger]);
 
   const onSubmit = (data: FormData) => {
     if (!selectedCategory) {
@@ -131,6 +155,19 @@ export default function Budget() {
       });
       return;
     }
+
+    // Require expireAt only when creating a new budget
+    if (!existingBudget && !data.expireAt) {
+      Toast.show({
+        type: "error",
+        text1: "Error",
+        text2: "Expiration date is required",
+        position: "top",
+        topOffset: 60,
+      });
+      return;
+    }
+
     const numericBalance = Number(balance) || 0;
     if (data.amount > numericBalance) {
       Toast.show({
@@ -142,10 +179,17 @@ export default function Budget() {
       });
       return;
     }
+
+    const expiresAtDate =
+      data.expireAt ??
+      (existingBudget ? new Date(existingBudget.expiresAt) : null);
+
     lockFunds({
       amountLocked: String(data.amount),
       category_id: selectedCategory.id,
-      expiresAt: data.expireAt.toISOString().split("T")[0],
+      expiresAt: expiresAtDate
+        ? expiresAtDate.toISOString().split("T")[0]
+        : (undefined as any),
       pin: data.pin,
     });
   };
@@ -403,7 +447,6 @@ export default function Budget() {
                                 label="Amount to budget"
                                 value={displayValue}
                                 onChangeText={(t) => {
-                                  // Remove commas and clean input
                                   let cleaned = t
                                     .replace(/,/g, "")
                                     .replace(/[^0-9.]/g, "");
@@ -510,7 +553,7 @@ export default function Budget() {
                           fieldState,
                         }) => (
                           <ExpireDatePicker
-                            value={value}
+                            value={value ?? null}
                             onChange={onChange}
                             error={fieldState.error?.message}
                           />
