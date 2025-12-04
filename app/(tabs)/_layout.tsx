@@ -82,7 +82,7 @@ export default function RootLayout() {
           <Tabs.Screen
             name="profile"
             options={{
-              title: "Profile",
+              title: "My Account",
               tabBarIcon: ({ color }) => (
                 <Ionicons name="person" size={20} color={color} />
               ),

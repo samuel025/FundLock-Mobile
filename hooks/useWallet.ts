@@ -10,6 +10,7 @@ import {
 } from "@/services/wallet";
 import { useMutation } from "@tanstack/react-query";
 import { useFocusEffect } from "expo-router";
+import * as SecureStore from "expo-secure-store";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 export function useWallet() {
@@ -26,6 +27,10 @@ export function useWallet() {
   const hasFetchedRef = useRef(false);
   const previousTokenRef = useRef<string | null>(null);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [hasPinStored, setHasPinStored] = useState<boolean | null>(null);
+  const [isCheckingPin, setIsCheckingPin] = useState(true);
+
+  const HAS_PIN = "HAS_PIN";
 
   const walletState = walletStore();
   const {
@@ -38,6 +43,25 @@ export function useWallet() {
     successMessage,
   } = walletState;
 
+  // Check SecureStore on mount
+  useEffect(() => {
+    const checkStoredPin = async () => {
+      try {
+        const storedPin = await SecureStore.getItemAsync(HAS_PIN);
+        const hasPinValue = storedPin === "true";
+        setHasPinStored(hasPinValue);
+        // Update wallet store with stored value
+        walletStore.getState().setHasPin(hasPinValue);
+      } catch (error) {
+        console.error("Failed to check stored PIN:", error);
+        setHasPinStored(false);
+      } finally {
+        setIsCheckingPin(false);
+      }
+    };
+    checkStoredPin();
+  }, []);
+
   const walletMutation = useMutation({
     mutationFn: getWalletDetails,
     onSuccess: async (data) => {
@@ -48,6 +72,8 @@ export function useWallet() {
         totalRedeemedAmount,
         hasPin,
       } = data;
+      await SecureStore.setItemAsync(HAS_PIN, String(hasPin));
+      setHasPinStored(hasPin);
       const {
         setBalance,
         setTotalLockedAmount,
@@ -121,7 +147,7 @@ export function useWallet() {
       return () => {
         hasFetchedRef.current = false;
       };
-    }, [user, accessToken]),
+    }, [user, accessToken])
   );
 
   useEffect(() => {
@@ -169,7 +195,8 @@ export function useWallet() {
     walletData,
     loadMore,
     isLoadingMore,
-    hasPin,
+    hasPin: hasPinStored !== null ? hasPinStored : hasPin,
+    isCheckingPin,
     successMessage,
   };
 }

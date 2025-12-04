@@ -1,14 +1,15 @@
+import { useWallet } from "@/hooks/useWallet";
 import { walletStore } from "@/lib/walletStore";
 import { Redirect } from "expo-router";
 import React from "react";
-import { View, ActivityIndicator } from "react-native";
-import { useWallet } from "@/hooks/useWallet";
+import { ActivityIndicator, View } from "react-native";
 
 export function PinGuard({ children }: { children: React.ReactNode }) {
-  const { hasPin, balance } = useWallet();
+  const { hasPin, balance, isCheckingPin } = useWallet();
   const isLoading = walletStore((s) => s.isLoading);
 
-  if (isLoading && balance === null) {
+  // Show loading while checking PIN from SecureStore or loading wallet
+  if (isCheckingPin || (isLoading && balance === null)) {
     return (
       <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
         <ActivityIndicator size="large" color="#38B2AC" />

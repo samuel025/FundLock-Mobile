@@ -40,7 +40,7 @@ const schema = yup.object({
   amount: yup
     .number()
     .transform((value, original) =>
-      original === "" ? undefined : Number(original)
+      original === "" ? undefined : Number(original),
     )
     .typeError("Enter a valid amount")
     .positive("Amount must be greater than 0")
@@ -71,7 +71,7 @@ export default function Budget() {
   const router = useRouter();
   const toastConfig = useToastConfig();
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(
-    null
+    null,
   );
   const [categoryModalVisible, setCategoryModalVisible] = useState(false);
 
@@ -90,12 +90,12 @@ export default function Budget() {
   useFocusEffect(
     useCallback(() => {
       fetchLocks();
-    }, [fetchLocks])
+    }, [fetchLocks]),
   );
 
   const selectedCategory = useMemo(
     () => categories?.find((c) => c.id === selectedCategoryId) || null,
-    [selectedCategoryId, categories]
+    [selectedCategoryId, categories],
   );
 
   const existingBudget = useMemo(() => {
@@ -103,7 +103,7 @@ export default function Budget() {
     return locksList.find(
       (lock: any) =>
         String(lock.categoryName).toLowerCase() ===
-        String(selectedCategory.name).toLowerCase()
+        String(selectedCategory.name).toLowerCase(),
     );
   }, [selectedCategory, locksList]);
 
@@ -137,7 +137,7 @@ export default function Budget() {
           keepTouched: false,
           keepIsValid: false,
           keepSubmitCount: false,
-        }
+        },
       );
       // Recompute form validity after reset with new context
       setTimeout(() => trigger(), 0);
@@ -272,7 +272,7 @@ export default function Budget() {
             behavior={Platform.OS === "ios" ? "padding" : undefined}
             style={{ flex: 1 }}
             keyboardVerticalOffset={
-              Platform.OS === "ios" ? 0 : StatusBar.currentHeight ?? 0
+              Platform.OS === "ios" ? 0 : (StatusBar.currentHeight ?? 0)
             }
           >
             <ScrollView
@@ -403,12 +403,12 @@ export default function Budget() {
                             { color: theme.colors.muted },
                           ]}
                         >
-                          Current balance: ₦
+                          Current Budget: ₦
                           {Number(existingBudget.amount || 0).toLocaleString()}
                           {"\n"}
                           Expires:{" "}
                           {new Date(
-                            existingBudget.expiresAt
+                            existingBudget.expiresAt,
                           ).toLocaleDateString("en-US", {
                             year: "numeric",
                             month: "short",
@@ -674,8 +674,8 @@ export default function Budget() {
                         {isLocking
                           ? "Processing..."
                           : existingBudget
-                          ? "Top Up Budget"
-                          : "Budget Funds"}
+                            ? "Top Up Budget"
+                            : "Budget Funds"}
                       </Text>
                       <Ionicons name="lock-closed" size={18} color="#fff" />
                     </LinearGradient>

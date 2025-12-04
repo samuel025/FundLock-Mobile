@@ -223,7 +223,7 @@ export default function AddBvn() {
                 <Text
                   style={[styles.helperText, { color: theme.colors.muted }]}
                 >
-                  Dial *565*0# to get your BVN if you don't know it
+                  Dial *565*0# to get your BVN if you don&apos;t know it
                 </Text>
               )}
 
