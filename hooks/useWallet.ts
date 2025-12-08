@@ -50,10 +50,8 @@ export function useWallet() {
         const storedPin = await SecureStore.getItemAsync(HAS_PIN);
         const hasPinValue = storedPin === "true";
         setHasPinStored(hasPinValue);
-        // Update wallet store with stored value
         walletStore.getState().setHasPin(hasPinValue);
       } catch (error) {
-        console.error("Failed to check stored PIN:", error);
         setHasPinStored(false);
       } finally {
         setIsCheckingPin(false);
