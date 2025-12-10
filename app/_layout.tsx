@@ -11,23 +11,20 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { useEffect, useState } from "react";
+import { ActivityIndicator, View } from "react-native";
 
-// Prevent the native splash screen from auto-hiding
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
   const [queryClient] = useState(() => new QueryClient());
   const [appIsReady, setAppIsReady] = useState(false);
   const [splashComplete, setSplashComplete] = useState(false);
+  const isLoadingUser = useAuthStore((s) => s.isLoadingUser);
 
   useEffect(() => {
     async function prepare() {
       try {
-        // Initialize auth - this checks tokens and user data
         await authActions.initializeAuth();
-
-        // Add minimum splash duration for branding
-        await new Promise((resolve) => setTimeout(resolve, 1500));
       } catch (e) {
         console.warn("Error during app initialization:", e);
       } finally {
@@ -58,6 +55,18 @@ export default function RootLayout() {
   const handleSplashComplete = () => {
     setSplashComplete(true);
   };
+
+  if (splashComplete && isLoadingUser) {
+    return (
+      <ThemeProvider>
+        <View
+          style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
+        >
+          <ActivityIndicator size="large" color="#09A674" />
+        </View>
+      </ThemeProvider>
+    );
+  }
 
   return (
     <ThemeProvider>

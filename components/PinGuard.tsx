@@ -8,7 +8,6 @@ export function PinGuard({ children }: { children: React.ReactNode }) {
   const { hasPin, balance, isCheckingPin } = useWallet();
   const isLoading = walletStore((s) => s.isLoading);
 
-  // Show loading while checking PIN from SecureStore or loading wallet
   if (isCheckingPin || (isLoading && balance === null)) {
     return (
       <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
