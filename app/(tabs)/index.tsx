@@ -544,8 +544,15 @@ export default function Index() {
 
           {recentTransactions.length > 0 ? (
             recentTransactions.map((transaction, index) => (
-              <View
+              <TouchableOpacity
                 key={index}
+                onPress={() =>
+                  router.push({
+                    pathname: "/transactionDetails",
+                    params: { reference: transaction.reference },
+                  })
+                }
+                activeOpacity={0.7}
                 style={[
                   styles.activityItem,
                   isDark
@@ -634,7 +641,7 @@ export default function Index() {
                 >
                   {formatAmount(transaction)}
                 </Text>
-              </View>
+              </TouchableOpacity>
             ))
           ) : (
             <View style={styles.emptyState}>

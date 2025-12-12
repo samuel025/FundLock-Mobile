@@ -307,7 +307,7 @@ export default function Profile() {
           />
 
           <Text style={[styles.version, { color: theme.colors.muted }]}>
-            FundLock v1.0.0
+            BlockIT v1.0.0
           </Text>
         </ScrollView>
         <Toast config={toastConfig} />

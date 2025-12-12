@@ -3,9 +3,16 @@ import { useTheme } from "@/theme";
 import { Ionicons } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
 import { Platform, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function RootLayout() {
   const { theme } = useTheme();
+  const insets = useSafeAreaInsets();
+
+  // Calculate proper tab bar height accounting for navigation bar
+  const tabBarHeight = 70 + (Platform.OS === "android" ? insets.bottom : 0);
+  const tabBarPaddingBottom =
+    8 + (Platform.OS === "android" ? insets.bottom : 0);
 
   return (
     <AuthGuard>
@@ -22,8 +29,8 @@ export default function RootLayout() {
               shadowOffset: { width: 0, height: -6 },
               shadowOpacity: 0.08,
               shadowRadius: 12,
-              height: 70,
-              paddingBottom: 8,
+              height: tabBarHeight,
+              paddingBottom: tabBarPaddingBottom,
               paddingTop: 8,
               borderRadius: 16,
               overflow: "hidden",

@@ -3,6 +3,7 @@ import { useTheme } from "@/theme";
 import { formatCurrency } from "@/utils/formatCurrency";
 import { Feather, Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { BlurView } from "expo-blur";
+import { router } from "expo-router";
 import { MotiView } from "moti";
 import React from "react";
 import {
@@ -10,6 +11,7 @@ import {
   FlatList,
   StyleSheet,
   Text,
+  TouchableOpacity,
   View,
 } from "react-native";
 
@@ -186,117 +188,126 @@ export default function ModernTransactionList({
     };
 
     return (
-      <MotiView
-        from={{ opacity: 0, translateY: 12 }}
-        animate={{ opacity: 1, translateY: 0 }}
-        transition={{
-          delay: index * 50,
-          type: "timing",
-          duration: 300,
-        }}
-        style={[
-          styles.transactionCard,
-          isDark
-            ? {
-                backgroundColor: "rgba(255,255,255,0.05)",
-                borderWidth: 1,
-                borderColor: "rgba(255,255,255,0.10)",
-              }
-            : { backgroundColor: theme.colors.card },
-        ]}
+      <TouchableOpacity
+        activeOpacity={0.7}
+        onPress={() =>
+          router.push({
+            pathname: "/transactionDetails",
+            params: { reference: transaction.reference },
+          })
+        }
       >
-        {isDark && (
-          <BlurView
-            intensity={25}
-            tint="dark"
-            style={StyleSheet.absoluteFill}
-          />
-        )}
+        <MotiView
+          from={{ opacity: 0, translateY: 20 }}
+          animate={{ opacity: 1, translateY: 0 }}
+          transition={{ type: "timing", duration: 400, delay: index * 50 }}
+          style={[
+            styles.transactionCard,
+            {
+              backgroundColor: isDark
+                ? "rgba(255,255,255,0.05)"
+                : theme.colors.card,
+              borderWidth: isDark ? 1 : 0,
+              borderColor: isDark ? "rgba(255,255,255,0.10)" : "transparent",
+            },
+          ]}
+        >
+          {isDark && (
+            <BlurView
+              intensity={25}
+              tint="dark"
+              style={StyleSheet.absoluteFill}
+            />
+          )}
 
-        <View style={styles.transactionLeft}>
-          <View style={[styles.transactionIcon, { backgroundColor: iconBg }]}>
-            <MotiView
-              from={{ scale: 0.7, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ type: "spring", damping: 10 }}
-            >
-              {renderIcon(transaction.type)}
-            </MotiView>
-          </View>
-
-          <View style={styles.transactionDetails}>
-            <View style={styles.transactionTitleRow}>
-              <Text
-                style={[styles.transactionLabel, { color: theme.colors.muted }]}
-                numberOfLines={1}
-                ellipsizeMode="tail"
+          <View style={styles.transactionLeft}>
+            <View style={[styles.transactionIcon, { backgroundColor: iconBg }]}>
+              <MotiView
+                from={{ scale: 0.7, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ type: "spring", damping: 10 }}
               >
-                {getTitle(transaction)}
-              </Text>
-              <Text
-                style={[
-                  styles.transactionRecipient,
-                  { color: theme.colors.text },
-                ]}
-                numberOfLines={1}
-                ellipsizeMode="tail"
-              >
-                {getRecipient(transaction)}
-              </Text>
+                {renderIcon(transaction.type)}
+              </MotiView>
             </View>
-            <Text
-              style={[styles.transactionDate, { color: theme.colors.muted }]}
-              numberOfLines={1}
-              ellipsizeMode="tail"
-            >
-              {formatDateTime(transaction.createdAt)}
-            </Text>
-            {transaction.status && (
-              <View style={styles.statusBadgeRow}>
-                <View
+
+            <View style={styles.transactionDetails}>
+              <View style={styles.transactionTitleRow}>
+                <Text
                   style={[
-                    styles.statusBadge,
-                    {
-                      backgroundColor: isDark
-                        ? `${getStatusColor(transaction.status)}20`
-                        : `${getStatusColor(transaction.status)}15`,
-                    },
+                    styles.transactionLabel,
+                    { color: theme.colors.muted },
                   ]}
+                  numberOfLines={1}
+                  ellipsizeMode="tail"
                 >
-                  <Text
+                  {getTitle(transaction)}
+                </Text>
+                <Text
+                  style={[
+                    styles.transactionRecipient,
+                    { color: theme.colors.text },
+                  ]}
+                  numberOfLines={1}
+                  ellipsizeMode="tail"
+                >
+                  {getRecipient(transaction)}
+                </Text>
+              </View>
+              <Text
+                style={[styles.transactionDate, { color: theme.colors.muted }]}
+                numberOfLines={1}
+                ellipsizeMode="tail"
+              >
+                {formatDateTime(transaction.createdAt)}
+              </Text>
+              {transaction.status && (
+                <View style={styles.statusBadgeRow}>
+                  <View
                     style={[
-                      styles.statusText,
-                      { color: getStatusColor(transaction.status) },
+                      styles.statusBadge,
+                      {
+                        backgroundColor: isDark
+                          ? `${getStatusColor(transaction.status)}20`
+                          : `${getStatusColor(transaction.status)}15`,
+                      },
                     ]}
                   >
-                    {transaction.status}
-                  </Text>
+                    <Text
+                      style={[
+                        styles.statusText,
+                        { color: getStatusColor(transaction.status) },
+                      ]}
+                    >
+                      {transaction.status}
+                    </Text>
+                  </View>
                 </View>
-              </View>
-            )}
+              )}
+            </View>
           </View>
-        </View>
 
-        <MotiView
-          from={{ opacity: 0, translateX: 10 }}
-          animate={{ opacity: 1, translateX: 0 }}
-          transition={{ delay: index * 50 + 150, duration: 300 }}
-          style={styles.amountContainer}
-        >
-          <Text
-            style={[
-              styles.transactionAmount,
-              { color: amountColor(transaction) },
-            ]}
-            numberOfLines={1}
-            adjustsFontSizeToFit
-            minimumFontScale={0.8}
+          <MotiView
+            from={{ opacity: 0, translateX: 10 }}
+            animate={{ opacity: 1, translateX: 0 }}
+            transition={{ delay: index * 50 + 150, duration: 300 }}
+            style={styles.amountContainer}
           >
-            {transaction.entryType === "CREDIT" ? "+" : "-"}₦
-            {formatCurrency(transaction.amount)}
-          </Text>
+            <Text
+              style={[
+                styles.transactionAmount,
+                { color: amountColor(transaction) },
+              ]}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              minimumFontScale={0.8}
+            >
+              {transaction.entryType === "CREDIT" ? "+" : "-"}₦
+              {formatCurrency(transaction.amount)}
+            </Text>
+          </MotiView>
         </MotiView>
-      </MotiView>
+      </TouchableOpacity>
     );
   };
 

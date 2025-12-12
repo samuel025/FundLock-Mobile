@@ -6,12 +6,12 @@ import {
 } from "@/lib/pushNotifications";
 import { useAuthStore } from "@/lib/useAuthStore";
 import { registerExpoPushToken } from "@/services/push";
-import { ThemeProvider } from "@/theme";
+import { ThemeProvider, useTheme } from "@/theme";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { useEffect, useState } from "react";
-import { ActivityIndicator, View } from "react-native";
+import { ActivityIndicator, StatusBar, View } from "react-native";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -69,8 +69,9 @@ export default function RootLayout() {
   }
 
   return (
-    <ThemeProvider>
-      <QueryClientProvider client={queryClient}>
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider>
+        <ThemeAwareStatusBar />
         {!splashComplete && (
           <AnimatedSplash
             isReady={appIsReady}
@@ -86,7 +87,19 @@ export default function RootLayout() {
           <Stack.Screen name="spendByOrgId" />
           <Stack.Screen name="(tabs)" />
         </Stack>
-      </QueryClientProvider>
-    </ThemeProvider>
+      </ThemeProvider>
+    </QueryClientProvider>
+  );
+}
+
+function ThemeAwareStatusBar() {
+  const { scheme } = useTheme();
+
+  return (
+    <StatusBar
+      barStyle={scheme === "dark" ? "light-content" : "dark-content"}
+      backgroundColor="transparent"
+      translucent
+    />
   );
 }

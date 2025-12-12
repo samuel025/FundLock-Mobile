@@ -364,8 +364,8 @@ export function AnimatedSplash({
               { color: isDark ? "#FFFFFF" : "#1B263B" },
             ]}
           >
-            Fund
-            <Text style={styles.brandNameAccent}>Lock</Text>
+            Block
+            <Text style={styles.brandNameAccent}>IT</Text>
           </Text>
         </Animated.View>
 

@@ -146,7 +146,7 @@ export default function SignIn() {
                 { color: isDark ? "#fff" : theme.colors.text },
               ]}
             >
-              FundLock
+              BlockIT
             </Text>
             <Text
               style={[

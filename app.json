@@ -1,18 +1,18 @@
 {
   "expo": {
-    "name": "fundlock",
+    "name": "BlockIT",
     "slug": "strixt",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "fundlock",
+    "scheme": "blockit",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true
     },
     "androidStatusBar": {
-      "barStyle": "light-content",
+      "barStyle": "dark-content",
       "translucent": true,
       "backgroundColor": "#00000000"
     },

@@ -1,5 +1,6 @@
 import { PinGuard } from "@/components/PinGuard";
 import AmountSection from "@/components/spendComponents/AmountSection";
+import BillPaymentSection from "@/components/spendComponents/BillPaymentSection";
 import CategoryPicker from "@/components/spendComponents/CategoryPicker";
 import CompanyPicker from "@/components/spendComponents/CompanyPicker";
 import LoadingRow from "@/components/spendComponents/LoadingRow";
@@ -26,7 +27,13 @@ import { Ionicons } from "@expo/vector-icons";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { LinearGradient } from "expo-linear-gradient";
 import { useFocusEffect } from "expo-router";
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { useForm } from "react-hook-form";
 import {
   ActivityIndicator,
@@ -34,7 +41,6 @@ import {
   Platform,
   ScrollView,
   StatusBar,
-  StyleSheet,
   Text,
   TouchableOpacity,
   View,
@@ -66,7 +72,9 @@ export default function Spend() {
 
   const [allowDirectOutlet, setAllowDirectOutlet] = useState(false);
   const scrollRef = useRef<any>(null);
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(
+    null
+  );
   const [selectedCompany, setSelectedCompany] = useState<string | null>(null);
   const [selectedOutlet, setSelectedOutlet] = useState<string | null>(null);
   const toastConfig = useToastConfig();
@@ -84,21 +92,21 @@ export default function Spend() {
   const { locksList, fetchLocks } = useGetLocks();
 
   useEffect(() => {
-    if (selectedCategory) {
+    if (selectedCategoryId) {
       setSelectedCompany(null);
       setSelectedOutlet(null);
-      fetchCompanies(selectedCategory);
+      fetchCompanies(selectedCategoryId);
       clearOutlets();
     }
-  }, [selectedCategory, fetchCompanies, clearOutlets]);
+  }, [selectedCategoryId, fetchCompanies, clearOutlets]);
 
   useEffect(() => {
     if (allowDirectOutlet) {
       setSelectedCompany(null);
       setSelectedOutlet(null);
-      fetchAllOutlets(selectedCategory ?? "");
+      fetchAllOutlets(selectedCategoryId ?? "");
     }
-  }, [allowDirectOutlet, fetchAllOutlets, selectedCategory]);
+  }, [allowDirectOutlet, fetchAllOutlets, selectedCategoryId]);
 
   useEffect(() => {
     if (selectedCompany) {
@@ -147,7 +155,7 @@ export default function Spend() {
 
       setTimeout(() => {
         reset();
-        setSelectedCategory(null);
+        setSelectedCategoryId(null);
         setSelectedCompany(null);
         setSelectedOutlet(null);
         fetchLocks();
@@ -155,23 +163,29 @@ export default function Spend() {
     }
   }, [spendError, spendMessage, reset, fetchLocks]);
 
-  const selectedCategoryName = selectedCategory
-    ? categories?.find((c) => String(c.id) === String(selectedCategory))
-        ?.name ?? null
-    : null;
+  const selectedCategory = useMemo(
+    () => categories?.find((c) => c.id === selectedCategoryId) || null,
+    [selectedCategoryId, categories]
+  );
 
-  const availableLocked = selectedCategoryName
+  const isBillPaymentCategory = useMemo(() => {
+    if (!selectedCategory) return false;
+    const categoryName = selectedCategory.name.toLowerCase();
+    return categoryName.includes("data") || categoryName.includes("airtime");
+  }, [selectedCategory]);
+
+  const availableLocked = selectedCategory
     ? Number(
         locksList.find(
           (l: any) =>
             String(l.categoryName).toLowerCase() ===
-            String(selectedCategoryName).toLowerCase()
+            String(selectedCategory.name).toLowerCase()
         )?.amount ?? 0
       )
     : 0;
 
   const onSubmit = (data: FormData) => {
-    if (!selectedCategory) {
+    if (!selectedCategoryId) {
       Toast.show({
         type: "error",
         text1: "Error",
@@ -196,6 +210,12 @@ export default function Spend() {
       outletId: selectedOutlet,
       pin: data.pin,
     });
+  };
+
+  const handleBillPaymentComplete = () => {
+    reset();
+    setSelectedCategoryId(null);
+    fetchLocks();
   };
 
   if (!fontsLoaded) return null;
@@ -236,9 +256,9 @@ export default function Spend() {
             ) : (
               <CategoryPicker
                 categories={categories ?? []}
-                selected={selectedCategory}
+                selected={selectedCategoryId}
                 onSelect={(id) => {
-                  setSelectedCategory(id);
+                  setSelectedCategoryId(id);
                   setSelectedCompany(null);
                 }}
                 styles={{
@@ -266,213 +286,238 @@ export default function Spend() {
               />
             )}
 
-            {/* Mode Switch */}
             {selectedCategory && (
-              <ModeSwitch
-                theme={theme}
-                isDark={isDark}
-                styles={spendStyles}
-                allowDirectOutlet={allowDirectOutlet}
-                onModeChange={setAllowDirectOutlet}
-              />
-            )}
-
-            {selectedCategory && (
-              <Text
-                style={[spendStyles.helperText, { color: theme.colors.muted }]}
-              >
-                {allowDirectOutlet
-                  ? "Showing all outlets."
-                  : selectedCompany
-                  ? "Showing outlets for the selected company."
-                  : "Pick a company to see its outlets."}
-              </Text>
-            )}
-
-            {/* Company Picker */}
-            {selectedCategory && !allowDirectOutlet && (
               <>
-                {isCompanyLoading ? (
-                  <LoadingRow
-                    theme={theme}
-                    isDark={isDark}
+                {isBillPaymentCategory ? (
+                  // Show Bill Payment Section for Airtime/Data
+                  <BillPaymentSection
+                    control={control}
+                    categoryId={selectedCategory.id}
+                    availableLocked={availableLocked}
+                    onPurchaseComplete={handleBillPaymentComplete}
                     styles={spendStyles}
-                    message="Loading companies..."
                   />
                 ) : (
-                  <CompanyPicker
-                    companies={companies}
-                    selected={selectedCompany}
-                    onSelect={(id) => {
-                      setSelectedCompany(id);
-                      setSelectedOutlet(null);
-                    }}
-                    styles={{
-                      ...spendStyles,
-                      pickerButton: [
-                        spendStyles.pickerButton,
-                        {
-                          backgroundColor: isDark
-                            ? "rgba(255,255,255,0.05)"
-                            : theme.colors.card,
-                          borderColor: isDark
-                            ? "rgba(255,255,255,0.15)"
-                            : theme.colors.border,
-                        },
-                      ],
-                      pickerText: [
-                        spendStyles.pickerText,
-                        { color: theme.colors.text },
-                      ],
-                      catIcon: [
-                        spendStyles.catIcon,
-                        { backgroundColor: theme.colors.actionIconLockBg },
-                      ],
-                    }}
-                  />
-                )}
-              </>
-            )}
+                  <>
+                    {/* Mode Switch */}
+                    <ModeSwitch
+                      theme={theme}
+                      isDark={isDark}
+                      styles={spendStyles}
+                      allowDirectOutlet={allowDirectOutlet}
+                      onModeChange={setAllowDirectOutlet}
+                    />
 
-            {/* Outlet Picker */}
-            {(selectedCompany || allowDirectOutlet) && (
-              <>
-                {isOutletLoading ? (
-                  <LoadingRow
-                    theme={theme}
-                    isDark={isDark}
-                    styles={spendStyles}
-                    message="Loading outlets..."
-                  />
-                ) : (
-                  <OutletPicker
-                    outlets={outlets}
-                    selected={selectedOutlet}
-                    onSelect={(id) => setSelectedOutlet(id)}
-                    styles={{
-                      ...spendStyles,
-                      pickerButton: [
-                        spendStyles.pickerButton,
-                        {
-                          backgroundColor: isDark
-                            ? "rgba(255,255,255,0.05)"
-                            : theme.colors.card,
-                          borderColor: isDark
-                            ? "rgba(255,255,255,0.15)"
-                            : theme.colors.border,
-                        },
-                      ],
-                      pickerText: [
-                        spendStyles.pickerText,
-                        { color: theme.colors.text },
-                      ],
-                      catIcon: [
-                        spendStyles.catIcon,
-                        { backgroundColor: theme.colors.actionIconLockBg },
-                      ],
-                    }}
-                  />
-                )}
-              </>
-            )}
-
-            {/* Selected outlet summary */}
-            {selectedOutlet && (
-              <View style={{ marginTop: 8, marginBottom: 6 }}>
-                {(() => {
-                  const picked = outlets?.find(
-                    (o: any) =>
-                      String(o.id) === String(selectedOutlet) ||
-                      o.id === selectedOutlet
-                  );
-                  return (
                     <Text
                       style={[
                         spendStyles.helperText,
                         { color: theme.colors.muted },
                       ]}
                     >
-                      Selected outlet:{" "}
-                      <Text
-                        style={{
-                          fontFamily: "Poppins_600SemiBold",
-                          color: theme.colors.text,
-                        }}
+                      {allowDirectOutlet
+                        ? "Showing all outlets."
+                        : selectedCompany
+                        ? "Showing outlets for the selected company."
+                        : "Pick a company to see its outlets."}
+                    </Text>
+
+                    {/* Company Picker */}
+                    {!allowDirectOutlet && (
+                      <>
+                        {isCompanyLoading ? (
+                          <LoadingRow
+                            theme={theme}
+                            isDark={isDark}
+                            styles={spendStyles}
+                            message="Loading companies..."
+                          />
+                        ) : (
+                          <CompanyPicker
+                            companies={companies}
+                            selected={selectedCompany}
+                            onSelect={(id) => {
+                              setSelectedCompany(id);
+                              setSelectedOutlet(null);
+                            }}
+                            styles={{
+                              ...spendStyles,
+                              pickerButton: [
+                                spendStyles.pickerButton,
+                                {
+                                  backgroundColor: isDark
+                                    ? "rgba(255,255,255,0.05)"
+                                    : theme.colors.card,
+                                  borderColor: isDark
+                                    ? "rgba(255,255,255,0.15)"
+                                    : theme.colors.border,
+                                },
+                              ],
+                              pickerText: [
+                                spendStyles.pickerText,
+                                { color: theme.colors.text },
+                              ],
+                              catIcon: [
+                                spendStyles.catIcon,
+                                {
+                                  backgroundColor:
+                                    theme.colors.actionIconLockBg,
+                                },
+                              ],
+                            }}
+                          />
+                        )}
+                      </>
+                    )}
+
+                    {/* Outlet Picker */}
+                    {(selectedCompany || allowDirectOutlet) && (
+                      <>
+                        {isOutletLoading ? (
+                          <LoadingRow
+                            theme={theme}
+                            isDark={isDark}
+                            styles={spendStyles}
+                            message="Loading outlets..."
+                          />
+                        ) : (
+                          <OutletPicker
+                            outlets={outlets}
+                            selected={selectedOutlet}
+                            onSelect={(id) => setSelectedOutlet(id)}
+                            styles={{
+                              ...spendStyles,
+                              pickerButton: [
+                                spendStyles.pickerButton,
+                                {
+                                  backgroundColor: isDark
+                                    ? "rgba(255,255,255,0.05)"
+                                    : theme.colors.card,
+                                  borderColor: isDark
+                                    ? "rgba(255,255,255,0.15)"
+                                    : theme.colors.border,
+                                },
+                              ],
+                              pickerText: [
+                                spendStyles.pickerText,
+                                { color: theme.colors.text },
+                              ],
+                              catIcon: [
+                                spendStyles.catIcon,
+                                {
+                                  backgroundColor:
+                                    theme.colors.actionIconLockBg,
+                                },
+                              ],
+                            }}
+                          />
+                        )}
+                      </>
+                    )}
+
+                    {/* Selected outlet summary */}
+                    {selectedOutlet && (
+                      <View style={{ marginTop: 8, marginBottom: 6 }}>
+                        {(() => {
+                          const picked = outlets?.find(
+                            (o: any) =>
+                              String(o.id) === String(selectedOutlet) ||
+                              o.id === selectedOutlet
+                          );
+                          return (
+                            <Text
+                              style={[
+                                spendStyles.helperText,
+                                { color: theme.colors.muted },
+                              ]}
+                            >
+                              Selected outlet:{" "}
+                              <Text
+                                style={{
+                                  fontFamily: "Poppins_600SemiBold",
+                                  color: theme.colors.text,
+                                }}
+                              >
+                                {picked?.name ?? selectedOutlet}
+                              </Text>
+                              {picked?.name ? (
+                                <Text style={{ color: theme.colors.muted }}>
+                                  {" "}
+                                  — {picked.name}
+                                </Text>
+                              ) : null}
+                            </Text>
+                          );
+                        })()}
+                      </View>
+                    )}
+
+                    {/* Amount & PIN sections */}
+                    {selectedOutlet && (
+                      <>
+                        <AmountSection
+                          control={control}
+                          availableLocked={availableLocked}
+                          styles={spendStyles}
+                        />
+                        <PinSection control={control} styles={spendStyles} />
+                      </>
+                    )}
+
+                    {/* Action button */}
+                    <TouchableOpacity
+                      style={[
+                        spendStyles.actionButton,
+                        (isSpending || !formState.isValid) &&
+                          spendStyles.disabledButton,
+                      ]}
+                      onPress={handleSubmit(onSubmit)}
+                      disabled={isSpending || !formState.isValid}
+                    >
+                      <LinearGradient
+                        colors={[theme.colors.primary, theme.colors.primary]}
+                        style={spendStyles.actionGradient}
                       >
-                        {picked?.name ?? selectedOutlet}
-                      </Text>
-                      {picked?.name ? (
-                        <Text style={{ color: theme.colors.muted }}>
-                          {" "}
-                          — {picked.name}
-                        </Text>
-                      ) : null}
-                    </Text>
-                  );
-                })()}
-              </View>
-            )}
-
-            {/* Amount & PIN sections */}
-            {selectedOutlet && (
-              <>
-                <AmountSection
-                  control={control}
-                  availableLocked={availableLocked}
-                  styles={spendStyles}
-                />
-                <PinSection control={control} styles={spendStyles} />
-              </>
-            )}
-
-            {/* Action button */}
-            <TouchableOpacity
-              style={[
-                spendStyles.actionButton,
-                (isSpending || !formState.isValid) &&
-                  spendStyles.disabledButton,
-              ]}
-              onPress={handleSubmit(onSubmit)}
-              disabled={isSpending || !formState.isValid}
-            >
-              <LinearGradient
-                colors={[theme.colors.primary, theme.colors.primary]}
-                style={spendStyles.actionGradient}
-              >
-                {isSpending ? (
-                  <>
-                    <ActivityIndicator
-                      size="small"
-                      color={theme.colors.balanceText}
-                    />
-                    <Text
-                      style={[
-                        spendStyles.actionText,
-                        { marginLeft: 8, color: theme.colors.balanceText },
-                      ]}
-                    >
-                      Processing...
-                    </Text>
-                  </>
-                ) : (
-                  <>
-                    <Text
-                      style={[
-                        spendStyles.actionText,
-                        { color: theme.colors.balanceText },
-                      ]}
-                    >
-                      Complete Payment
-                    </Text>
-                    <Ionicons
-                      name="card"
-                      size={18}
-                      color={theme.colors.balanceText}
-                    />
+                        {isSpending ? (
+                          <>
+                            <ActivityIndicator
+                              size="small"
+                              color={theme.colors.balanceText}
+                            />
+                            <Text
+                              style={[
+                                spendStyles.actionText,
+                                {
+                                  marginLeft: 8,
+                                  color: theme.colors.balanceText,
+                                },
+                              ]}
+                            >
+                              Processing...
+                            </Text>
+                          </>
+                        ) : (
+                          <>
+                            <Text
+                              style={[
+                                spendStyles.actionText,
+                                { color: theme.colors.balanceText },
+                              ]}
+                            >
+                              Complete Payment
+                            </Text>
+                            <Ionicons
+                              name="card"
+                              size={18}
+                              color={theme.colors.balanceText}
+                            />
+                          </>
+                        )}
+                      </LinearGradient>
+                    </TouchableOpacity>
                   </>
                 )}
-              </LinearGradient>
-            </TouchableOpacity>
+              </>
+            )}
           </ScrollView>
         </KeyboardAvoidingView>
       </LinearGradient>
@@ -480,17 +525,3 @@ export default function Spend() {
     </PinGuard>
   );
 }
-
-const glassBase = StyleSheet.create({
-  container: {
-    overflow: "hidden",
-    position: "relative",
-  },
-  blur: {
-    ...StyleSheet.absoluteFillObject,
-    borderRadius: 16,
-    backgroundColor: "rgba(255,255,255,0.05)",
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.10)",
-  },
-});
