@@ -45,9 +45,6 @@ export default function RootLayout() {
               includeFontPadding: Platform.OS === "android",
             },
             headerShown: false,
-            sceneContainerStyle: {
-              backgroundColor: theme.colors.background,
-            },
           }}
         >
           <Tabs.Screen
@@ -87,7 +84,7 @@ export default function RootLayout() {
             }}
           />
           <Tabs.Screen
-            name="profile"
+            name="accountActions"
             options={{
               title: "My Account",
               tabBarIcon: ({ color }) => (

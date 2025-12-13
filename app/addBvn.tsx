@@ -1,32 +1,25 @@
+import { authActions } from "@/lib/authContext";
+import { useAuthStore } from "@/lib/useAuthStore";
+import { updateBvn } from "@/services/bvn";
+import { useTheme } from "@/theme";
 import { Ionicons } from "@expo/vector-icons";
-import {
-  Poppins_400Regular,
-  Poppins_500Medium,
-  Poppins_600SemiBold,
-  Poppins_700Bold,
-  useFonts,
-} from "@expo-google-fonts/poppins";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
+  ActivityIndicator,
+  Alert,
   Animated,
+  KeyboardAvoidingView,
   Platform,
+  ScrollView,
   StatusBar,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
-  Alert,
-  KeyboardAvoidingView,
-  ScrollView,
-  ActivityIndicator,
 } from "react-native";
 import { TextInput } from "react-native-paper";
-import { useTheme } from "@/theme";
-import { updateBvn } from "@/services/bvn";
-import { authActions } from "@/lib/authContext";
-import { useAuthStore } from "@/lib/useAuthStore";
 
 export default function AddBvn() {
   const { theme, scheme } = useTheme();
@@ -37,13 +30,6 @@ export default function AddBvn() {
   const [bvn, setBvn] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
-
-  let [fontsLoaded] = useFonts({
-    Poppins_400Regular,
-    Poppins_500Medium,
-    Poppins_600SemiBold,
-    Poppins_700Bold,
-  });
 
   useEffect(() => {
     Animated.timing(fadeAnim, {
@@ -81,7 +67,7 @@ export default function AddBvn() {
       Alert.alert("Success", "Your BVN has been added successfully", [
         {
           text: "OK",
-          onPress: () => router.replace("/(tabs)/profile"),
+          onPress: () => router.replace("/(tabs)/accountActions"),
         },
       ]);
     } catch (err: any) {
@@ -90,8 +76,6 @@ export default function AddBvn() {
       setIsSubmitting(false);
     }
   };
-
-  if (!fontsLoaded) return null;
 
   const inputTheme = {
     roundness: 12,

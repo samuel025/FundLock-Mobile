@@ -4,13 +4,6 @@ import { CreateBudgetCTA } from "@/components/budgets/CreateBudgetCTA";
 import { EmptyBudgets } from "@/components/budgets/EmptyBudgets";
 import { useGetLocks } from "@/hooks/useGetLocks";
 import { useTheme } from "@/theme";
-import {
-  Poppins_400Regular,
-  Poppins_500Medium,
-  Poppins_600SemiBold,
-  Poppins_700Bold,
-  useFonts,
-} from "@expo-google-fonts/poppins";
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
@@ -36,13 +29,6 @@ export default function BudgetsPage() {
 
   const { isLocksLoading, locksList, fetchLocks } = useGetLocks();
 
-  const [fontsLoaded] = useFonts({
-    Poppins_400Regular,
-    Poppins_500Medium,
-    Poppins_600SemiBold,
-    Poppins_700Bold,
-  });
-
   const totalBudgeted = useMemo(() => {
     return locksList.reduce(
       (sum, item) => sum + Number((item as any).amount ?? 0),
@@ -67,8 +53,6 @@ export default function BudgetsPage() {
       }, 100);
     }, [fetchLocks])
   );
-
-  if (!fontsLoaded) return null;
 
   return (
     <LinearGradient

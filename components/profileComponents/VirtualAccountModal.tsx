@@ -1,7 +1,8 @@
-import React from "react";
+import { useTheme } from "@/theme";
+import React, { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
-  KeyboardAvoidingView,
+  Animated,
   Modal,
   Platform,
   StyleSheet,
@@ -25,88 +26,227 @@ export function VirtualAccountModal({
   isLoading?: boolean;
   isCreating?: boolean;
 }) {
-  // dev debug — remove or comment out in production
-  // console.log({ visible, isLoading, isCreating, virtualAccount });
+  const { theme, scheme } = useTheme();
+  const isDark = scheme === "dark";
+
+  const [renderModal, setRenderModal] = useState(false);
+  const overlayOpacity = useRef(new Animated.Value(0)).current;
+  const sheetTranslate = useRef(new Animated.Value(40)).current;
+
+  useEffect(() => {
+    if (visible) {
+      setRenderModal(true);
+      requestAnimationFrame(() => {
+        Animated.parallel([
+          Animated.timing(overlayOpacity, {
+            toValue: 1,
+            duration: 180,
+            useNativeDriver: true,
+          }),
+          Animated.timing(sheetTranslate, {
+            toValue: 0,
+            duration: 220,
+            useNativeDriver: true,
+          }),
+        ]).start();
+      });
+    } else {
+      Animated.parallel([
+        Animated.timing(overlayOpacity, {
+          toValue: 0,
+          duration: 150,
+          useNativeDriver: true,
+        }),
+        Animated.timing(sheetTranslate, {
+          toValue: 40,
+          duration: 180,
+          useNativeDriver: true,
+        }),
+      ]).start(() => setRenderModal(false));
+    }
+  }, [visible, overlayOpacity, sheetTranslate]);
+
+  if (!renderModal) return null;
+
+  const sheetBg = isDark ? "rgba(30,41,59,0.92)" : theme.colors.surface;
+  const cardBg = isDark ? "rgba(255,255,255,0.06)" : theme.colors.card;
+  const cardBorder = isDark ? "rgba(255,255,255,0.12)" : theme.colors.border;
 
   return (
-    <Modal visible={visible} transparent animationType="slide">
-      <View style={styles.modalOverlay}>
-        <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : undefined}
-          keyboardVerticalOffset={100}
-        >
-          <View style={styles.modal}>
-            <Text style={styles.modalTitle}>Virtual Account</Text>
+    <Modal visible={visible} transparent animationType="none">
+      <TouchableOpacity
+        style={styles.modalOverlay}
+        activeOpacity={1}
+        onPress={onClose}
+      >
+        <Animated.View
+          style={[
+            styles.overlay,
+            {
+              opacity: overlayOpacity,
+              backgroundColor: isDark ? "rgba(0,0,0,0.55)" : "rgba(0,0,0,0.35)",
+            },
+          ]}
+        />
+      </TouchableOpacity>
 
+      <View style={{ flex: 1, justifyContent: "flex-end" }}>
+        <Animated.View
+          style={[
+            styles.modal,
+            {
+              transform: [{ translateY: sheetTranslate }],
+              backgroundColor: sheetBg,
+              borderTopColor: isDark ? "rgba(255,255,255,0.10)" : "transparent",
+            },
+          ]}
+        >
+          <View
+            style={[
+              styles.modalHandle,
+              {
+                backgroundColor: isDark
+                  ? "rgba(255,255,255,0.20)"
+                  : "rgba(0,0,0,0.12)",
+              },
+            ]}
+          />
+
+          <Text style={[styles.modalTitle, { color: theme.colors.text }]}>
+            Bank Transfer
+          </Text>
+          <Text style={[styles.modalSubtitle, { color: theme.colors.muted }]}>
+            Use these details to fund your wallet via bank transfer.
+          </Text>
+
+          <View
+            style={[
+              styles.detailsCard,
+              { backgroundColor: cardBg, borderColor: cardBorder },
+            ]}
+          >
             {isLoading ? (
-              <View style={{ paddingVertical: 16, alignItems: "center" }}>
-                <ActivityIndicator size="small" color="#38B2AC" />
+              <View style={styles.loadingRow}>
+                <ActivityIndicator size="small" color={theme.colors.primary} />
+                <Text
+                  style={[styles.loadingText, { color: theme.colors.muted }]}
+                >
+                  Loading your bank transfer details...
+                </Text>
               </View>
             ) : virtualAccount ? (
               <>
-                <Text
-                  style={{
-                    fontFamily: "Poppins_500Medium",
-                    color: "#1B263B",
-                    marginBottom: 8,
-                  }}
-                >
-                  {virtualAccount.bank}
+                <View style={styles.detailRow}>
+                  <Text
+                    style={[styles.detailLabel, { color: theme.colors.muted }]}
+                  >
+                    Bank
+                  </Text>
+                  <Text
+                    style={[styles.detailValue, { color: theme.colors.text }]}
+                  >
+                    {virtualAccount.bank}
+                  </Text>
+                </View>
+
+                <View
+                  style={[
+                    styles.divider,
+                    {
+                      backgroundColor: isDark
+                        ? "rgba(255,255,255,0.10)"
+                        : theme.colors.border,
+                    },
+                  ]}
+                />
+
+                <View style={styles.detailRow}>
+                  <Text
+                    style={[styles.detailLabel, { color: theme.colors.muted }]}
+                  >
+                    Account Number
+                  </Text>
+                  <Text
+                    style={[
+                      styles.detailValueMono,
+                      { color: theme.colors.text },
+                    ]}
+                  >
+                    {virtualAccount.accountNumber}
+                  </Text>
+                </View>
+
+                <Text style={[styles.hint, { color: theme.colors.muted }]}>
+                  This is your personal funding account. Transfers may take a
+                  few minutes to reflect.
                 </Text>
-                <Text
-                  style={{
-                    fontFamily: "Poppins_400Regular",
-                    color: "#415A77",
-                    marginBottom: 12,
-                  }}
-                >
-                  Account number: {virtualAccount.accountNumber}
-                </Text>
-                <TouchableOpacity
-                  style={[styles.modalButtonPrimary]}
-                  onPress={() => {
-                    onClose();
-                  }}
-                >
-                  <Text style={styles.modalButtonTextPrimary}>Copy / Use</Text>
-                </TouchableOpacity>
               </>
             ) : (
               <>
-                <Text
-                  style={{
-                    fontFamily: "Poppins_400Regular",
-                    color: "#415A77",
-                    marginBottom: 12,
-                  }}
-                >
-                  No virtual account yet. Create one to receive deposits.
+                <Text style={[styles.emptyText, { color: theme.colors.muted }]}>
+                  You don’t have bank transfer details yet. Create them once,
+                  then use the same details to deposit anytime.
                 </Text>
-
-                <TouchableOpacity
-                  style={[
-                    styles.modalButtonPrimary,
-                    isCreating && { opacity: 0.8 },
-                  ]}
-                  onPress={onCreate}
-                  disabled={isCreating}
-                >
-                  {isCreating ? (
-                    <ActivityIndicator color="#fff" />
-                  ) : (
-                    <Text style={styles.modalButtonTextPrimary}>
-                      Create Virtual Account
-                    </Text>
-                  )}
-                </TouchableOpacity>
               </>
             )}
-
-            <TouchableOpacity style={{ marginTop: 12 }} onPress={onClose}>
-              <Text style={styles.modalCloseText}>Close</Text>
-            </TouchableOpacity>
           </View>
-        </KeyboardAvoidingView>
+
+          <View style={styles.buttonRow}>
+            <TouchableOpacity
+              style={[
+                styles.modalButton,
+                styles.modalButtonSecondary,
+                {
+                  borderColor: isDark
+                    ? "rgba(255,255,255,0.18)"
+                    : theme.colors.border,
+                  backgroundColor: isDark
+                    ? "rgba(255,255,255,0.06)"
+                    : "transparent",
+                },
+              ]}
+              onPress={onClose}
+            >
+              <Text
+                style={[
+                  styles.modalButtonTextSecondary,
+                  { color: theme.colors.text },
+                ]}
+              >
+                Close
+              </Text>
+            </TouchableOpacity>
+
+            {!virtualAccount && !isLoading ? (
+              <TouchableOpacity
+                style={[
+                  styles.modalButton,
+                  styles.modalButtonPrimary,
+                  { backgroundColor: theme.colors.primary },
+                  isCreating && styles.modalButtonDisabled,
+                ]}
+                onPress={onCreate}
+                disabled={isCreating}
+              >
+                {isCreating ? (
+                  <ActivityIndicator
+                    size="small"
+                    color={theme.colors.balanceText}
+                  />
+                ) : (
+                  <Text
+                    style={[
+                      styles.modalButtonTextPrimary,
+                      { color: theme.colors.balanceText },
+                    ]}
+                  >
+                    Create details
+                  </Text>
+                )}
+              </TouchableOpacity>
+            ) : null}
+          </View>
+        </Animated.View>
       </View>
     </Modal>
   );
@@ -114,36 +254,119 @@ export function VirtualAccountModal({
 
 const styles = StyleSheet.create({
   modalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.35)",
-    justifyContent: "flex-end",
+    ...StyleSheet.absoluteFillObject,
   },
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
+  },
+
   modal: {
-    backgroundColor: "#fff",
-    padding: 16,
+    maxHeight: "85%",
     borderTopLeftRadius: 16,
     borderTopRightRadius: 16,
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    paddingBottom: Platform.select({ ios: 24, android: 20 }),
+    shadowColor: "#000",
+    shadowOpacity: 0.08,
+    shadowRadius: 10,
+    elevation: 8,
+    borderTopWidth: 1,
+  },
+  modalHandle: {
+    alignSelf: "center",
+    width: 40,
+    height: 4,
+    borderRadius: 2,
+    marginVertical: 8,
   },
   modalTitle: {
     fontFamily: "Poppins_600SemiBold",
     fontSize: 16,
-    marginBottom: 12,
+    marginBottom: 8,
   },
-  // changed: remove flex:1, make full width, add margin
-  modalButtonPrimary: {
-    width: "100%",
-    padding: 12,
+  modalSubtitle: {
+    fontFamily: "Poppins_400Regular",
+    fontSize: 13,
+    lineHeight: 18,
+    marginBottom: 14,
+  },
+
+  detailsCard: {
+    borderRadius: 14,
+    borderWidth: 1,
+    padding: 14,
+  },
+  loadingRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    paddingVertical: 8,
+  },
+  loadingText: {
+    fontFamily: "Poppins_500Medium",
+    fontSize: 13,
+    flex: 1,
+  },
+
+  detailRow: {
+    gap: 6,
+  },
+  detailLabel: {
+    fontFamily: "Poppins_500Medium",
+    fontSize: 12,
+  },
+  detailValue: {
+    fontFamily: "Poppins_700Bold",
+    fontSize: 16,
+  },
+  detailValueMono: {
+    fontFamily: "Poppins_700Bold",
+    fontSize: 18,
+    letterSpacing: 1,
+  },
+  divider: {
+    height: 1,
+    marginVertical: 12,
+  },
+  hint: {
+    marginTop: 10,
+    fontFamily: "Poppins_400Regular",
+    fontSize: 11,
+    lineHeight: 16,
+  },
+  emptyText: {
+    fontFamily: "Poppins_400Regular",
+    fontSize: 13,
+    lineHeight: 18,
+  },
+
+  buttonRow: {
+    flexDirection: "row",
+    gap: 12,
+    marginTop: 16,
+  },
+  modalButton: {
+    flex: 1,
+    paddingVertical: 12,
     borderRadius: 12,
-    backgroundColor: "#38B2AC",
     alignItems: "center",
     justifyContent: "center",
-    marginTop: 8,
+    borderWidth: 1,
   },
-  modalButtonTextPrimary: { fontFamily: "Poppins_600SemiBold", color: "#fff" },
-  modalCloseText: {
-    color: "#38B2AC",
+  modalButtonSecondary: {},
+  modalButtonPrimary: {
+    borderWidth: 0,
+  },
+  modalButtonTextSecondary: {
     fontFamily: "Poppins_600SemiBold",
-    textAlign: "center",
-    marginTop: 8,
+    fontSize: 14,
+  },
+  modalButtonTextPrimary: {
+    fontFamily: "Poppins_600SemiBold",
+    fontSize: 14,
+  },
+  modalButtonDisabled: {
+    opacity: 0.6,
   },
 });

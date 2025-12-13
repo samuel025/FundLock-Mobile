@@ -7,12 +7,20 @@ import {
 import { useAuthStore } from "@/lib/useAuthStore";
 import { registerExpoPushToken } from "@/services/push";
 import { ThemeProvider, useTheme } from "@/theme";
+import {
+  Poppins_400Regular,
+  Poppins_500Medium,
+  Poppins_600SemiBold,
+  Poppins_700Bold,
+  useFonts,
+} from "@expo-google-fonts/poppins";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, StatusBar, View } from "react-native";
 
+// Prevent splash screen from auto-hiding
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
@@ -55,6 +63,24 @@ export default function RootLayout() {
   const handleSplashComplete = () => {
     setSplashComplete(true);
   };
+
+  const [fontsLoaded, fontError] = useFonts({
+    Poppins_400Regular,
+    Poppins_500Medium,
+    Poppins_600SemiBold,
+    Poppins_700Bold,
+  });
+
+  useEffect(() => {
+    if (fontsLoaded || fontError) {
+      SplashScreen.hideAsync();
+    }
+  }, [fontsLoaded, fontError]);
+
+  // Don't render anything until fonts are loaded
+  if (!fontsLoaded && !fontError) {
+    return null;
+  }
 
   if (splashComplete && isLoadingUser) {
     return (

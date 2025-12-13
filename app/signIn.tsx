@@ -5,13 +5,6 @@ import { useAuthStore } from "@/lib/useAuthStore";
 import { loginUser } from "@/services/auth";
 import { authStyles } from "@/styles/auth.styles";
 import { useTheme } from "@/theme";
-import {
-  Poppins_400Regular,
-  Poppins_500Medium,
-  Poppins_600SemiBold,
-  Poppins_700Bold,
-  useFonts,
-} from "@expo-google-fonts/poppins";
 import { Ionicons } from "@expo/vector-icons";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { useMutation } from "@tanstack/react-query";
@@ -54,13 +47,6 @@ export default function SignIn() {
   const [showSuccess, setShowSuccess] = useState(false);
 
   const fadeAnim = useMemo(() => new Animated.Value(0), []);
-
-  const [fontsLoaded] = useFonts({
-    Poppins_400Regular,
-    Poppins_500Medium,
-    Poppins_600SemiBold,
-    Poppins_700Bold,
-  });
 
   useEffect(() => {
     Animated.timing(fadeAnim, {
@@ -119,8 +105,6 @@ export default function SignIn() {
       onSurface: theme.colors.text,
     },
   });
-
-  if (!fontsLoaded) return null;
 
   const isLoading = signInMutation.isPending;
   const canSubmit = isValid && !isLoading;
@@ -441,7 +425,7 @@ export default function SignIn() {
               <Text
                 style={[authStyles.linkText, { color: theme.colors.muted }]}
               >
-                Don't have an account?{" "}
+                Don&apos;t have an account?{" "}
                 <Text
                   style={[authStyles.linkBold, { color: theme.colors.primary }]}
                 >

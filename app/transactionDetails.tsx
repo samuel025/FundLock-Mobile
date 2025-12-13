@@ -1,12 +1,5 @@
 import { getTransactionDetails, TransactionDetails } from "@/services/wallet";
 import { useTheme } from "@/theme";
-import {
-  Poppins_400Regular,
-  Poppins_500Medium,
-  Poppins_600SemiBold,
-  Poppins_700Bold,
-  useFonts,
-} from "@expo-google-fonts/poppins";
 import { Feather, Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { BlurView } from "expo-blur";
 import { LinearGradient } from "expo-linear-gradient";
@@ -33,13 +26,6 @@ export default function TransactionDetailsScreen() {
   );
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  let [fontsLoaded] = useFonts({
-    Poppins_400Regular,
-    Poppins_500Medium,
-    Poppins_600SemiBold,
-    Poppins_700Bold,
-  });
 
   useEffect(() => {
     const fetchTransaction = async () => {
@@ -218,10 +204,6 @@ export default function TransactionDetailsScreen() {
       </View>
     );
   };
-
-  if (!fontsLoaded) {
-    return null;
-  }
 
   return (
     <LinearGradient

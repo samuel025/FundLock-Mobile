@@ -67,7 +67,10 @@ export default function Wallet() {
   };
 
   const handleAddMoney = () => {
-    router.push({ pathname: "/profile", params: { openDeposit: "1" } });
+    router.push({
+      pathname: "/(tabs)/accountActions",
+      params: { openDeposit: "1" },
+    });
   };
 
   const handleSpend = () => {

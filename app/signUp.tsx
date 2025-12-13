@@ -3,13 +3,6 @@ import { AuthPageGuard } from "@/components/RouteGuard";
 import { authActions } from "@/lib/authContext";
 import { authStyles } from "@/styles/auth.styles";
 import { useTheme } from "@/theme";
-import {
-  Poppins_400Regular,
-  Poppins_500Medium,
-  Poppins_600SemiBold,
-  Poppins_700Bold,
-  useFonts,
-} from "@expo-google-fonts/poppins";
 import { Ionicons } from "@expo/vector-icons";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { BlurView } from "expo-blur";
@@ -68,13 +61,6 @@ export default function SignUp() {
 
   const [showPassword, setShowPassword] = useState(false);
   const fadeAnim = useMemo(() => new Animated.Value(0), []);
-
-  const [fontsLoaded] = useFonts({
-    Poppins_400Regular,
-    Poppins_500Medium,
-    Poppins_600SemiBold,
-    Poppins_700Bold,
-  });
 
   useEffect(() => {
     Animated.timing(fadeAnim, {
@@ -139,8 +125,6 @@ export default function SignUp() {
 
   const iconColor = isDark ? theme.colors.balanceLabel : theme.colors.muted;
 
-  if (!fontsLoaded) return null;
-
   const canSubmit = isValid && !isSubmitting;
 
   return (
@@ -170,7 +154,7 @@ export default function SignUp() {
                 },
               ]}
             >
-              Join FundLock
+              Join BlockIT
             </Text>
             <Text
               style={[

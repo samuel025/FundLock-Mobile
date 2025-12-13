@@ -9,13 +9,6 @@ import {
   verifyKoraBankAccount,
 } from "@/services/bank";
 import { useTheme } from "@/theme";
-import {
-  Poppins_400Regular,
-  Poppins_500Medium,
-  Poppins_600SemiBold,
-  Poppins_700Bold,
-  useFonts,
-} from "@expo-google-fonts/poppins";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
@@ -59,13 +52,6 @@ export default function AddBankDetails() {
   const [verifyError, setVerifyError] = useState("");
 
   const scrollRef = React.useRef<ScrollView | null>(null);
-
-  let [fontsLoaded] = useFonts({
-    Poppins_400Regular,
-    Poppins_500Medium,
-    Poppins_600SemiBold,
-    Poppins_700Bold,
-  });
 
   useEffect(() => {
     fetchBanks();
@@ -175,8 +161,6 @@ export default function AddBankDetails() {
       setIsVerifying(false);
     }
   }, [selectedBank, accountNumber]);
-
-  if (!fontsLoaded) return null;
 
   const isFormValid =
     !!selectedBank &&

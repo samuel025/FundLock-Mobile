@@ -1,11 +1,6 @@
+import { useCreatePin } from "@/hooks/useCreatePin";
+import { useWallet } from "@/hooks/useWallet";
 import { Ionicons } from "@expo/vector-icons";
-import {
-  Poppins_400Regular,
-  Poppins_500Medium,
-  Poppins_600SemiBold,
-  Poppins_700Bold,
-  useFonts,
-} from "@expo-google-fonts/poppins";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
@@ -16,12 +11,10 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
-  View,
   Vibration,
+  View,
   useColorScheme,
 } from "react-native";
-import { useWallet } from "@/hooks/useWallet";
-import { useCreatePin } from "@/hooks/useCreatePin";
 
 type Step = "enter" | "confirm";
 
@@ -38,13 +31,6 @@ export default function CreatePin() {
   const [pin, setPin] = useState("");
   const [confirmPin, setConfirmPin] = useState("");
   const [error, setError] = useState("");
-
-  let [fontsLoaded] = useFonts({
-    Poppins_400Regular,
-    Poppins_500Medium,
-    Poppins_600SemiBold,
-    Poppins_700Bold,
-  });
 
   useEffect(() => {
     Animated.timing(fadeAnim, {
@@ -132,8 +118,6 @@ export default function CreatePin() {
     ]).start();
   };
 
-  if (!fontsLoaded) return null;
-
   return (
     <LinearGradient
       colors={
@@ -179,8 +163,8 @@ export default function CreatePin() {
                   step === "confirm"
                     ? "#38B2AC"
                     : isDark
-                      ? "#415A77"
-                      : "#E2E8F0",
+                    ? "#415A77"
+                    : "#E2E8F0",
               },
             ]}
           />
@@ -192,14 +176,14 @@ export default function CreatePin() {
                   step === "confirm"
                     ? "#38B2AC"
                     : isDark
-                      ? "#1B263B"
-                      : "#F1F5F9",
+                    ? "#1B263B"
+                    : "#F1F5F9",
                 borderColor:
                   step === "confirm"
                     ? "#38B2AC"
                     : isDark
-                      ? "#415A77"
-                      : "#CBD5E1",
+                    ? "#415A77"
+                    : "#CBD5E1",
               },
               step === "confirm" && styles.progressDotActive,
             ]}
@@ -296,10 +280,10 @@ export default function CreatePin() {
                     borderColor: error
                       ? "#EF4444"
                       : isFilled
-                        ? "#38B2AC"
-                        : isDark
-                          ? "#415A77"
-                          : "#CBD5E1",
+                      ? "#38B2AC"
+                      : isDark
+                      ? "#415A77"
+                      : "#CBD5E1",
                   },
                   isFilled && styles.pinDotFilled,
                   isActive && styles.pinDotActive,
