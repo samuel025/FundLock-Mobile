@@ -19,6 +19,7 @@ import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, StatusBar, View } from "react-native";
+import { SafeAreaProvider } from "react-native-safe-area-context";
 
 // Prevent splash screen from auto-hiding
 SplashScreen.preventAutoHideAsync();
@@ -95,26 +96,29 @@ export default function RootLayout() {
   }
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <ThemeProvider>
-        <ThemeAwareStatusBar />
-        {!splashComplete && (
-          <AnimatedSplash
-            isReady={appIsReady}
-            onAnimationComplete={handleSplashComplete}
-          />
-        )}
-        <Stack screenOptions={{ headerShown: false }}>
-          <Stack.Screen name="signUp" />
-          <Stack.Screen name="signIn" />
-          <Stack.Screen name="index" />
-          <Stack.Screen name="budget" />
-          <Stack.Screen name="createPin" />
-          <Stack.Screen name="spendByOrgId" />
-          <Stack.Screen name="(tabs)" />
-        </Stack>
-      </ThemeProvider>
-    </QueryClientProvider>
+    <SafeAreaProvider>
+      <QueryClientProvider client={queryClient}>
+        <ThemeProvider>
+          <ThemeAwareStatusBar />
+          {!splashComplete && (
+            <AnimatedSplash
+              isReady={appIsReady}
+              onAnimationComplete={handleSplashComplete}
+            />
+          )}
+          <Stack screenOptions={{ headerShown: false }}>
+            <Stack.Screen name="signUp" />
+            <Stack.Screen name="signIn" />
+            <Stack.Screen name="index" />
+            <Stack.Screen name="budget" />
+            <Stack.Screen name="createPin" />
+            <Stack.Screen name="spendByOrgId" />
+            <Stack.Screen name="profileDetails" />
+            <Stack.Screen name="(tabs)" />
+          </Stack>
+        </ThemeProvider>
+      </QueryClientProvider>
+    </SafeAreaProvider>
   );
 }
 

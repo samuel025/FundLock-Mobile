@@ -125,7 +125,7 @@ export default function Index() {
       icon: "person" as const,
       iconBg: theme.colors.actionIconRedeemBg,
       iconColor: theme.colors.actionIconRedeem,
-      onPress: () => router.push("/(tabs)/accountActions"),
+      onPress: () => router.push("/profileDetails"),
     },
   ];
 
@@ -147,7 +147,7 @@ export default function Index() {
       >
         <HomeHeader
           firstName={user?.firstName}
-          onPressProfile={() => router.push("/(tabs)/accountActions")}
+          onPressProfile={() => router.push("/profileDetails")}
         />
 
         <SuccessBanner

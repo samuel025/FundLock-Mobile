@@ -1,4 +1,4 @@
-import { MessageBanner } from "@/components/MessageBanner";
+import { useToastConfig } from "@/config/toastConfig";
 import { useSpendByOrgId } from "@/hooks/useSpendByOrgId";
 import { getOutletByOrgId, OutletByOrgId } from "@/services/outlet";
 import { useTheme } from "@/theme";
@@ -22,6 +22,7 @@ import {
   ViewStyle,
 } from "react-native";
 import { TextInput } from "react-native-paper";
+import Toast from "react-native-toast-message";
 import * as yup from "yup";
 
 const schema = yup.object({
@@ -95,14 +96,11 @@ const GlassCard = ({
 export default function SpendByOrgId() {
   const { theme, scheme } = useTheme();
   const isDark = scheme === "dark";
+  const toastConfig = useToastConfig();
 
   const [outlet, setOutlet] = useState<OutletByOrgId | null>(null);
   const [loading, setLoading] = useState(false);
   const [showPin, setShowPin] = useState(false);
-  const [banner, setBanner] = useState<{
-    message: string;
-    type: "success" | "error" | "info";
-  } | null>(null);
   const scrollRef = useRef<any>(null);
 
   const { control, handleSubmit, watch, formState, reset } = useForm<FormData>({
@@ -118,22 +116,26 @@ export default function SpendByOrgId() {
 
   useEffect(() => {
     if (spendError) {
-      setBanner({ message: spendError, type: "error" });
+      Toast.show({
+        type: "error",
+        text1: "Payment Failed",
+        text2: spendError,
+        position: "top",
+        visibilityTime: 4000,
+      });
     }
     if (spendMessage) {
-      setBanner({ message: spendMessage, type: "success" });
+      Toast.show({
+        type: "success",
+        text1: "Payment Successful",
+        text2: spendMessage,
+        position: "top",
+        visibilityTime: 4000,
+      });
       reset();
       setOutlet(null);
     }
   }, [spendError, spendMessage, reset]);
-
-  useEffect(() => {
-    if (banner) {
-      scrollRef.current?.scrollTo?.({ y: 0, animated: true });
-      const timer = setTimeout(() => setBanner(null), 5000);
-      return () => clearTimeout(timer);
-    }
-  }, [banner]);
 
   const handleFetchOutlet = async () => {
     setLoading(true);
@@ -142,9 +144,12 @@ export default function SpendByOrgId() {
       const data = await getOutletByOrgId(orgId.trim().toUpperCase());
       setOutlet(data);
     } catch (err: any) {
-      setBanner({
-        message: err?.message || "Failed to fetch outlet",
+      Toast.show({
         type: "error",
+        text1: "Vendor Not Found",
+        text2: err?.message || "Failed to fetch outlet",
+        position: "top",
+        visibilityTime: 4000,
       });
     } finally {
       setLoading(false);
@@ -189,14 +194,6 @@ export default function SpendByOrgId() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          {banner && (
-            <MessageBanner
-              message={banner.message}
-              type={banner.type}
-              onClose={() => setBanner(null)}
-            />
-          )}
-
           {/* Header */}
           <View style={styles.header}>
             <TouchableOpacity
@@ -663,6 +660,8 @@ export default function SpendByOrgId() {
           )}
         </ScrollView>
       </KeyboardAvoidingView>
+
+      <Toast config={toastConfig} />
     </LinearGradient>
   );
 }

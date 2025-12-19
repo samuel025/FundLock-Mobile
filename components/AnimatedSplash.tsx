@@ -364,8 +364,8 @@ export function AnimatedSplash({
               { color: isDark ? "#FFFFFF" : "#1B263B" },
             ]}
           >
-            Block
-            <Text style={styles.brandNameAccent}>IT</Text>
+            Str
+            <Text style={styles.brandNameAccent}>ixt</Text>
           </Text>
         </Animated.View>
 

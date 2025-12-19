@@ -258,7 +258,7 @@ export default function Profile() {
           />
 
           <Text style={[styles.version, { color: theme.colors.muted }]}>
-            BlockIT v1.0.0
+            Strixt v1.0.0
           </Text>
         </ScrollView>
 

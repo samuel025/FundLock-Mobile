@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "BlockIT",
+    "name": "Strixt",
     "slug": "strixt",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "blockit",
+    "scheme": "strixt",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
@@ -24,7 +24,9 @@
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "package": "com.strixt.strixt",
+      "googleServicesFile": "./google-services.json"
     },
     "web": {
       "output": "static",
@@ -55,7 +57,7 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "29b9d12e-aaa5-4f12-b583-1e9c92a80c5f"
+        "projectId": "e305a3ce-fb8e-4ad5-8cfe-df8ae96446b6"
       }
     },
     "owner": "strixt"

@@ -1,4 +1,5 @@
 import { AuthLayout } from "@/components/auth/AuthLayout";
+import { OtpVerifyModal } from "@/components/auth/OtpVerifyModal";
 import { AuthPageGuard } from "@/components/RouteGuard";
 import { authActions } from "@/lib/authContext";
 import { authStyles } from "@/styles/auth.styles";
@@ -60,6 +61,9 @@ export default function SignUp() {
   const isDark = scheme === "dark";
 
   const [showPassword, setShowPassword] = useState(false);
+  const [showOtpModal, setShowOtpModal] = useState(false);
+  const [pendingEmail, setPendingEmail] = useState<string>("");
+
   const fadeAnim = useMemo(() => new Animated.Value(0), []);
 
   useEffect(() => {
@@ -89,12 +93,12 @@ export default function SignUp() {
   const onSubmit = async (data: signUpFormData) => {
     try {
       await authActions.signUp(data);
-      router.replace("/signIn?registered=true");
+
+      // OTP is automatically sent by backend after signup
+      setPendingEmail(data.email);
+      setShowOtpModal(true);
     } catch (error: any) {
-      Alert.alert(
-        "Error",
-        error.message || "Failed to create account. Please try again."
-      );
+      Alert.alert("Error", error?.message || "Failed to sign up");
     }
   };
 
@@ -128,341 +132,360 @@ export default function SignUp() {
   const canSubmit = isValid && !isSubmitting;
 
   return (
-    <AuthPageGuard>
-      <AuthLayout>
-        <Animated.View style={[authStyles.content, { opacity: fadeAnim }]}>
-          {/* Logo */}
-          <View style={authStyles.logoContainer}>
-            <LinearGradient
-              colors={[theme.colors.primary, theme.colors.primary]}
-              style={[
-                authStyles.logoCircle,
-                { shadowColor: theme.colors.primary },
-              ]}
-            >
-              <Ionicons
-                name="lock-closed"
-                size={32}
-                color={theme.colors.balanceText}
-              />
-            </LinearGradient>
-            <Text
-              style={[
-                authStyles.brandName,
-                {
-                  color: isDark ? theme.colors.balanceText : theme.colors.text,
-                },
-              ]}
-            >
-              Join BlockIT
-            </Text>
-            <Text
-              style={[
-                authStyles.tagline,
-                {
-                  color: isDark
-                    ? theme.colors.balanceLabel
-                    : "rgba(27,38,59,0.72)",
-                },
-              ]}
-            >
-              Start your journey to financial discipline
-            </Text>
-          </View>
-
-          {/* Form Card */}
-          <View
-            style={[
-              authStyles.formCard,
-              isDark
-                ? {
-                    backgroundColor: "rgba(255,255,255,0.05)",
-                    borderWidth: 1,
-                    borderColor: "rgba(255,255,255,0.10)",
-                    overflow: "hidden",
-                  }
-                : { backgroundColor: theme.colors.card },
-            ]}
-          >
-            {isDark && (
-              <BlurView
-                intensity={30}
-                tint="dark"
-                style={StyleSheet.absoluteFillObject}
-              />
-            )}
-
-            <Text style={[authStyles.formTitle, { color: theme.colors.text }]}>
-              Create Account
-            </Text>
-            <Text
-              style={[authStyles.formSubtitle, { color: theme.colors.muted }]}
-            >
-              Fill in your details to get started
-            </Text>
-
-            {/* Name Row */}
-            <View style={styles.formRow}>
-              <Controller
-                control={control}
-                name="firstName"
-                render={({ field: { onChange, onBlur, value } }) => (
-                  <View style={[authStyles.inputContainer, styles.halfWidth]}>
-                    <TextInput
-                      label="First Name"
-                      autoCapitalize="words"
-                      placeholder="John"
-                      mode="outlined"
-                      value={value}
-                      onChangeText={onChange}
-                      onBlur={onBlur}
-                      error={!!errors.firstName}
-                      theme={inputTheme(!!errors.firstName)}
-                      style={[authStyles.input, inputStyle]}
-                      outlineStyle={getOutlineStyle(!!errors.firstName)}
-                    />
-                    {errors.firstName && (
-                      <Text
-                        style={[
-                          authStyles.inputError,
-                          { color: theme.colors.danger },
-                        ]}
-                      >
-                        {errors.firstName.message}
-                      </Text>
-                    )}
-                  </View>
-                )}
-              />
-
-              <Controller
-                control={control}
-                name="lastName"
-                render={({ field: { onChange, onBlur, value } }) => (
-                  <View style={[authStyles.inputContainer, styles.halfWidth]}>
-                    <TextInput
-                      label="Last Name"
-                      autoCapitalize="words"
-                      placeholder="Doe"
-                      mode="outlined"
-                      value={value}
-                      onChangeText={onChange}
-                      onBlur={onBlur}
-                      error={!!errors.lastName}
-                      theme={inputTheme(!!errors.lastName)}
-                      style={[authStyles.input, inputStyle]}
-                      outlineStyle={getOutlineStyle(!!errors.lastName)}
-                    />
-                    {errors.lastName && (
-                      <Text
-                        style={[
-                          authStyles.inputError,
-                          { color: theme.colors.danger },
-                        ]}
-                      >
-                        {errors.lastName.message}
-                      </Text>
-                    )}
-                  </View>
-                )}
-              />
+    <>
+      <AuthPageGuard>
+        <AuthLayout>
+          <Animated.View style={[authStyles.content, { opacity: fadeAnim }]}>
+            {/* Logo */}
+            <View style={authStyles.logoContainer}>
+              <LinearGradient
+                colors={[theme.colors.primary, theme.colors.primary]}
+                style={[
+                  authStyles.logoCircle,
+                  { shadowColor: theme.colors.primary },
+                ]}
+              >
+                <Ionicons
+                  name="lock-closed"
+                  size={32}
+                  color={theme.colors.balanceText}
+                />
+              </LinearGradient>
+              <Text
+                style={[
+                  authStyles.brandName,
+                  {
+                    color: isDark
+                      ? theme.colors.balanceText
+                      : theme.colors.text,
+                  },
+                ]}
+              >
+                Join Strixt
+              </Text>
+              <Text
+                style={[
+                  authStyles.tagline,
+                  {
+                    color: isDark
+                      ? theme.colors.balanceLabel
+                      : "rgba(27,38,59,0.72)",
+                  },
+                ]}
+              >
+                Start your journey to financial discipline
+              </Text>
             </View>
 
-            {/* Email */}
-            <Controller
-              control={control}
-              name="email"
-              render={({ field: { onChange, onBlur, value } }) => (
-                <View style={authStyles.inputContainer}>
-                  <TextInput
-                    label="Email"
-                    autoCapitalize="none"
-                    keyboardType="email-address"
-                    placeholder="[email protected]"
-                    mode="outlined"
-                    value={value}
-                    onChangeText={onChange}
-                    onBlur={onBlur}
-                    error={!!errors.email}
-                    left={
-                      <TextInput.Icon
-                        icon={() => (
-                          <Ionicons
-                            name="mail-outline"
-                            size={20}
-                            color={iconColor}
-                          />
-                        )}
-                      />
-                    }
-                    theme={inputTheme(!!errors.email)}
-                    style={[authStyles.input, inputStyle]}
-                    outlineStyle={getOutlineStyle(!!errors.email)}
-                  />
-                  {errors.email && (
-                    <Text
-                      style={[
-                        authStyles.inputError,
-                        { color: theme.colors.danger },
-                      ]}
-                    >
-                      {errors.email.message}
-                    </Text>
-                  )}
-                </View>
-              )}
-            />
-
-            {/* Phone */}
-            <Controller
-              control={control}
-              name="phoneNumber"
-              render={({ field: { onChange, onBlur, value } }) => (
-                <View style={authStyles.inputContainer}>
-                  <TextInput
-                    label="Phone Number"
-                    keyboardType="phone-pad"
-                    placeholder="08012345678"
-                    mode="outlined"
-                    value={value}
-                    onChangeText={onChange}
-                    onBlur={onBlur}
-                    error={!!errors.phoneNumber}
-                    left={
-                      <TextInput.Icon
-                        icon={() => (
-                          <Ionicons
-                            name="call-outline"
-                            size={20}
-                            color={iconColor}
-                          />
-                        )}
-                      />
-                    }
-                    theme={inputTheme(!!errors.phoneNumber)}
-                    style={[authStyles.input, inputStyle]}
-                    outlineStyle={getOutlineStyle(!!errors.phoneNumber)}
-                  />
-                  {errors.phoneNumber && (
-                    <Text
-                      style={[
-                        authStyles.inputError,
-                        { color: theme.colors.danger },
-                      ]}
-                    >
-                      {errors.phoneNumber.message}
-                    </Text>
-                  )}
-                </View>
-              )}
-            />
-
-            {/* Password */}
-            <Controller
-              control={control}
-              name="password"
-              render={({ field: { onChange, onBlur, value } }) => (
-                <View style={authStyles.inputContainer}>
-                  <TextInput
-                    label="Password"
-                    autoCapitalize="none"
-                    placeholder="Enter password"
-                    secureTextEntry={!showPassword}
-                    mode="outlined"
-                    value={value}
-                    onChangeText={onChange}
-                    onBlur={onBlur}
-                    error={!!errors.password}
-                    left={
-                      <TextInput.Icon
-                        icon={() => (
-                          <Ionicons
-                            name="lock-closed-outline"
-                            size={20}
-                            color={iconColor}
-                          />
-                        )}
-                      />
-                    }
-                    right={
-                      <TextInput.Icon
-                        icon={showPassword ? "eye-off" : "eye"}
-                        onPress={() => setShowPassword(!showPassword)}
-                      />
-                    }
-                    theme={inputTheme(!!errors.password)}
-                    style={[authStyles.input, inputStyle]}
-                    outlineStyle={getOutlineStyle(!!errors.password)}
-                  />
-                  {errors.password && (
-                    <Text
-                      style={[
-                        authStyles.inputError,
-                        { color: theme.colors.danger },
-                      ]}
-                    >
-                      {errors.password.message}
-                    </Text>
-                  )}
-                </View>
-              )}
-            />
-
-            {/* Submit Button */}
-            <TouchableOpacity
+            {/* Form Card */}
+            <View
               style={[
-                authStyles.primaryButton,
-                !canSubmit && authStyles.primaryButtonDisabled,
+                authStyles.formCard,
+                isDark
+                  ? {
+                      backgroundColor: "rgba(255,255,255,0.05)",
+                      borderWidth: 1,
+                      borderColor: "rgba(255,255,255,0.10)",
+                      overflow: "hidden",
+                    }
+                  : { backgroundColor: theme.colors.card },
               ]}
-              onPress={handleSubmit(onSubmit)}
-              disabled={!canSubmit}
             >
-              <LinearGradient
-                colors={
-                  canSubmit
-                    ? [theme.colors.primary, theme.colors.primary]
-                    : [theme.colors.muted, theme.colors.muted]
-                }
-                style={authStyles.primaryButtonGradient}
-              >
-                <Text
-                  style={[
-                    authStyles.primaryButtonText,
-                    { color: theme.colors.balanceText },
-                  ]}
-                >
-                  {isSubmitting ? "Creating Account..." : "Create Account"}
-                </Text>
-                {!isSubmitting && (
-                  <Ionicons
-                    name="arrow-forward"
-                    size={20}
-                    color={theme.colors.balanceText}
-                  />
-                )}
-              </LinearGradient>
-            </TouchableOpacity>
+              {isDark && (
+                <BlurView
+                  intensity={30}
+                  tint="dark"
+                  style={StyleSheet.absoluteFillObject}
+                />
+              )}
 
-            {/* Sign In Link */}
-            <TouchableOpacity
-              style={authStyles.linkContainer}
-              onPress={() => router.replace("/signIn")}
-            >
               <Text
-                style={[authStyles.linkText, { color: theme.colors.muted }]}
+                style={[authStyles.formTitle, { color: theme.colors.text }]}
               >
-                Already have an account?{" "}
-                <Text
-                  style={[authStyles.linkBold, { color: theme.colors.primary }]}
-                >
-                  Sign In
-                </Text>
+                Create Account
               </Text>
-            </TouchableOpacity>
-          </View>
-        </Animated.View>
-      </AuthLayout>
-    </AuthPageGuard>
+              <Text
+                style={[authStyles.formSubtitle, { color: theme.colors.muted }]}
+              >
+                Fill in your details to get started
+              </Text>
+
+              {/* Name Row */}
+              <View style={styles.formRow}>
+                <Controller
+                  control={control}
+                  name="firstName"
+                  render={({ field: { onChange, onBlur, value } }) => (
+                    <View style={[authStyles.inputContainer, styles.halfWidth]}>
+                      <TextInput
+                        label="First Name"
+                        autoCapitalize="words"
+                        placeholder="John"
+                        mode="outlined"
+                        value={value}
+                        onChangeText={onChange}
+                        onBlur={onBlur}
+                        error={!!errors.firstName}
+                        theme={inputTheme(!!errors.firstName)}
+                        style={[authStyles.input, inputStyle]}
+                        outlineStyle={getOutlineStyle(!!errors.firstName)}
+                      />
+                      {errors.firstName && (
+                        <Text
+                          style={[
+                            authStyles.inputError,
+                            { color: theme.colors.danger },
+                          ]}
+                        >
+                          {errors.firstName.message}
+                        </Text>
+                      )}
+                    </View>
+                  )}
+                />
+
+                <Controller
+                  control={control}
+                  name="lastName"
+                  render={({ field: { onChange, onBlur, value } }) => (
+                    <View style={[authStyles.inputContainer, styles.halfWidth]}>
+                      <TextInput
+                        label="Last Name"
+                        autoCapitalize="words"
+                        placeholder="Doe"
+                        mode="outlined"
+                        value={value}
+                        onChangeText={onChange}
+                        onBlur={onBlur}
+                        error={!!errors.lastName}
+                        theme={inputTheme(!!errors.lastName)}
+                        style={[authStyles.input, inputStyle]}
+                        outlineStyle={getOutlineStyle(!!errors.lastName)}
+                      />
+                      {errors.lastName && (
+                        <Text
+                          style={[
+                            authStyles.inputError,
+                            { color: theme.colors.danger },
+                          ]}
+                        >
+                          {errors.lastName.message}
+                        </Text>
+                      )}
+                    </View>
+                  )}
+                />
+              </View>
+
+              {/* Email */}
+              <Controller
+                control={control}
+                name="email"
+                render={({ field: { onChange, onBlur, value } }) => (
+                  <View style={authStyles.inputContainer}>
+                    <TextInput
+                      label="Email"
+                      autoCapitalize="none"
+                      keyboardType="email-address"
+                      placeholder="[email protected]"
+                      mode="outlined"
+                      value={value}
+                      onChangeText={onChange}
+                      onBlur={onBlur}
+                      error={!!errors.email}
+                      left={
+                        <TextInput.Icon
+                          icon={() => (
+                            <Ionicons
+                              name="mail-outline"
+                              size={20}
+                              color={iconColor}
+                            />
+                          )}
+                        />
+                      }
+                      theme={inputTheme(!!errors.email)}
+                      style={[authStyles.input, inputStyle]}
+                      outlineStyle={getOutlineStyle(!!errors.email)}
+                    />
+                    {errors.email && (
+                      <Text
+                        style={[
+                          authStyles.inputError,
+                          { color: theme.colors.danger },
+                        ]}
+                      >
+                        {errors.email.message}
+                      </Text>
+                    )}
+                  </View>
+                )}
+              />
+
+              {/* Phone */}
+              <Controller
+                control={control}
+                name="phoneNumber"
+                render={({ field: { onChange, onBlur, value } }) => (
+                  <View style={authStyles.inputContainer}>
+                    <TextInput
+                      label="Phone Number"
+                      keyboardType="phone-pad"
+                      placeholder="08012345678"
+                      mode="outlined"
+                      value={value}
+                      onChangeText={onChange}
+                      onBlur={onBlur}
+                      error={!!errors.phoneNumber}
+                      left={
+                        <TextInput.Icon
+                          icon={() => (
+                            <Ionicons
+                              name="call-outline"
+                              size={20}
+                              color={iconColor}
+                            />
+                          )}
+                        />
+                      }
+                      theme={inputTheme(!!errors.phoneNumber)}
+                      style={[authStyles.input, inputStyle]}
+                      outlineStyle={getOutlineStyle(!!errors.phoneNumber)}
+                    />
+                    {errors.phoneNumber && (
+                      <Text
+                        style={[
+                          authStyles.inputError,
+                          { color: theme.colors.danger },
+                        ]}
+                      >
+                        {errors.phoneNumber.message}
+                      </Text>
+                    )}
+                  </View>
+                )}
+              />
+
+              {/* Password */}
+              <Controller
+                control={control}
+                name="password"
+                render={({ field: { onChange, onBlur, value } }) => (
+                  <View style={authStyles.inputContainer}>
+                    <TextInput
+                      label="Password"
+                      autoCapitalize="none"
+                      placeholder="Enter password"
+                      secureTextEntry={!showPassword}
+                      mode="outlined"
+                      value={value}
+                      onChangeText={onChange}
+                      onBlur={onBlur}
+                      error={!!errors.password}
+                      left={
+                        <TextInput.Icon
+                          icon={() => (
+                            <Ionicons
+                              name="lock-closed-outline"
+                              size={20}
+                              color={iconColor}
+                            />
+                          )}
+                        />
+                      }
+                      right={
+                        <TextInput.Icon
+                          icon={showPassword ? "eye-off" : "eye"}
+                          onPress={() => setShowPassword(!showPassword)}
+                        />
+                      }
+                      theme={inputTheme(!!errors.password)}
+                      style={[authStyles.input, inputStyle]}
+                      outlineStyle={getOutlineStyle(!!errors.password)}
+                    />
+                    {errors.password && (
+                      <Text
+                        style={[
+                          authStyles.inputError,
+                          { color: theme.colors.danger },
+                        ]}
+                      >
+                        {errors.password.message}
+                      </Text>
+                    )}
+                  </View>
+                )}
+              />
+
+              {/* Submit Button */}
+              <TouchableOpacity
+                style={[
+                  authStyles.primaryButton,
+                  !canSubmit && authStyles.primaryButtonDisabled,
+                ]}
+                onPress={handleSubmit(onSubmit)}
+                disabled={!canSubmit}
+              >
+                <LinearGradient
+                  colors={
+                    canSubmit
+                      ? [theme.colors.primary, theme.colors.primary]
+                      : [theme.colors.muted, theme.colors.muted]
+                  }
+                  style={authStyles.primaryButtonGradient}
+                >
+                  <Text
+                    style={[
+                      authStyles.primaryButtonText,
+                      { color: theme.colors.balanceText },
+                    ]}
+                  >
+                    {isSubmitting ? "Creating Account..." : "Create Account"}
+                  </Text>
+                  {!isSubmitting && (
+                    <Ionicons
+                      name="arrow-forward"
+                      size={20}
+                      color={theme.colors.balanceText}
+                    />
+                  )}
+                </LinearGradient>
+              </TouchableOpacity>
+
+              {/* Sign In Link */}
+              <TouchableOpacity
+                style={authStyles.linkContainer}
+                onPress={() => router.replace("/signIn")}
+              >
+                <Text
+                  style={[authStyles.linkText, { color: theme.colors.muted }]}
+                >
+                  Already have an account?{" "}
+                  <Text
+                    style={[
+                      authStyles.linkBold,
+                      { color: theme.colors.primary },
+                    ]}
+                  >
+                    Sign In
+                  </Text>
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </Animated.View>
+        </AuthLayout>
+      </AuthPageGuard>
+
+      <OtpVerifyModal
+        visible={showOtpModal}
+        email={pendingEmail}
+        onClose={() => setShowOtpModal(false)}
+        onVerified={() => {
+          setShowOtpModal(false);
+          router.replace("/signIn?otpVerified=true");
+        }}
+      />
+    </>
   );
 }
 
