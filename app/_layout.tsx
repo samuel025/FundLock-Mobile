@@ -78,6 +78,13 @@ export default function RootLayout() {
     }
   }, [fontsLoaded, fontError]);
 
+  useEffect(() => {
+    // Hide splash screen after a delay or when assets are loaded
+    setTimeout(async () => {
+      await SplashScreen.hideAsync();
+    }, 2000);
+  }, []);
+
   // Don't render anything until fonts are loaded
   if (!fontsLoaded && !fontError) {
     return null;
