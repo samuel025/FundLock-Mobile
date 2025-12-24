@@ -1,4 +1,5 @@
 import { AnimatedSplash } from "@/components/AnimatedSplash";
+import { OfflineBanner } from "@/components/OfflineBanner";
 import { authActions } from "@/lib/authContext";
 import {
   initializeNotificationListeners,
@@ -19,9 +20,9 @@ import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, StatusBar, View } from "react-native";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
-// Prevent splash screen from auto-hiding
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
@@ -35,7 +36,6 @@ export default function RootLayout() {
       try {
         await authActions.initializeAuth();
       } catch (e) {
-        console.warn("Error during app initialization:", e);
       } finally {
         setAppIsReady(true);
       }
@@ -79,13 +79,11 @@ export default function RootLayout() {
   }, [fontsLoaded, fontError]);
 
   useEffect(() => {
-    // Hide splash screen after a delay or when assets are loaded
     setTimeout(async () => {
       await SplashScreen.hideAsync();
     }, 2000);
   }, []);
 
-  // Don't render anything until fonts are loaded
   if (!fontsLoaded && !fontError) {
     return null;
   }
@@ -113,16 +111,21 @@ export default function RootLayout() {
               onAnimationComplete={handleSplashComplete}
             />
           )}
-          <Stack screenOptions={{ headerShown: false }}>
-            <Stack.Screen name="signUp" />
-            <Stack.Screen name="signIn" />
-            <Stack.Screen name="index" />
-            <Stack.Screen name="budget" />
-            <Stack.Screen name="createPin" />
-            <Stack.Screen name="spendByOrgId" />
-            <Stack.Screen name="profileDetails" />
-            <Stack.Screen name="(tabs)" />
-          </Stack>
+          <GestureHandlerRootView style={{ flex: 1 }}>
+            <View style={{ flex: 1 }}>
+              <OfflineBanner />
+              <Stack screenOptions={{ headerShown: false }}>
+                <Stack.Screen name="signUp" />
+                <Stack.Screen name="signIn" />
+                <Stack.Screen name="index" />
+                <Stack.Screen name="budget" />
+                <Stack.Screen name="createPin" />
+                <Stack.Screen name="spendByOrgId" />
+                <Stack.Screen name="profileDetails" />
+                <Stack.Screen name="(tabs)" />
+              </Stack>
+            </View>
+          </GestureHandlerRootView>
         </ThemeProvider>
       </QueryClientProvider>
     </SafeAreaProvider>

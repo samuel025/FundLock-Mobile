@@ -50,13 +50,13 @@ export async function getProfile(): Promise<ProfileResponse> {
       const errorMessage =
         axiosError.response?.data?.message || "Failed to fetch profile";
 
-      console.error("Failed to fetch profile:", errorMessage);
+      // console.error("Failed to fetch profile:", errorMessage);
       const customError: any = new Error(errorMessage);
       customError.status = axiosError.response?.status;
       throw customError;
     }
 
-    console.error("Failed to fetch profile:", error);
+    // console.error("Failed to fetch profile:", error);
     throw new Error("An unexpected error occurred. Please try again.");
   }
 }

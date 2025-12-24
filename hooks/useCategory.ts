@@ -18,7 +18,7 @@ export function useCategory() {
       setCategories(list.map((c: any) => ({ id: String(c.id), name: c.name })));
     },
     onError: (error) => {
-      console.error("Failed to fetch categories", error);
+      // console.error("Failed to fetch categories", error);
     },
     onSettled: () => {
       setIsCategoryLoading(false);

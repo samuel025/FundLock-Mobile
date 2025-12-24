@@ -16,7 +16,7 @@ export function useCompany() {
       setCompanies(list.map((c: any) => ({ id: String(c.id), name: c.name })));
     },
     onError: (error) => {
-      console.error("Failed to fetch companies", error);
+      // console.error("Failed to fetch companies", error);
       setCompanies([]);
     },
     onSettled: () => {

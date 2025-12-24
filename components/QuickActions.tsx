@@ -1,7 +1,7 @@
+import { useTheme } from "@/theme";
 import { Ionicons } from "@expo/vector-icons";
 import React from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import { useTheme } from "@/theme";
 
 interface QuickActionsProps {
   onAddMoney: () => void;
@@ -78,13 +78,13 @@ export default function QuickActions({
             ]}
           >
             <Ionicons
-              name="log-out-outline"
+              name="pie-chart"
               size={24}
               color={theme.colors.actionIconRedeem}
             />
           </View>
           <Text style={[styles.actionText, { color: theme.colors.muted }]}>
-            Sign Out
+            Budget
           </Text>
         </TouchableOpacity>
       </View>

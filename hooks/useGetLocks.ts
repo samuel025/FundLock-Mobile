@@ -18,11 +18,11 @@ export function useGetLocks() {
           categoryName: c.categoryName,
           amount: c.amount,
           expiresAt: c.expiresAt,
-        })),
+        }))
       );
     },
     onError: (error) => {
-      console.error("Failed to fetch companies", error);
+      // console.error("Failed to fetch companies", error);
       setLocksList([]);
     },
     onSettled: () => {

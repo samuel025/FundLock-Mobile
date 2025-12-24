@@ -28,7 +28,7 @@ export function AnimatedSplash({
   isReady,
   onAnimationComplete,
 }: AnimatedSplashProps) {
-  const { theme, scheme } = useTheme();
+  const { scheme } = useTheme();
   const isDark = scheme === "dark";
 
   // Animation values

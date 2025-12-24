@@ -1,6 +1,6 @@
-import * as Notifications from "expo-notifications";
-import * as Device from "expo-device";
 import Constants from "expo-constants";
+import * as Device from "expo-device";
+import * as Notifications from "expo-notifications";
 
 export async function registerForPushNotificationsAsync() {
   // Android: ensure a channel exists
@@ -22,7 +22,6 @@ export async function registerForPushNotificationsAsync() {
     return { token: null, status };
   }
 
-  // SDK 49+: projectId may be required in dev/builds
   const projectId =
     Constants?.expoConfig?.extra?.eas?.projectId ??
     Constants?.easConfig?.projectId ??

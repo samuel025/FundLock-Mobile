@@ -32,7 +32,6 @@ export const authActions = {
           await authActions.getUser();
         } catch (error: any) {
           if (error?.status === 401) {
-            // Token expired, try refresh if available
             if (refreshToken) {
               try {
                 const tokens = await refreshAccessToken(refreshToken);
@@ -52,15 +51,11 @@ export const authActions = {
               await authActions.signOut();
             }
           } else {
-            console.error(
-              "Failed to fetch user profile, using cached data:",
-              error
-            );
           }
         }
       }
     } catch (error) {
-      console.error("Failed to initialize auth:", error);
+      //
     } finally {
       setIsLoadingUser(false);
     }
@@ -79,7 +74,7 @@ export const authActions = {
       setTokens(tokens.accessToken, tokens.refreshToken);
       return tokens;
     } catch (error) {
-      console.error("Token refresh failed:", error);
+      // console.error("Token refresh failed:", error);
       await authActions.signOut();
       throw error;
     }
@@ -103,8 +98,8 @@ export const authActions = {
       setUser(userData);
       return userData;
     } catch (error) {
-      console.error("Failed to fetch user:", error);
-      throw error;
+      // console.error("Failed to fetch user:", error);
+      // throw error;
     } finally {
       setIsLoadingUser(false);
     }
@@ -140,7 +135,7 @@ export const authActions = {
       setUser(null);
       setTokens(null, null);
     } catch (error) {
-      console.error("Signout error:", error);
+      // console.error("Signout error:", error);
     }
   },
 

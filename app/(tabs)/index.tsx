@@ -3,7 +3,10 @@ import HomeHeader from "@/components/home/HomeHeader";
 import QuickActionsGrid from "@/components/home/QuickActionsGrid";
 import RecentActivityList from "@/components/home/RecentActivityList";
 import SuccessBanner from "@/components/home/SuccessBanner";
+import { NetworkError } from "@/components/NetworkError";
+import { OfflineBanner } from "@/components/OfflineBanner";
 import SpendingInsights from "@/components/SpendingInsights";
+import { useNetworkStatus } from "@/hooks/useNetworkStatus";
 import { useWallet } from "@/hooks/useWallet";
 import { authActions } from "@/lib/authContext";
 import { useAuthStore } from "@/lib/useAuthStore";
@@ -26,6 +29,7 @@ import {
   Text,
   View,
 } from "react-native";
+import Toast from "react-native-toast-message";
 
 export default function Index() {
   const { theme } = useTheme();
@@ -35,6 +39,9 @@ export default function Index() {
 
   const [refreshing, setRefreshing] = useState(false);
   const [showBalance, setShowBalance] = useState(true);
+  const [hasNetworkError, setHasNetworkError] = useState(false);
+
+  const { isConnected, isInternetReachable } = useNetworkStatus();
 
   const {
     balance,
@@ -44,6 +51,7 @@ export default function Index() {
     fetchWalletData,
     insights,
     successMessage,
+    toastConfig,
   } = useWallet();
 
   const [fontsLoaded] = useFonts({
@@ -55,12 +63,26 @@ export default function Index() {
 
   const onRefresh = async () => {
     setRefreshing(true);
+    setHasNetworkError(false);
     try {
       await authActions.getUser();
       fetchWalletData();
+    } catch (error: any) {
+      if (
+        error?.status === 0 ||
+        isConnected === false ||
+        isInternetReachable === false
+      ) {
+        setHasNetworkError(true);
+      }
     } finally {
       setRefreshing(false);
     }
+  };
+
+  const handleRetry = async () => {
+    setHasNetworkError(false);
+    await onRefresh();
   };
 
   if (!fontsLoaded || (isLoadingUser && !user)) {
@@ -75,6 +97,22 @@ export default function Index() {
           Loading...
         </Text>
       </View>
+    );
+  }
+
+  // Show full-screen network error if there's a network issue
+  if (
+    hasNetworkError ||
+    isConnected === false ||
+    isInternetReachable === false
+  ) {
+    return (
+      <LinearGradient
+        colors={[theme.colors.gradientStart, theme.colors.gradientEnd]}
+        style={styles.container}
+      >
+        <NetworkError onRetry={handleRetry} />
+      </LinearGradient>
     );
   }
 
@@ -130,62 +168,66 @@ export default function Index() {
   ];
 
   return (
-    <LinearGradient
-      colors={[theme.colors.gradientStart, theme.colors.gradientEnd]}
-      style={styles.container}
-    >
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-            colors={[theme.colors.primary]}
-            tintColor={theme.colors.primary}
-          />
-        }
+    <>
+      <LinearGradient
+        colors={[theme.colors.gradientStart, theme.colors.gradientEnd]}
+        style={styles.container}
       >
-        <HomeHeader
-          firstName={user?.firstName}
-          onPressProfile={() => router.push("/profileDetails")}
-        />
+        <OfflineBanner />
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              colors={[theme.colors.primary]}
+              tintColor={theme.colors.primary}
+            />
+          }
+        >
+          <HomeHeader
+            firstName={user?.firstName}
+            onPressProfile={() => router.push("/profileDetails")}
+          />
 
-        <SuccessBanner
-          message={successMessage}
-          onCleared={() => walletStore.getState().setSuccessMessage(null)}
-        />
+          <SuccessBanner
+            message={successMessage}
+            onCleared={() => walletStore.getState().setSuccessMessage(null)}
+          />
 
-        <BalanceOverviewCard
-          balance={balance}
-          totalLockedAmount={totalLockedAmount}
-          totalRedeemedAmount={totalRedeemedAmount}
-          showBalance={showBalance}
-          onToggleShowBalance={() => setShowBalance((s) => !s)}
-        />
+          <BalanceOverviewCard
+            balance={balance}
+            totalLockedAmount={totalLockedAmount}
+            totalRedeemedAmount={totalRedeemedAmount}
+            showBalance={showBalance}
+            onToggleShowBalance={() => setShowBalance((s) => !s)}
+          />
 
-        <QuickActionsGrid actions={actions} />
+          <QuickActionsGrid actions={actions} />
 
-        <SpendingInsights
-          insights={
-            insights || {
-              spentThisWeek: "0",
-              receivedThisWeek: "0",
+          <SpendingInsights
+            insights={
+              insights || {
+                spentThisWeek: "0",
+                receivedThisWeek: "0",
+              }
             }
-          }
-        />
+          />
 
-        <RecentActivityList
-          transactions={transactions}
-          onPressViewAll={() => router.push("/wallet")}
-          onPressTransaction={(reference) =>
-            router.push({
-              pathname: "/transactionDetails",
-              params: { reference },
-            })
-          }
-        />
-      </ScrollView>
-    </LinearGradient>
+          <RecentActivityList
+            transactions={transactions}
+            onPressViewAll={() => router.push("/wallet")}
+            onPressTransaction={(reference) =>
+              router.push({
+                pathname: "/transactionDetails",
+                params: { reference },
+              })
+            }
+          />
+        </ScrollView>
+      </LinearGradient>
+      <Toast config={toastConfig} />
+    </>
   );
 }
 

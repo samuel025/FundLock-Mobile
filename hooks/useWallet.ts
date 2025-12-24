@@ -1,3 +1,4 @@
+import { useToastConfig } from "@/config/toastConfig";
 import { useAuthStore } from "@/lib/useAuthStore";
 import { walletStore } from "@/lib/walletStore";
 import {
@@ -12,6 +13,7 @@ import { useMutation } from "@tanstack/react-query";
 import { useFocusEffect } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import { useCallback, useEffect, useRef, useState } from "react";
+import Toast from "react-native-toast-message";
 
 export function useWallet() {
   const user = useAuthStore((state) => state.user);
@@ -29,6 +31,10 @@ export function useWallet() {
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [hasPinStored, setHasPinStored] = useState<boolean | null>(null);
   const [isCheckingPin, setIsCheckingPin] = useState(true);
+  const [networkError, setNetworkError] = useState<Error | null>(null);
+  const [hasNetworkError, setHasNetworkError] = useState(false);
+  const [unknownError, setUnknownError] = useState<string | null>(null);
+  const toastConfig = useToastConfig();
 
   const HAS_PIN = "HAS_PIN";
 
@@ -43,7 +49,6 @@ export function useWallet() {
     successMessage,
   } = walletState;
 
-  // Check SecureStore on mount
   useEffect(() => {
     const checkStoredPin = async () => {
       try {
@@ -84,9 +89,17 @@ export function useWallet() {
       setTotalRedeemedAmount(totalRedeemedAmount);
       setWalletNumber(walletNumber);
       setHasPin(hasPin);
+      setHasNetworkError(false);
+      setNetworkError(null);
     },
-    onError: (error) => {
-      console.error("Failed to fetch wallet details:", error);
+    onError: (error: any) => {
+      if (error?.status === 0 || error?.message?.includes("network")) {
+        setHasNetworkError(true);
+        setNetworkError(error);
+      }
+
+      setUnknownError("An error occured, try again later");
+
       const { setBalance, setTotalLockedAmount, setTotalRedeemedAmount } =
         walletStore.getState();
       setBalance("0.00");
@@ -106,9 +119,18 @@ export function useWallet() {
     onSuccess: (data) => {
       setWalletData(data);
       setTransactions(data.transactions);
+      setHasNetworkError(false);
+      setNetworkError(null);
     },
-    onError: (error) => {
-      console.error("Failed to fetch transactions:", error);
+    onError: (error: any) => {
+      // Check if it's a network error
+      if (error?.status === 0 || error?.message?.includes("network")) {
+        setHasNetworkError(true);
+        setNetworkError(error);
+      }
+
+      setUnknownError("An error occured, try again later");
+
       setTransactions([]);
     },
     onSettled: () => setIsLoadingTransactions(false),
@@ -119,34 +141,75 @@ export function useWallet() {
     onSuccess: (data) => {
       setInsights(data ?? { spentThisWeek: "0", receivedThisWeek: "0" });
       setIsLoadingInsights(false);
+      setHasNetworkError(false);
+      setNetworkError(null);
     },
-    onError: (error) => {
-      console.error("failed to fetch insights", error);
+    onError: (error: any) => {
+      // Check if it's a network error
+      if (error?.status === 0 || error?.message?.includes("network")) {
+        setHasNetworkError(true);
+        setNetworkError(error);
+      }
+
+      setUnknownError("An error occured, try again later");
+
       setInsights({ spentThisWeek: "0", receivedThisWeek: "0" });
       setIsLoadingInsights(false);
     },
     onSettled: () => setIsLoadingInsights(false),
   });
 
-  const fetchWalletData = useCallback(() => {
+  const fetchWalletData = useCallback(async () => {
     if (user && accessToken) {
-      walletMutation.mutate();
-      transactionsMutation.mutate({});
-      weeklyInsightMutation.mutate();
+      try {
+        setHasNetworkError(false);
+        setNetworkError(null);
+
+        await Promise.all([
+          walletMutation.mutateAsync(),
+          transactionsMutation.mutateAsync({}),
+          weeklyInsightMutation.mutateAsync(),
+        ]);
+      } catch (error: any) {
+        // If it's a network error, propagate it
+        if (error?.status === 0 || error?.message?.includes("network")) {
+          setHasNetworkError(true);
+          setNetworkError(error);
+          throw error;
+        }
+
+        setUnknownError("An error occured, try again later");
+      }
     }
   }, [user, accessToken]);
 
   useFocusEffect(
     useCallback(() => {
       if (user && accessToken && !hasFetchedRef.current) {
-        fetchWalletData();
+        fetchWalletData().catch((error) => {
+          console.error("Failed to fetch wallet data on focus:", error);
+        });
         hasFetchedRef.current = true;
       }
       return () => {
         hasFetchedRef.current = false;
       };
-    }, [user, accessToken])
+    }, [user, accessToken, fetchWalletData])
   );
+
+  useEffect(() => {
+    if (!hasNetworkError && unknownError != null) {
+      Toast.show({
+        type: "error",
+        text1: "Error",
+        text2: unknownError,
+        position: "top",
+        topOffset: 60,
+      });
+
+      setTimeout(() => {}, 200);
+    }
+  }, [unknownError]);
 
   useEffect(() => {
     if (
@@ -156,7 +219,9 @@ export function useWallet() {
       user
     ) {
       hasFetchedRef.current = false;
-      fetchWalletData();
+      fetchWalletData().catch((error) => {
+        console.error("Failed to fetch wallet data on token change:", error);
+      });
       hasFetchedRef.current = true;
     }
     previousTokenRef.current = accessToken;
@@ -166,21 +231,38 @@ export function useWallet() {
     if (isLoadingMore || !walletData?.hasNext) return;
     try {
       setIsLoadingMore(true);
+      setHasNetworkError(false);
+      setNetworkError(null);
+
       const nextPage = (walletData.currentPage ?? 0) + 1;
       const data = await getWalletTransactions(nextPage);
+
       setWalletData((prev) => {
         const prevTx = prev?.transactions ?? [];
         return { ...data, transactions: [...prevTx, ...data.transactions] };
       });
       setTransactions((prev) => [...prev, ...data.transactions]);
-    } catch (e) {
-      console.error("Failed to load more transactions:", e);
+    } catch (error: any) {
+      console.error("Failed to load more transactions:", error);
+
+      // Check if it's a network error
+      if (error?.status === 0 || error?.message?.includes("network")) {
+        setHasNetworkError(true);
+        setNetworkError(error);
+      }
     } finally {
       setIsLoadingMore(false);
     }
   }, [walletData, isLoadingMore]);
 
+  const retryFetch = useCallback(async () => {
+    setHasNetworkError(false);
+    setNetworkError(null);
+    await fetchWalletData();
+  }, [fetchWalletData]);
+
   return {
+    toastConfig,
     balance,
     totalLockedAmount,
     totalRedeemedAmount,
@@ -196,5 +278,9 @@ export function useWallet() {
     hasPin: hasPinStored !== null ? hasPinStored : hasPin,
     isCheckingPin,
     successMessage,
+    hasNetworkError,
+    networkError,
+    retryFetch,
+    unknownError,
   };
 }

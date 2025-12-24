@@ -1,9 +1,11 @@
 import ModernTransactionList from "@/components/ModernTransactionList";
+import { NetworkError } from "@/components/NetworkError";
+import { OfflineBanner } from "@/components/OfflineBanner";
 import QuickActions from "@/components/QuickActions";
 import RecentStatistics from "@/components/RecentStatistics";
 import WalletBalanceCard from "@/components/WalletBalanceCard";
+import { useNetworkStatus } from "@/hooks/useNetworkStatus";
 import { useWallet } from "@/hooks/useWallet";
-import { authActions } from "@/lib/authContext";
 import { useAuthStore } from "@/lib/useAuthStore";
 import { useTheme } from "@/theme";
 import { formatCurrency } from "@/utils/formatCurrency";
@@ -31,14 +33,17 @@ import {
   View,
 } from "react-native";
 import { ActivityIndicator } from "react-native-paper";
+import Toast from "react-native-toast-message";
 
 export default function Wallet() {
   const { theme } = useTheme();
+  const { isConnected, isInternetReachable } = useNetworkStatus();
 
   const user = useAuthStore((state) => state.user);
   const isLoadingUser = useAuthStore((state) => state.isLoadingUser);
   const [refreshing, setRefreshing] = useState(false);
   const [showBalance, setShowBalance] = useState(true);
+  const [hasNetworkError, setHasNetworkError] = useState(false);
   const scrollViewRef = useRef<ScrollView>(null);
 
   const {
@@ -52,6 +57,7 @@ export default function Wallet() {
     walletData,
     loadMore,
     isLoadingMore,
+    toastConfig,
   } = useWallet();
 
   let [fontsLoaded] = useFonts({
@@ -61,9 +67,8 @@ export default function Wallet() {
     Poppins_700Bold,
   });
 
-  const handleSignOut = async () => {
-    await authActions.signOut();
-    router.replace("/signIn");
+  const handleBudget = () => {
+    router.push({ pathname: "/budget" });
   };
 
   const handleAddMoney = () => {
@@ -83,10 +88,18 @@ export default function Wallet() {
 
   const onRefresh = async () => {
     setRefreshing(true);
+    setHasNetworkError(false);
     try {
-      fetchWalletData();
-    } catch (error) {
+      await fetchWalletData();
+    } catch (error: any) {
       console.error("Failed to refresh wallet data:", error);
+      if (
+        error?.status === 0 ||
+        isConnected === false ||
+        isInternetReachable === false
+      ) {
+        setHasNetworkError(true);
+      }
     } finally {
       setRefreshing(false);
     }
@@ -122,109 +135,139 @@ export default function Wallet() {
     );
   }
 
-  return (
-    <LinearGradient
-      colors={[theme.colors.gradientStart, theme.colors.gradientEnd]}
-      style={styles.container}
-    >
-      <ScrollView
-        ref={scrollViewRef}
-        showsVerticalScrollIndicator={false}
-        onScrollEndDrag={handleScroll}
-        onMomentumScrollEnd={handleScroll}
-        scrollEventThrottle={16}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-            colors={[theme.colors.primary]}
-            tintColor={theme.colors.primary}
-          />
-        }
+  // Show network error if offline or has network error
+  if (
+    hasNetworkError ||
+    isConnected === false ||
+    isInternetReachable === false
+  ) {
+    return (
+      <LinearGradient
+        colors={[theme.colors.gradientStart, theme.colors.gradientEnd]}
+        style={styles.container}
       >
-        {/* Header */}
-        <View style={styles.header}>
-          <View style={styles.headerLeft}>
-            <View
-              style={[
-                styles.avatar,
-                { backgroundColor: theme.colors.actionIconDepositBg },
-              ]}
-            >
-              <Ionicons name="person" size={24} color={theme.colors.primary} />
+        <NetworkError
+          onRetry={onRefresh}
+          message="Unable to load wallet data. Please check your internet connection."
+          isFullScreen={true}
+        />
+      </LinearGradient>
+    );
+  }
+
+  return (
+    <>
+      <LinearGradient
+        colors={[theme.colors.gradientStart, theme.colors.gradientEnd]}
+        style={styles.container}
+      >
+        <OfflineBanner />
+        <ScrollView
+          ref={scrollViewRef}
+          showsVerticalScrollIndicator={false}
+          onScrollEndDrag={handleScroll}
+          onMomentumScrollEnd={handleScroll}
+          scrollEventThrottle={16}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              colors={[theme.colors.primary]}
+              tintColor={theme.colors.primary}
+            />
+          }
+        >
+          {/* Header */}
+          <View style={styles.header}>
+            <View style={styles.headerLeft}>
+              <View
+                style={[
+                  styles.avatar,
+                  { backgroundColor: theme.colors.actionIconDepositBg },
+                ]}
+              >
+                <Ionicons
+                  name="person"
+                  size={24}
+                  color={theme.colors.primary}
+                />
+              </View>
+              <View>
+                <Text
+                  style={[styles.greetingText, { color: theme.colors.text }]}
+                >
+                  Hey, {user?.firstName} 👋
+                </Text>
+              </View>
             </View>
-            <View>
-              <Text style={[styles.greetingText, { color: theme.colors.text }]}>
-                Hey, {user?.firstName} 👋
+            <View style={styles.headerRight}>
+              <TouchableOpacity
+                style={[
+                  styles.iconButton,
+                  { backgroundColor: theme.colors.card },
+                ]}
+              >
+                <Ionicons name="add" size={24} color={theme.colors.text} />
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.iconButton,
+                  { backgroundColor: theme.colors.card },
+                ]}
+              >
+                <Ionicons
+                  name="notifications-outline"
+                  size={24}
+                  color={theme.colors.text}
+                />
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          {/* Balance Card */}
+          <WalletBalanceCard
+            balance={formatCurrency(balance || "0.00")}
+            totalRedeemed={formatCurrency(totalRedeemedAmount || "0.00")}
+            totalLocked={formatCurrency(totalLockedAmount || "0.00")}
+            isLoading={isLoadingWallet}
+            showBalance={showBalance}
+            onToggleShowBalance={() => setShowBalance((s) => !s)}
+          />
+
+          {/* Quick Actions */}
+          <QuickActions
+            onAddMoney={handleAddMoney}
+            onWithdraw={handleWithdraw}
+            onBudget={handleBudget}
+            onSpend={handleSpend}
+          />
+
+          {/* Recent Statistics */}
+          <RecentStatistics
+            totalSpent={formatCurrency(balance || "0")}
+            isLoading={isLoadingWallet}
+            transactions={transactions}
+          />
+
+          {/* Transactions Section */}
+          <View style={styles.transactionsSection}>
+            <View style={styles.sectionHeader}>
+              <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
+                Transactions
               </Text>
             </View>
+
+            <ModernTransactionList
+              transactions={walletData?.transactions || []}
+              isLoading={isLoadingTransactions}
+              isLoadingMore={isLoadingMore}
+              hasNext={walletData?.hasNext ?? false}
+            />
           </View>
-          <View style={styles.headerRight}>
-            <TouchableOpacity
-              style={[
-                styles.iconButton,
-                { backgroundColor: theme.colors.card },
-              ]}
-            >
-              <Ionicons name="add" size={24} color={theme.colors.text} />
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[
-                styles.iconButton,
-                { backgroundColor: theme.colors.card },
-              ]}
-            >
-              <Ionicons
-                name="notifications-outline"
-                size={24}
-                color={theme.colors.text}
-              />
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        {/* Balance Card */}
-        <WalletBalanceCard
-          balance={formatCurrency(balance || "0.00")}
-          totalRedeemed={formatCurrency(totalRedeemedAmount || "0.00")}
-          totalLocked={formatCurrency(totalLockedAmount || "0.00")}
-          isLoading={isLoadingWallet}
-          showBalance={showBalance}
-          onToggleShowBalance={() => setShowBalance((s) => !s)}
-        />
-
-        {/* Quick Actions */}
-        <QuickActions
-          onAddMoney={handleAddMoney}
-          onWithdraw={handleWithdraw}
-          onSignOut={handleSignOut}
-          onSpend={handleSpend}
-        />
-
-        {/* Recent Statistics */}
-        <RecentStatistics
-          totalSpent={formatCurrency(balance || "0")}
-          isLoading={isLoadingWallet}
-          transactions={transactions}
-        />
-
-        {/* Transactions Section */}
-        <View style={styles.transactionsSection}>
-          <View style={styles.sectionHeader}>
-            <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
-              Transactions
-            </Text>
-          </View>
-
-          <ModernTransactionList
-            transactions={walletData?.transactions || []}
-            isLoading={isLoadingTransactions}
-            isLoadingMore={isLoadingMore}
-            hasNext={walletData?.hasNext ?? false}
-          />
-        </View>
-      </ScrollView>
-    </LinearGradient>
+        </ScrollView>
+      </LinearGradient>
+      <Toast config={toastConfig} />
+    </>
   );
 }
 

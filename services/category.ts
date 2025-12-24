@@ -35,7 +35,7 @@ export async function getCategories(): Promise<Categories[]> {
       const errorMessage =
         axiosError.response?.data?.message || "Failed to fetch transactions";
 
-      console.error("Failed to fetch transactions:", errorMessage);
+      // console.error("Failed to fetch transactions:", errorMessage);
       const customError: any = new Error(errorMessage);
       customError.status = axiosError.response?.status;
       throw customError;
