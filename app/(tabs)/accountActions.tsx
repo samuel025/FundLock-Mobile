@@ -3,7 +3,6 @@ import { AccountActions } from "@/components/profileComponents/AccountActions";
 import { ProfileHeader } from "@/components/profileComponents/ProfileHeader";
 import { VirtualAccountModal } from "@/components/profileComponents/VirtualAccountModal";
 import { WithdrawModal } from "@/components/profileComponents/WithdrawModal";
-import { useToastConfig } from "@/config/toastConfig";
 import { useWallet } from "@/hooks/useWallet";
 import { authActions } from "@/lib/authContext";
 import { useAuthStore } from "@/lib/useAuthStore";
@@ -56,7 +55,6 @@ export default function Profile() {
 
   const [virtualLoading, setVirtualLoading] = useState(false);
   const [creatingVirtual, setCreatingVirtual] = useState(false);
-  const toastConfig = useToastConfig();
   const [refreshKey, setRefreshKey] = useState(0);
 
   const [isWithdrawing, setIsWithdrawing] = useState(false);
@@ -191,7 +189,7 @@ export default function Profile() {
       await authActions.signOut();
       router.replace("/signIn");
     } catch (err) {
-      console.error("Sign out failed:", err);
+      // console.error("Sign out failed:", err);
       Alert.alert("Error", "Failed to sign out. Please try again.");
     }
   };
@@ -261,8 +259,6 @@ export default function Profile() {
             Strixt v1.0.0
           </Text>
         </ScrollView>
-
-        <Toast config={toastConfig} />
       </LinearGradient>
     </PinGuard>
   );

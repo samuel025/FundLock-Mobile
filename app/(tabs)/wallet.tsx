@@ -33,7 +33,6 @@ import {
   View,
 } from "react-native";
 import { ActivityIndicator } from "react-native-paper";
-import Toast from "react-native-toast-message";
 
 export default function Wallet() {
   const { theme } = useTheme();
@@ -92,7 +91,7 @@ export default function Wallet() {
     try {
       await fetchWalletData();
     } catch (error: any) {
-      console.error("Failed to refresh wallet data:", error);
+      // console.error("Failed to refresh wallet data:", error);
       if (
         error?.status === 0 ||
         isConnected === false ||
@@ -266,7 +265,6 @@ export default function Wallet() {
           </View>
         </ScrollView>
       </LinearGradient>
-      <Toast config={toastConfig} />
     </>
   );
 }

@@ -29,7 +29,6 @@ import {
   Text,
   View,
 } from "react-native";
-import Toast from "react-native-toast-message";
 
 export default function Index() {
   const { theme } = useTheme();
@@ -51,7 +50,6 @@ export default function Index() {
     fetchWalletData,
     insights,
     successMessage,
-    toastConfig,
   } = useWallet();
 
   const [fontsLoaded] = useFonts({
@@ -226,7 +224,6 @@ export default function Index() {
           />
         </ScrollView>
       </LinearGradient>
-      <Toast config={toastConfig} />
     </>
   );
 }

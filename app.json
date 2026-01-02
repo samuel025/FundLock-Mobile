@@ -60,6 +60,12 @@
         "projectId": "e305a3ce-fb8e-4ad5-8cfe-df8ae96446b6"
       }
     },
-    "owner": "strixt"
+    "owner": "strixt",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/e305a3ce-fb8e-4ad5-8cfe-df8ae96446b6"
+    }
   }
 }

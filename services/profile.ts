@@ -2,7 +2,7 @@ import { API } from "@/lib/api";
 import axios, { AxiosError } from "axios";
 
 type ProfileData = {
-  id: number;
+  id: string; // was number
   email: string;
   firstName: string;
   lastName: string;

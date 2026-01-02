@@ -1,5 +1,6 @@
 import { AnimatedSplash } from "@/components/AnimatedSplash";
 import { OfflineBanner } from "@/components/OfflineBanner";
+import { useToastConfig } from "@/config/toastConfig";
 import { authActions } from "@/lib/authContext";
 import {
   initializeNotificationListeners,
@@ -22,14 +23,15 @@ import { useEffect, useState } from "react";
 import { ActivityIndicator, StatusBar, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
+import Toast from "react-native-toast-message";
 
 SplashScreen.preventAutoHideAsync();
 
-export default function RootLayout() {
-  const [queryClient] = useState(() => new QueryClient());
+function RootLayoutContent() {
   const [appIsReady, setAppIsReady] = useState(false);
   const [splashComplete, setSplashComplete] = useState(false);
   const isLoadingUser = useAuthStore((s) => s.isLoadingUser);
+  const toastConfig = useToastConfig(); // Now inside ThemeProvider
 
   useEffect(() => {
     async function prepare() {
@@ -90,42 +92,49 @@ export default function RootLayout() {
 
   if (splashComplete && isLoadingUser) {
     return (
-      <ThemeProvider>
-        <View
-          style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
-        >
-          <ActivityIndicator size="large" color="#09A674" />
-        </View>
-      </ThemeProvider>
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+        <ActivityIndicator size="large" color="#09A674" />
+      </View>
     );
   }
+
+  return (
+    <>
+      <ThemeAwareStatusBar />
+      {!splashComplete && (
+        <AnimatedSplash
+          isReady={appIsReady}
+          onAnimationComplete={handleSplashComplete}
+        />
+      )}
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <View style={{ flex: 1 }}>
+          <OfflineBanner />
+          <Stack screenOptions={{ headerShown: false }}>
+            <Stack.Screen name="signUp" />
+            <Stack.Screen name="signIn" />
+            <Stack.Screen name="index" />
+            <Stack.Screen name="budget" />
+            <Stack.Screen name="createPin" />
+            <Stack.Screen name="spendByOrgId" />
+            <Stack.Screen name="profileDetails" />
+            <Stack.Screen name="(tabs)" />
+          </Stack>
+        </View>
+      </GestureHandlerRootView>
+      <Toast config={toastConfig} />
+    </>
+  );
+}
+
+export default function RootLayout() {
+  const [queryClient] = useState(() => new QueryClient());
 
   return (
     <SafeAreaProvider>
       <QueryClientProvider client={queryClient}>
         <ThemeProvider>
-          <ThemeAwareStatusBar />
-          {!splashComplete && (
-            <AnimatedSplash
-              isReady={appIsReady}
-              onAnimationComplete={handleSplashComplete}
-            />
-          )}
-          <GestureHandlerRootView style={{ flex: 1 }}>
-            <View style={{ flex: 1 }}>
-              <OfflineBanner />
-              <Stack screenOptions={{ headerShown: false }}>
-                <Stack.Screen name="signUp" />
-                <Stack.Screen name="signIn" />
-                <Stack.Screen name="index" />
-                <Stack.Screen name="budget" />
-                <Stack.Screen name="createPin" />
-                <Stack.Screen name="spendByOrgId" />
-                <Stack.Screen name="profileDetails" />
-                <Stack.Screen name="(tabs)" />
-              </Stack>
-            </View>
-          </GestureHandlerRootView>
+          <RootLayoutContent />
         </ThemeProvider>
       </QueryClientProvider>
     </SafeAreaProvider>

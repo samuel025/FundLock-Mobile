@@ -187,7 +187,7 @@ export function useWallet() {
     useCallback(() => {
       if (user && accessToken && !hasFetchedRef.current) {
         fetchWalletData().catch((error) => {
-          console.error("Failed to fetch wallet data on focus:", error);
+          // console.error("Failed to fetch wallet data on focus:", error);
         });
         hasFetchedRef.current = true;
       }
@@ -220,7 +220,7 @@ export function useWallet() {
     ) {
       hasFetchedRef.current = false;
       fetchWalletData().catch((error) => {
-        console.error("Failed to fetch wallet data on token change:", error);
+        // console.error("Failed to fetch wallet data on token change:", error);
       });
       hasFetchedRef.current = true;
     }
@@ -243,7 +243,7 @@ export function useWallet() {
       });
       setTransactions((prev) => [...prev, ...data.transactions]);
     } catch (error: any) {
-      console.error("Failed to load more transactions:", error);
+      // console.error("Failed to load more transactions:", error);
 
       // Check if it's a network error
       if (error?.status === 0 || error?.message?.includes("network")) {

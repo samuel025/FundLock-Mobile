@@ -15,7 +15,6 @@ import {
   ScrollView,
   StatusBar,
 } from "react-native";
-import Toast from "react-native-toast-message";
 import spendStyles from "../../styles/spend.styles";
 
 export default function Spend() {
@@ -23,8 +22,6 @@ export default function Spend() {
   const isDark = scheme === "dark";
 
   const {
-    toastConfig,
-
     isCategoryLoading,
     categories,
     isCompanyLoading,
@@ -156,8 +153,6 @@ export default function Spend() {
           </ScrollView>
         </KeyboardAvoidingView>
       </LinearGradient>
-
-      <Toast config={toastConfig} />
     </PinGuard>
   );
 }

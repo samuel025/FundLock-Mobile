@@ -6,14 +6,14 @@ import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 interface QuickActionsProps {
   onAddMoney: () => void;
   onWithdraw: () => void;
-  onSignOut: () => void;
+  onBudget: () => void;
   onSpend: () => void;
 }
 
 export default function QuickActions({
   onAddMoney,
   onWithdraw,
-  onSignOut,
+  onBudget,
   onSpend,
 }: QuickActionsProps) {
   const { theme } = useTheme();
@@ -70,7 +70,7 @@ export default function QuickActions({
           </Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.actionItem} onPress={onSignOut}>
+        <TouchableOpacity style={styles.actionItem} onPress={onBudget}>
           <View
             style={[
               styles.actionIcon,

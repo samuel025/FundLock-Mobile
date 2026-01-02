@@ -1,0 +1,122 @@
+{
+  "findings": [
+    {
+      "ruleId": "NO_REQUEST_TIMEOUT",
+      "description": "axios request without timeout configuration",
+      "severity": "MEDIUM",
+      "filePath": "/home/samuel/Documents/Expo/fundlock/lib/api.ts",
+      "line": 9,
+      "snippet": "const REFRESH_TOKEN_KEY = \"refresh_token\";\n\nexport const API = axios.create({\n  baseURL: process.env.EXPO_PUBLIC_BASE_URL,\n});",
+      "suggestion": "Add timeout to axios config: { timeout: 30000 } to prevent hanging requests."
+    },
+    {
+      "ruleId": "NETWORK_LOGGER_IN_PRODUCTION",
+      "description": "Network interceptor with logging not wrapped in __DEV__ check",
+      "severity": "MEDIUM",
+      "filePath": "/home/samuel/Documents/Expo/fundlock/lib/api.ts",
+      "line": 23,
+      "snippet": "\n// Request interceptor - add auth token\nAPI.interceptors.request.use(\n  (config) => {\n    const state = useAuthStore.getState();",
+      "suggestion": "Wrap network logging in __DEV__ check or disable in production to prevent sensitive data exposure"
+    },
+    {
+      "ruleId": "NETWORK_LOGGER_IN_PRODUCTION",
+      "description": "Network interceptor with logging not wrapped in __DEV__ check",
+      "severity": "MEDIUM",
+      "filePath": "/home/samuel/Documents/Expo/fundlock/lib/api.ts",
+      "line": 40,
+      "snippet": "\n// Response interceptor - handle token refresh\nAPI.interceptors.response.use(\n  (response) => response,\n  async (error) => {",
+      "suggestion": "Wrap network logging in __DEV__ check or disable in production to prevent sensitive data exposure"
+    },
+    {
+      "ruleId": "SENSITIVE_LOGGING",
+      "description": "console.log() logging Authentication Token: Expo push token:",
+      "severity": "MEDIUM",
+      "filePath": "/home/samuel/Documents/Expo/fundlock/lib/pushNotifications.ts",
+      "line": 35,
+      "snippet": "\n  const token = tokenResp.data;\n  console.log(\"Expo push token:\", token);\n  return { token, status };\n}",
+      "suggestion": "Remove console logs with sensitive data or wrap in __DEV__ check. Use a logging library with data filtering for production."
+    },
+    {
+      "ruleId": "SENSITIVE_DATA_IN_ERROR_MESSAGES",
+      "description": "Error object logged directly - may contain sensitive data or stack traces",
+      "severity": "MEDIUM",
+      "filePath": "/home/samuel/Documents/Expo/fundlock/services/auth.ts",
+      "line": 117,
+      "snippet": "    }\n\n    console.error(\"Sign up failed:\", error);\n    throw new Error(\"An unexpected error occurred. Please try again.\");\n  }",
+      "suggestion": "Log only safe error properties (message, code). Sanitize error messages before displaying to users. Never expose stack traces in production."
+    },
+    {
+      "ruleId": "NO_REQUEST_TIMEOUT",
+      "description": "axios request without timeout configuration",
+      "severity": "MEDIUM",
+      "filePath": "/home/samuel/Documents/Expo/fundlock/services/billpayment-real.ts",
+      "line": 69,
+      "snippet": "export async function getNetworkProviders(): Promise<NetworkProvider[]> {\n  try {\n    const response = await axios.get<NetworkProvidersResponse>(\n      `${API}/bill-payment/networks`,\n      {",
+      "suggestion": "Add timeout to axios config: { timeout: 30000 } to prevent hanging requests."
+    },
+    {
+      "ruleId": "NO_REQUEST_TIMEOUT",
+      "description": "axios request without timeout configuration",
+      "severity": "MEDIUM",
+      "filePath": "/home/samuel/Documents/Expo/fundlock/services/billpayment-real.ts",
+      "line": 94,
+      "snippet": "): Promise<DataBundle[]> {\n  try {\n    const response = await axios.get<DataBundlesResponse>(\n      `${API}/bill-payment/data-bundles/${networkCode}`,\n      {",
+      "suggestion": "Add timeout to axios config: { timeout: 30000 } to prevent hanging requests."
+    },
+    {
+      "ruleId": "SENSITIVE_LOGGING",
+      "description": "console.warn() logging Authentication Token: Failed to register push token:",
+      "severity": "MEDIUM",
+      "filePath": "/home/samuel/Documents/Expo/fundlock/services/push.ts",
+      "line": 7,
+      "snippet": "    await API.post(\"/api/v1/fundlock/notifications/register\", { token });\n  } catch (e) {\n    console.warn(\"Failed to register push token:\", e);\n  }\n}",
+      "suggestion": "Remove console logs with sensitive data or wrap in __DEV__ check. Use a logging library with data filtering for production."
+    },
+    {
+      "ruleId": "NO_REQUEST_TIMEOUT",
+      "description": "axios request without timeout configuration",
+      "severity": "MEDIUM",
+      "filePath": "/home/samuel/Documents/Expo/fundlock/services/refreshToken.ts",
+      "line": 19,
+      "snippet": "}> {\n  try {\n    const response = await axios.post<RefreshTokenResponse>(\n      `${process.env.EXPO_PUBLIC_BASE_URL}/api/v1/fundlock/refresh-token`,\n      { refreshToken }",
+      "suggestion": "Add timeout to axios config: { timeout: 30000 } to prevent hanging requests."
+    },
+    {
+      "ruleId": "SENSITIVE_LOGGING",
+      "description": "console.error() logging Authentication Token: Token refresh failed:",
+      "severity": "MEDIUM",
+      "filePath": "/home/samuel/Documents/Expo/fundlock/services/refreshToken.ts",
+      "line": 29,
+      "snippet": "      const errorMessage =\n        axiosError.response?.data?.message || \"Failed to refresh token\";\n      console.error(\"Token refresh failed:\", errorMessage);\n      throw new Error(errorMessage);\n    }",
+      "suggestion": "Remove console logs with sensitive data or wrap in __DEV__ check. Use a logging library with data filtering for production."
+    },
+    {
+      "ruleId": "ROOT_JAILBREAK_DETECTION_ABSENT",
+      "description": "Sensitive app (banking/fintech/healthcare) without root/jailbreak detection",
+      "severity": "HIGH",
+      "filePath": "/home/samuel/Documents/Expo/fundlock/app/(tabs)/index.tsx",
+      "line": 1,
+      "suggestion": "Implement root/jailbreak detection using jail-monkey or similar library. Warn users or restrict functionality on compromised devices."
+    },
+    {
+      "ruleId": "MISSING_RUNTIME_INTEGRITY_CHECKS",
+      "description": "Sensitive app without runtime integrity or tamper detection",
+      "severity": "MEDIUM",
+      "filePath": "/home/samuel/Documents/Expo/fundlock/app/(tabs)/index.tsx",
+      "line": 1,
+      "suggestion": "Implement runtime integrity checks: Play Integrity API (Android), App Attest (iOS), or signature verification to detect tampering."
+    },
+    {
+      "ruleId": "MISSING_SECURITY_HEADERS",
+      "description": "WebView loading external content without security headers",
+      "severity": "LOW",
+      "filePath": "/home/samuel/Documents/Expo/fundlock/components/profileComponents/DepositModal.tsx",
+      "line": 384,
+      "snippet": "            </TouchableOpacity>\n          </View>\n          <WebView\n            source={{ uri: depositLink ?? \"about:blank\" }}\n            startInLoadingState",
+      "suggestion": "Add security headers to WebView source: X-Frame-Options, Content-Security-Policy. Validate origin of loaded content."
+    }
+  ],
+  "scannedFiles": 125,
+  "duration": 2225,
+  "timestamp": "2026-01-02T12:09:36.948Z"
+}

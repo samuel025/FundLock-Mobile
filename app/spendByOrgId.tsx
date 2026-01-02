@@ -22,7 +22,7 @@ import {
   ViewStyle,
 } from "react-native";
 import { TextInput } from "react-native-paper";
-import Toast from "react-native-toast-message";
+import Toast from "react-native-toast-message"; // Keep for Toast.show() calls
 import * as yup from "yup";
 
 const schema = yup.object({
@@ -660,8 +660,6 @@ export default function SpendByOrgId() {
           )}
         </ScrollView>
       </KeyboardAvoidingView>
-
-      <Toast config={toastConfig} />
     </LinearGradient>
   );
 }

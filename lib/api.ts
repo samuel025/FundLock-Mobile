@@ -100,7 +100,7 @@ API.interceptors.response.use(
       // Retry the original request
       return API(originalRequest);
     } catch (refreshError) {
-      console.error("Token refresh failed:", refreshError);
+      // console.error("Token refresh failed:", refreshError);
 
       // Reject all queued requests
       failedQueue.forEach((queuedRequest) => {
@@ -118,7 +118,7 @@ API.interceptors.response.use(
         await SecureStore.deleteItemAsync("refresh_token");
         await SecureStore.deleteItemAsync("user_data");
       } catch (storageError) {
-        console.error("Failed to clear storage:", storageError);
+        // console.error("Failed to clear storage:", storageError);
       }
 
       // Redirect to sign in page

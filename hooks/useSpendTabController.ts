@@ -1,4 +1,3 @@
-import { useToastConfig } from "@/config/toastConfig";
 import { useCategory } from "@/hooks/useCategory";
 import { useCompany } from "@/hooks/useCompany";
 import { useGetLocks } from "@/hooks/useGetLocks";
@@ -29,8 +28,6 @@ const schema = yup.object({
 export type SpendTabFormData = yup.InferType<typeof schema>;
 
 export function useSpendTabController() {
-  const toastConfig = useToastConfig();
-
   const [allowDirectOutlet, setAllowDirectOutlet] = useState(false);
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(
     null
@@ -188,9 +185,6 @@ export function useSpendTabController() {
   };
 
   return {
-    toastConfig,
-
-    // data/loading
     isCategoryLoading,
     categories,
     isCompanyLoading,

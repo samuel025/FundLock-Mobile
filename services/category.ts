@@ -24,7 +24,7 @@ export async function getCategories(): Promise<Categories[]> {
       const axiosError = error as AxiosError<ErrorResponse>;
 
       if (!axiosError.response) {
-        console.error("Network error while fetching transactions");
+        // console.error("Network error while fetching transactions");
         const customError: any = new Error(
           "Network error. Please check your internet connection and try again."
         );

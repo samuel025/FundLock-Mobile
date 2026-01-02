@@ -23,8 +23,7 @@ const slides = [
   {
     id: "1",
     title: "Secure Your Funds",
-    description:
-      "Lock your savings with military-grade encryption and build financial discipline.",
+    description: "Lock your savings and build financial discipline.",
     icon: "shield-checkmark-outline",
   },
   {
@@ -38,7 +37,7 @@ const slides = [
     id: "3",
     title: "Financial Freedom",
     description:
-      "Take control of your future. Join thousands of users securing their dreams today.",
+      "Take control of your future. Join many users securing their dreams today.",
     icon: "rocket-outline",
   },
 ];

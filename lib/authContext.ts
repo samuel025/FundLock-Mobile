@@ -86,7 +86,7 @@ export const authActions = {
       setIsLoadingUser(true);
       const response = await getProfile();
       const userData: User = {
-        id: response.data.Profile.id.toString(),
+        id: response.data.Profile.id, // was .toString()
         email: response.data.Profile.email,
         firstName: response.data.Profile.firstName,
         lastName: response.data.Profile.lastName,
@@ -98,8 +98,9 @@ export const authActions = {
       setUser(userData);
       return userData;
     } catch (error) {
+      // don't rethrow — keep app flow moving
       // console.error("Failed to fetch user:", error);
-      // throw error;
+      return null;
     } finally {
       setIsLoadingUser(false);
     }

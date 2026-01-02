@@ -1,7 +1,6 @@
 import { CategoryPicker } from "@/components/CategoryPicker";
 import { ExpireDatePicker } from "@/components/ExpireDatePicker";
 import { PinGuard } from "@/components/PinGuard";
-import { useToastConfig } from "@/config/toastConfig";
 import { useCategory } from "@/hooks/useCategory";
 import { useGetLocks } from "@/hooks/useGetLocks";
 import { useLock } from "@/hooks/useLock";
@@ -33,7 +32,7 @@ import {
   View,
 } from "react-native";
 import { TextInput } from "react-native-paper";
-import Toast from "react-native-toast-message";
+import Toast from "react-native-toast-message"; 
 import * as yup from "yup";
 
 const schema = yup.object({
@@ -69,7 +68,6 @@ export default function Budget() {
   const { theme, scheme } = useTheme();
   const isDark = scheme === "dark";
   const router = useRouter();
-  const toastConfig = useToastConfig();
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(
     null
   );
@@ -684,7 +682,6 @@ export default function Budget() {
           </KeyboardAvoidingView>
         </LinearGradient>
       </PinGuard>
-      <Toast config={toastConfig} />
     </>
   );
 }

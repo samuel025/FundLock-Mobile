@@ -5,7 +5,7 @@ import { LoginResponse } from "@/types/Response";
 import axios, { AxiosError } from "axios";
 
 type UserData = {
-  id: number;
+  id: string;
   email: string;
   firstName: string;
   lastName: string;
@@ -20,7 +20,6 @@ type SignUpResponse = {
   };
 };
 
-// Broaden to match backend error payloads like: { status: "90", message: "...", data: null }
 type ErrorResponse = {
   status?: string; // backend "status" (e.g. "90")
   message?: string;
