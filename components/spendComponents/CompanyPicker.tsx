@@ -136,6 +136,43 @@ export default function CompanyPicker({
                 <FlatList
                   data={companies}
                   keyExtractor={(i) => i.id}
+                  ListEmptyComponent={() => (
+                    <View
+                      style={{
+                        alignItems: "center",
+                        paddingVertical: 40,
+                        paddingHorizontal: 20,
+                      }}
+                    >
+                      <Ionicons
+                        name="business-outline"
+                        size={48}
+                        color={isDark ? "rgba(255,255,255,0.3)" : "#CBD5E1"}
+                      />
+                      <Text
+                        style={{
+                          fontFamily: "Poppins_500Medium",
+                          fontSize: 15,
+                          color: isDark ? "rgba(255,255,255,0.5)" : "#64748B",
+                          marginTop: 12,
+                          textAlign: "center",
+                        }}
+                      >
+                        No companies available
+                      </Text>
+                      <Text
+                        style={{
+                          fontFamily: "Poppins_400Regular",
+                          fontSize: 13,
+                          color: isDark ? "rgba(255,255,255,0.35)" : "#94A3B8",
+                          marginTop: 4,
+                          textAlign: "center",
+                        }}
+                      >
+                        Try selecting a different category
+                      </Text>
+                    </View>
+                  )}
                   ItemSeparatorComponent={() => (
                     <View
                       style={{

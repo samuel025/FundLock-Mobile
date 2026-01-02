@@ -49,39 +49,7 @@ export default function ModeSwitch({
         },
       ]}
     >
-      <Pressable
-        onPress={() => onModeChange(false)}
-        accessibilityRole="button"
-        accessibilityState={{ selected: !allowDirectOutlet }}
-        style={({ pressed }) => [
-          styles.modeOption,
-          !allowDirectOutlet && { backgroundColor: theme.colors.primary },
-          pressed && styles.modeOptionPressed,
-        ]}
-      >
-        <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-          <Ionicons
-            name="business"
-            size={14}
-            color={
-              !allowDirectOutlet
-                ? theme.colors.balanceText
-                : theme.colors.primary
-            }
-          />
-          <Text
-            style={[
-              styles.modeOptionText,
-              !allowDirectOutlet
-                ? { color: theme.colors.balanceText }
-                : { color: theme.colors.primary },
-            ]}
-          >
-            By company
-          </Text>
-        </View>
-      </Pressable>
-
+      {/* Select outlet directly - NOW FIRST */}
       <Pressable
         onPress={() => onModeChange(true)}
         accessibilityRole="button"
@@ -111,6 +79,40 @@ export default function ModeSwitch({
             ]}
           >
             Select outlet directly
+          </Text>
+        </View>
+      </Pressable>
+
+      {/* By company - NOW SECOND */}
+      <Pressable
+        onPress={() => onModeChange(false)}
+        accessibilityRole="button"
+        accessibilityState={{ selected: !allowDirectOutlet }}
+        style={({ pressed }) => [
+          styles.modeOption,
+          !allowDirectOutlet && { backgroundColor: theme.colors.primary },
+          pressed && styles.modeOptionPressed,
+        ]}
+      >
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+          <Ionicons
+            name="business"
+            size={14}
+            color={
+              !allowDirectOutlet
+                ? theme.colors.balanceText
+                : theme.colors.primary
+            }
+          />
+          <Text
+            style={[
+              styles.modeOptionText,
+              !allowDirectOutlet
+                ? { color: theme.colors.balanceText }
+                : { color: theme.colors.primary },
+            ]}
+          >
+            By company
           </Text>
         </View>
       </Pressable>

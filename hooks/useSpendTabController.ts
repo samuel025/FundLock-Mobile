@@ -28,7 +28,7 @@ const schema = yup.object({
 export type SpendTabFormData = yup.InferType<typeof schema>;
 
 export function useSpendTabController() {
-  const [allowDirectOutlet, setAllowDirectOutlet] = useState(false);
+  const [allowDirectOutlet, setAllowDirectOutlet] = useState(true); 
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(
     null
   );

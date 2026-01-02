@@ -86,35 +86,14 @@ export default function SpendOutletFlow({
 
       <Text style={[styles.helperText, { color: theme.colors.muted }]}>
         {allowDirectOutlet
-          ? "Showing all outlets."
+          ? "Select an outlet directly to make payment."
           : selectedCompany
           ? "Showing outlets for the selected company."
-          : "Pick a company to see its outlets."}
+          : "Pick a company first to see its outlets."}
       </Text>
 
-      {/* Company Picker */}
-      {!allowDirectOutlet && (
-        <>
-          {isCompanyLoading ? (
-            <LoadingRow
-              theme={theme}
-              isDark={isDark}
-              styles={styles}
-              message="Loading companies..."
-            />
-          ) : (
-            <CompanyPicker
-              companies={companies}
-              selected={selectedCompany}
-              onSelect={onSelectCompany}
-              styles={pickerStyles}
-            />
-          )}
-        </>
-      )}
-
-      {/* Outlet Picker */}
-      {(selectedCompany || allowDirectOutlet) && (
+      {/* Direct Outlet Mode - Show outlets directly (NOW FIRST/DEFAULT) */}
+      {allowDirectOutlet && (
         <>
           {isOutletLoading ? (
             <LoadingRow
@@ -134,8 +113,50 @@ export default function SpendOutletFlow({
         </>
       )}
 
+      {/* Company Mode - Show company picker first, then outlets */}
+      {!allowDirectOutlet && (
+        <>
+          {isCompanyLoading ? (
+            <LoadingRow
+              theme={theme}
+              isDark={isDark}
+              styles={styles}
+              message="Loading companies..."
+            />
+          ) : (
+            <CompanyPicker
+              companies={companies}
+              selected={selectedCompany}
+              onSelect={onSelectCompany}
+              styles={pickerStyles}
+            />
+          )}
+
+          {/* Outlet Picker - only show after company selected */}
+          {selectedCompany && (
+            <>
+              {isOutletLoading ? (
+                <LoadingRow
+                  theme={theme}
+                  isDark={isDark}
+                  styles={styles}
+                  message="Loading outlets..."
+                />
+              ) : (
+                <OutletPicker
+                  outlets={outlets}
+                  selected={selectedOutlet}
+                  onSelect={onSelectOutlet}
+                  styles={pickerStyles}
+                />
+              )}
+            </>
+          )}
+        </>
+      )}
+
       {/* Selected outlet summary */}
-      {selectedOutlet && (
+      {selectedOutlet && pickedOutlet && (
         <View style={{ marginTop: 8, marginBottom: 6 }}>
           <Text style={[styles.helperText, { color: theme.colors.muted }]}>
             Selected outlet:{" "}
@@ -145,13 +166,13 @@ export default function SpendOutletFlow({
                 color: theme.colors.text,
               }}
             >
-              {pickedOutlet?.name ?? selectedOutlet}
+              {pickedOutlet.name}
             </Text>
           </Text>
         </View>
       )}
 
-      {/* Amount & PIN sections */}
+      {/* Amount & PIN sections - only show after outlet selected */}
       {selectedOutlet && (
         <>
           <AmountSection
