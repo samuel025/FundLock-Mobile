@@ -63,7 +63,8 @@ export default function SpendOutletFlow({
   onSubmit,
 
   pickerStyles,
-}: SpendOutletFlowProps) {
+  categoryId, // Add this prop
+}: SpendOutletFlowProps & { categoryId?: string }) {
   const disableAction = isSpending || !isFormValid;
 
   const pickedOutlet = selectedOutlet
@@ -108,6 +109,7 @@ export default function SpendOutletFlow({
               selected={selectedOutlet}
               onSelect={onSelectOutlet}
               styles={pickerStyles}
+              categoryId={categoryId}
             />
           )}
         </>
@@ -129,6 +131,7 @@ export default function SpendOutletFlow({
               selected={selectedCompany}
               onSelect={onSelectCompany}
               styles={pickerStyles}
+              categoryId={categoryId}
             />
           )}
 
@@ -148,6 +151,8 @@ export default function SpendOutletFlow({
                   selected={selectedOutlet}
                   onSelect={onSelectOutlet}
                   styles={pickerStyles}
+                  categoryId={categoryId}
+                  companyId={selectedCompany}
                 />
               )}
             </>

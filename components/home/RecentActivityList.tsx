@@ -44,13 +44,16 @@ export default function RecentActivityList({
   const formatDateTime = (iso?: string) => {
     if (!iso) return "";
     try {
-      return new Date(iso).toLocaleString(undefined, {
+      // Append 'Z' if not present to indicate UTC
+      const utcString = iso.endsWith("Z") ? iso : iso + "Z";
+      return new Date(utcString).toLocaleString(undefined, {
         year: "numeric",
         month: "short",
         day: "numeric",
         hour: "numeric",
         minute: "2-digit",
         hour12: true,
+        timeZone: "Africa/Lagos",
       });
     } catch {
       return iso;

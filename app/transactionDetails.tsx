@@ -53,7 +53,9 @@ export default function TransactionDetailsScreen() {
   const formatDateTime = (iso?: string) => {
     if (!iso) return "";
     try {
-      return new Date(iso).toLocaleString(undefined, {
+      // Append 'Z' if not present to indicate UTC
+      const utcString = iso.endsWith("Z") ? iso : iso + "Z";
+      return new Date(utcString).toLocaleString(undefined, {
         weekday: "long",
         year: "numeric",
         month: "long",
@@ -61,6 +63,7 @@ export default function TransactionDetailsScreen() {
         hour: "numeric",
         minute: "2-digit",
         hour12: true,
+        timeZone: "Africa/Lagos",
       });
     } catch {
       return iso;
