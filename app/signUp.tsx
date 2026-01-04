@@ -93,8 +93,6 @@ export default function SignUp() {
   const onSubmit = async (data: signUpFormData) => {
     try {
       await authActions.signUp(data);
-
-      // OTP is automatically sent by backend after signup
       setPendingEmail(data.email);
       setShowOtpModal(true);
     } catch (error: any) {

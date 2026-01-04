@@ -63,7 +63,7 @@ export default function SpendOutletFlow({
   onSubmit,
 
   pickerStyles,
-  categoryId, // Add this prop
+  categoryId,
 }: SpendOutletFlowProps & { categoryId?: string }) {
   const disableAction = isSpending || !isFormValid;
 
@@ -135,9 +135,9 @@ export default function SpendOutletFlow({
             />
           )}
 
-          {/* Outlet Picker - only show after company selected */}
+          {/* Add spacing between company and outlet pickers */}
           {selectedCompany && (
-            <>
+            <View style={{ marginTop: 25 }}>
               {isOutletLoading ? (
                 <LoadingRow
                   theme={theme}
@@ -155,7 +155,7 @@ export default function SpendOutletFlow({
                   companyId={selectedCompany}
                 />
               )}
-            </>
+            </View>
           )}
         </>
       )}
