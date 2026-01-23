@@ -500,6 +500,18 @@ export function AnimatedSplash({
               ]}
             />
 
+            {/* Circular colored background for light mode */}
+            {!isDark && (
+              <View style={styles.logoBackground}>
+                <LinearGradient
+                  colors={["#38B2AC", "#2DD4BF"]}
+                  style={styles.logoBackgroundGradient}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                />
+              </View>
+            )}
+
             {/* Logo with name */}
             <View style={styles.logoContainer}>
               <Image
@@ -623,11 +635,23 @@ const styles = StyleSheet.create({
     shadowRadius: 40,
     elevation: 20,
   },
+  logoBackground: {
+    position: "absolute",
+    width: 200,
+    height: 200,
+    borderRadius: 100, // Perfect circle
+    overflow: "hidden",
+  },
+  logoBackgroundGradient: {
+    width: "100%",
+    height: "100%",
+  },
   logoContainer: {
     width: 280,
     height: 140,
     alignItems: "center",
     justifyContent: "center",
+    zIndex: 1,
   },
   logoImage: {
     width: "100%",
