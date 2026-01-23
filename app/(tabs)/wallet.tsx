@@ -1,6 +1,7 @@
 import ModernTransactionList from "@/components/ModernTransactionList";
 import { NetworkError } from "@/components/NetworkError";
 import { OfflineBanner } from "@/components/OfflineBanner";
+import { PinGuard } from "@/components/PinGuard";
 import QuickActions from "@/components/QuickActions";
 import RecentStatistics from "@/components/RecentStatistics";
 import WalletBalanceCard from "@/components/WalletBalanceCard";
@@ -156,6 +157,7 @@ export default function Wallet() {
 
   return (
     <>
+    <PinGuard>
       <LinearGradient
         colors={[theme.colors.gradientStart, theme.colors.gradientEnd]}
         style={styles.container}
@@ -265,6 +267,7 @@ export default function Wallet() {
           </View>
         </ScrollView>
       </LinearGradient>
+      </PinGuard>
     </>
   );
 }

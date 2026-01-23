@@ -29,7 +29,8 @@ function formatCountdown(totalSeconds: number) {
 }
 
 export function OtpVerifyModal({ visible, email, onClose, onVerified }: Props) {
-  const { theme } = useTheme();
+  const { theme, scheme } = useTheme();
+  const isDark = scheme === "dark";
   const [otp, setOtp] = useState("");
   const [localError, setLocalError] = useState<string | null>(null);
 
@@ -58,7 +59,7 @@ export function OtpVerifyModal({ visible, email, onClose, onVerified }: Props) {
 
   const canSubmit = useMemo(
     () => otp.length === 7 && /^\d{7}$/.test(otp),
-    [otp]
+    [otp],
   );
 
   const verifyMutation = useMutation({
@@ -93,8 +94,8 @@ export function OtpVerifyModal({ visible, email, onClose, onVerified }: Props) {
   const resendLabel = resendMutation.isPending
     ? "Resending..."
     : resendCooldown > 0
-    ? `Resend in ${formatCountdown(resendCooldown)}`
-    : "Resend OTP";
+      ? `Resend in ${formatCountdown(resendCooldown)}`
+      : "Resend OTP";
 
   return (
     <Modal
@@ -121,7 +122,33 @@ export function OtpVerifyModal({ visible, email, onClose, onVerified }: Props) {
             keyboardType="number-pad"
             autoCapitalize="none"
             mode="outlined"
-            style={styles.input}
+            style={[
+              styles.input,
+              {
+                backgroundColor: isDark
+                  ? theme.colors.surface
+                  : theme.colors.background,
+              },
+            ]}
+            textColor={theme.colors.text}
+            outlineColor={
+              isDark ? "rgba(255,255,255,0.15)" : theme.colors.border
+            }
+            activeOutlineColor={theme.colors.primary}
+            placeholderTextColor={theme.colors.muted}
+            theme={{
+              colors: {
+                onSurfaceVariant: theme.colors.muted, // Label color
+                background: isDark
+                  ? theme.colors.surface
+                  : theme.colors.background,
+                text: theme.colors.text,
+                primary: theme.colors.primary,
+                outline: isDark
+                  ? "rgba(255,255,255,0.15)"
+                  : theme.colors.border,
+              },
+            }}
             error={!!localError}
           />
 

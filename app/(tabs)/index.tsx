@@ -5,6 +5,7 @@ import RecentActivityList from "@/components/home/RecentActivityList";
 import SuccessBanner from "@/components/home/SuccessBanner";
 import { NetworkError } from "@/components/NetworkError";
 import { OfflineBanner } from "@/components/OfflineBanner";
+import { PinGuard } from "@/components/PinGuard";
 import SpendingInsights from "@/components/SpendingInsights";
 import { useNetworkStatus } from "@/hooks/useNetworkStatus";
 import { useWallet } from "@/hooks/useWallet";
@@ -167,6 +168,7 @@ export default function Index() {
 
   return (
     <>
+    <PinGuard>
       <LinearGradient
         colors={[theme.colors.gradientStart, theme.colors.gradientEnd]}
         style={styles.container}
@@ -224,6 +226,7 @@ export default function Index() {
           />
         </ScrollView>
       </LinearGradient>
+      </PinGuard>
     </>
   );
 }
