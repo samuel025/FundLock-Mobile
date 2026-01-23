@@ -28,6 +28,7 @@ export function AccountActions({
   const chevronColor = theme.colors.muted;
 
   const canUseBankTransfer = !!hasBvn;
+  const canWithdraw = !!hasBankDetails;
 
   return (
     <View style={styles.section}>
@@ -100,14 +101,14 @@ export function AccountActions({
 
           <View style={{ flex: 1 }}>
             <Text style={[styles.rowTitle, { color: theme.colors.text }]}>
-              Bank Transfer
+              Deposit
             </Text>
             <Text style={[styles.rowSubtitle, { color: theme.colors.muted }]}>
               {!canUseBankTransfer
                 ? "Add your BVN to enable bank transfer deposits"
                 : fundingDetailsExist
-                ? "View your bank transfer details"
-                : "Create your bank transfer details"}
+                  ? "View your bank details for transfer"
+                  : "Get your bank transfer details"}
             </Text>
           </View>
 
@@ -122,8 +123,19 @@ export function AccountActions({
           style={[styles.divider, { backgroundColor: theme.colors.border }]}
         />
 
-        {/* Withdraw (unchanged) */}
-        <TouchableOpacity style={styles.row} onPress={onWithdraw}>
+        {/* Withdraw - Disabled if no bank details */}
+        <TouchableOpacity
+          style={[styles.row, !canWithdraw && disabledStyle]}
+          disabled={!canWithdraw}
+          onPress={() => {
+            if (!canWithdraw) {
+              router.push("/addBankDetails");
+              return;
+            }
+            onWithdraw();
+          }}
+          accessibilityState={{ disabled: !canWithdraw }}
+        >
           <View
             style={[
               styles.actionIcon,
@@ -133,14 +145,32 @@ export function AccountActions({
             <Ionicons name="cash-outline" size={20} color="#D97706" />
           </View>
           <View style={{ flex: 1 }}>
-            <Text style={[styles.rowTitle, { color: theme.colors.text }]}>
+            <Text
+              style={[
+                styles.rowTitle,
+                { color: theme.colors.text },
+                !canWithdraw && { opacity: 0.6 },
+              ]}
+            >
               Withdraw
             </Text>
-            <Text style={[styles.rowSubtitle, { color: theme.colors.muted }]}>
-              Request money back to your bank
+            <Text
+              style={[
+                styles.rowSubtitle,
+                { color: theme.colors.muted },
+                !canWithdraw && { opacity: 0.6 },
+              ]}
+            >
+              {!canWithdraw
+                ? "Add bank details to enable withdrawals"
+                : "Request money back to your bank"}
             </Text>
           </View>
-          <Ionicons name="chevron-forward" size={20} color={chevronColor} />
+          <Ionicons
+            name="chevron-forward"
+            size={20}
+            color={!canWithdraw ? theme.colors.border : chevronColor}
+          />
         </TouchableOpacity>
 
         <View
@@ -227,7 +257,7 @@ export function AccountActions({
             >
               {hasBankDetails
                 ? "Bank details already added"
-                : "Add your bank account"}
+                : "Add your bank details for withdrawal"}
             </Text>
           </View>
           <Ionicons

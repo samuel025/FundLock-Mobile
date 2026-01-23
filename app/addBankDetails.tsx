@@ -122,9 +122,8 @@ export default function AddBankDetails() {
         type: "success",
       });
 
-      setTimeout(() => {
-        router.back();
-      }, 2000);
+        router.replace("/(tabs)/accountActions");
+ 
     } catch (err: any) {
       setBanner({
         message: err?.message || "Failed to save bank details",

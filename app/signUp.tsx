@@ -285,7 +285,7 @@ export default function SignUp() {
                       label="Email"
                       autoCapitalize="none"
                       keyboardType="email-address"
-                      placeholder="[email protected]"
+                      placeholder="email"
                       mode="outlined"
                       value={value}
                       onChangeText={onChange}

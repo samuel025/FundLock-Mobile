@@ -1,6 +1,6 @@
 import { useTheme } from "@/theme";
 import { Ionicons } from "@expo/vector-icons";
-import React, { useRef, useState } from "react";
+import React, { useMemo, useRef, useState } from "react";
 import {
   Animated,
   FlatList,
@@ -8,6 +8,7 @@ import {
   Modal,
   Platform,
   Pressable,
+  StyleSheet,
   Text,
   TouchableOpacity,
   View,
@@ -67,19 +68,35 @@ export default function CategoryPicker({
     });
   };
 
+  const selectedItem = useMemo(() => {
+    if (!categories || !selected) return null;
+    return categories.find((c) => c.id === selected);
+  }, [categories, selected]);
+
   return (
     <View style={styles.section}>
       <Text style={styles.sectionTitle}>Category</Text>
       <TouchableOpacity style={styles.pickerButton} onPress={open}>
+        <View
+          style={[
+            styles.catIcon,
+            {
+              backgroundColor: isDark
+                ? "rgba(56,178,172,0.15)"
+                : theme.colors.actionIconLockBg,
+            },
+          ]}
+        >
+          <Ionicons name="pricetag" size={16} color={theme.colors.primary} />
+        </View>
         <Text style={styles.pickerText}>
-          {categories && selected
-            ? categories.find((c) => c.id === selected)?.name
-            : "Select category"}
+          {selectedItem?.name ?? "Select category"}
         </Text>
         <Ionicons
           name="chevron-down"
           size={20}
-          color={isDark ? "rgba(255,255,255,0.6)" : "#778DA9"}
+          color={theme.colors.muted}
+          style={{ marginLeft: "auto" }}
         />
       </TouchableOpacity>
 
@@ -87,15 +104,10 @@ export default function CategoryPicker({
         <Modal transparent animationType="none" visible>
           <Animated.View
             style={[
-              styles.modalOverlay,
+              localStyles.modalOverlay,
               {
-                backgroundColor: overlayOpacity.interpolate({
-                  inputRange: [0, 1],
-                  outputRange: [
-                    "rgba(0,0,0,0.0)",
-                    isDark ? "rgba(0,0,0,0.55)" : "rgba(0,0,0,0.35)",
-                  ],
-                }),
+                opacity: overlayOpacity,
+                backgroundColor: isDark ? "rgba(0,0,0,0.6)" : "rgba(0,0,0,0.4)",
               },
             ]}
           >
@@ -106,28 +118,28 @@ export default function CategoryPicker({
             >
               <Animated.View
                 style={[
-                  styles.modalLarge,
+                  localStyles.modalSheet,
                   {
                     transform: [{ translateY: sheetTranslate }],
                     backgroundColor: isDark
-                      ? "rgba(30,41,59,0.92)"
-                      : theme.colors.surface,
-                    borderTopLeftRadius: 16,
-                    borderTopRightRadius: 16,
+                      ? "#1B263B"
+                      : theme.colors.background,
                   },
                 ]}
               >
                 <View
                   style={[
-                    styles.modalHandle,
+                    localStyles.handle,
                     {
                       backgroundColor: isDark
-                        ? "rgba(255,255,255,0.25)"
-                        : "rgba(0,0,0,0.12)",
+                        ? "rgba(255,255,255,0.2)"
+                        : "rgba(0,0,0,0.1)",
                     },
                   ]}
                 />
-                <Text style={[styles.modalTitle, { color: theme.colors.text }]}>
+                <Text
+                  style={[localStyles.modalTitle, { color: theme.colors.text }]}
+                >
                   Select Category
                 </Text>
                 <FlatList
@@ -136,7 +148,7 @@ export default function CategoryPicker({
                   ItemSeparatorComponent={() => (
                     <View
                       style={[
-                        styles.itemSeparator,
+                        localStyles.separator,
                         {
                           backgroundColor: isDark
                             ? "rgba(255,255,255,0.08)"
@@ -146,57 +158,76 @@ export default function CategoryPicker({
                     />
                   )}
                   contentContainerStyle={{ paddingBottom: 24 }}
-                  renderItem={({ item }) => (
-                    <Pressable
-                      onPress={() => {
-                        onSelect(item.id);
-                        close();
-                      }}
-                      style={({ pressed }) => [
-                        styles.modalItem,
-                        pressed && {
-                          backgroundColor: isDark
-                            ? "rgba(255,255,255,0.06)"
-                            : "rgba(0,0,0,0.03)",
-                        },
-                      ]}
-                    >
-                      <View
-                        style={[
-                          styles.catIcon,
-                          {
+                  renderItem={({ item }) => {
+                    const active = selected === item.id;
+                    return (
+                      <Pressable
+                        onPress={() => {
+                          onSelect(item.id);
+                          close();
+                        }}
+                        style={({ pressed }) => [
+                          localStyles.item,
+                          pressed && {
                             backgroundColor: isDark
-                              ? "rgba(56,178,172,0.18)"
-                              : theme.colors.actionIconLockBg ?? "#E7F6F2",
+                              ? "rgba(255,255,255,0.06)"
+                              : "#F8FAFC",
                           },
                         ]}
-                      />
-                      <Text
-                        style={[
-                          styles.modalItemText,
-                          { color: theme.colors.text },
-                        ]}
                       >
-                        {item.name}
-                      </Text>
-                      {selected === item.id && (
-                        <Ionicons
-                          name="checkmark"
-                          size={18}
-                          color={theme.colors.primary}
-                        />
-                      )}
-                    </Pressable>
-                  )}
+                        <View
+                          style={[
+                            localStyles.itemIcon,
+                            {
+                              backgroundColor: active
+                                ? theme.colors.primary
+                                : isDark
+                                  ? "rgba(255,255,255,0.08)"
+                                  : "#F1F5F9",
+                            },
+                          ]}
+                        >
+                          <Ionicons
+                            name="pricetag"
+                            size={18}
+                            color={active ? "#fff" : theme.colors.primary}
+                          />
+                        </View>
+                        <Text
+                          style={[
+                            localStyles.itemText,
+                            {
+                              color: active
+                                ? theme.colors.primary
+                                : theme.colors.text,
+                              fontFamily: active
+                                ? "Poppins_600SemiBold"
+                                : "Poppins_500Medium",
+                            },
+                          ]}
+                        >
+                          {item.name}
+                        </Text>
+                        {active && (
+                          <Ionicons
+                            name="checkmark-circle"
+                            size={20}
+                            color={theme.colors.primary}
+                            style={{ marginLeft: "auto" }}
+                          />
+                        )}
+                      </Pressable>
+                    );
+                  }}
                 />
                 <TouchableOpacity
                   onPress={close}
-                  style={styles.modalClose}
+                  style={localStyles.closeButton}
                   accessibilityLabel="Close category picker"
                 >
                   <Text
                     style={[
-                      styles.modalCloseText,
+                      localStyles.closeButtonText,
                       { color: theme.colors.primary },
                     ]}
                   >
@@ -211,3 +242,63 @@ export default function CategoryPicker({
     </View>
   );
 }
+
+const localStyles = StyleSheet.create({
+  modalOverlay: {
+    flex: 1,
+    justifyContent: "flex-end",
+  },
+  modalSheet: {
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingHorizontal: 16,
+    paddingBottom: 32,
+    maxHeight: "70%",
+  },
+  handle: {
+    width: 40,
+    height: 4,
+    borderRadius: 2,
+    alignSelf: "center",
+    marginTop: 12,
+    marginBottom: 16,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontFamily: "Poppins_600SemiBold",
+    marginBottom: 16,
+    paddingHorizontal: 4,
+  },
+  separator: {
+    height: 1,
+    marginHorizontal: 20,
+  },
+  item: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+  },
+  itemIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 12,
+  },
+  itemText: {
+    fontSize: 15,
+    flex: 1,
+  },
+  closeButton: {
+    marginTop: 12,
+    alignItems: "center",
+    paddingVertical: 12,
+  },
+  closeButtonText: {
+    fontFamily: "Poppins_600SemiBold",
+    fontSize: 15,
+  },
+});

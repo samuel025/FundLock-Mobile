@@ -32,7 +32,7 @@ export default function BudgetsPage() {
   const totalBudgeted = useMemo(() => {
     return locksList.reduce(
       (sum, item) => sum + Number((item as any).amount ?? 0),
-      0
+      0,
     );
   }, [locksList]);
 
@@ -51,7 +51,7 @@ export default function BudgetsPage() {
       setTimeout(() => {
         flatListRef.current?.scrollToOffset({ offset: 0, animated: false });
       }, 100);
-    }, [fetchLocks])
+    }, [fetchLocks]),
   );
 
   return (
@@ -79,12 +79,24 @@ export default function BudgetsPage() {
             </Text>
           </View>
         </View>
-        <TouchableOpacity
-          style={[styles.addButton, { backgroundColor: theme.colors.card }]}
-          onPress={() => router.push("/budget")}
-        >
-          <Ionicons name="add" size={24} color={theme.colors.text} />
-        </TouchableOpacity>
+
+        <View style={styles.headerRight}>
+          {/* Analytics Button */}
+          <TouchableOpacity
+            style={[styles.iconButton, { backgroundColor: theme.colors.card }]}
+            onPress={() => router.push("/budgetAnalytics")}
+          >
+            <Ionicons name="analytics" size={22} color={theme.colors.primary} />
+          </TouchableOpacity>
+
+          {/* Add Budget Button */}
+          <TouchableOpacity
+            style={[styles.addButton, { backgroundColor: theme.colors.card }]}
+            onPress={() => router.push("/budget")}
+          >
+            <Ionicons name="add" size={24} color={theme.colors.text} />
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* Summary */}
@@ -192,6 +204,17 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.05,
     shadowRadius: 8,
     elevation: 2,
+  },
+  headerRight: {
+    flexDirection: "row",
+    gap: 10,
+  },
+  iconButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    justifyContent: "center",
+    alignItems: "center",
   },
   listSection: {
     flex: 1,

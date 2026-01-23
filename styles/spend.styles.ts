@@ -146,8 +146,8 @@ export default StyleSheet.create({
   modalClose: { marginTop: 12, alignItems: "center" },
   modalCloseText: { color: "#38B2AC", fontFamily: "Poppins_600SemiBold" },
   catIcon: {
-    width: 36,
-    height: 36,
+    width: 30,
+    height: 30,
     borderRadius: 8,
     justifyContent: "center",
     alignItems: "center",
