@@ -6,6 +6,7 @@ import { router } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
   Animated,
+  Image,
   Platform,
   StatusBar,
   StyleSheet,
@@ -133,9 +134,13 @@ export default function CreatePin() {
         {/* Header */}
         <View style={styles.header}>
           <View style={styles.logoWrapper}>
-            <LinearGradient colors={["#38B2AC", "#2C9A8F"]} style={styles.logo}>
-              <Ionicons name="lock-closed" size={28} color="#FFFFFF" />
-            </LinearGradient>
+            <View style={[styles.logo, { backgroundColor: "#38B2AC" }]}>
+              <Image
+                source={require("@/assets/images/Strixt-logo-bare.png")}
+                style={{ width: 32, height: 32 }}
+                resizeMode="contain"
+              />
+            </View>
           </View>
 
           <Text
@@ -163,8 +168,8 @@ export default function CreatePin() {
                   step === "confirm"
                     ? "#38B2AC"
                     : isDark
-                    ? "#415A77"
-                    : "#E2E8F0",
+                      ? "#415A77"
+                      : "#E2E8F0",
               },
             ]}
           />
@@ -176,14 +181,14 @@ export default function CreatePin() {
                   step === "confirm"
                     ? "#38B2AC"
                     : isDark
-                    ? "#1B263B"
-                    : "#F1F5F9",
+                      ? "#1B263B"
+                      : "#F1F5F9",
                 borderColor:
                   step === "confirm"
                     ? "#38B2AC"
                     : isDark
-                    ? "#415A77"
-                    : "#CBD5E1",
+                      ? "#415A77"
+                      : "#CBD5E1",
               },
               step === "confirm" && styles.progressDotActive,
             ]}
@@ -280,10 +285,10 @@ export default function CreatePin() {
                     borderColor: error
                       ? "#EF4444"
                       : isFilled
-                      ? "#38B2AC"
-                      : isDark
-                      ? "#415A77"
-                      : "#CBD5E1",
+                        ? "#38B2AC"
+                        : isDark
+                          ? "#415A77"
+                          : "#CBD5E1",
                   },
                   isFilled && styles.pinDotFilled,
                   isActive && styles.pinDotActive,

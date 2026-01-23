@@ -5,7 +5,6 @@ import {
   Poppins_700Bold,
   useFonts,
 } from "@expo-google-fonts/poppins";
-import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import * as SplashScreen from "expo-splash-screen";
 import React, { useCallback, useEffect, useRef, useState } from "react";
@@ -13,6 +12,7 @@ import {
   Animated,
   Dimensions,
   Easing,
+  Image,
   StyleSheet,
   Text,
   View,
@@ -43,60 +43,57 @@ function FloatingOrb({
 }) {
   const translateY = useRef(new Animated.Value(0)).current;
   const translateX = useRef(new Animated.Value(0)).current;
-  const opacity = useRef(new Animated.Value(0)).current;
-  const scale = useRef(new Animated.Value(0.3)).current;
+  const scale = useRef(new Animated.Value(0.8)).current;
 
   useEffect(() => {
-    // Fade in
-    Animated.sequence([
-      Animated.delay(delay),
-      Animated.parallel([
-        Animated.timing(opacity, {
-          toValue: 0.6,
-          duration: 800,
-          useNativeDriver: true,
-        }),
-        Animated.timing(scale, {
-          toValue: 1,
-          duration: 800,
-          easing: Easing.out(Easing.back(1.2)),
-          useNativeDriver: true,
-        }),
-      ]),
-    ]).start();
-
-    // Floating animation
     Animated.loop(
       Animated.parallel([
         Animated.sequence([
           Animated.timing(translateY, {
-            toValue: -30,
-            duration: duration,
+            toValue: -50,
+            duration: duration / 2,
+            delay,
             easing: Easing.inOut(Easing.ease),
             useNativeDriver: true,
           }),
           Animated.timing(translateY, {
-            toValue: 30,
-            duration: duration,
+            toValue: 0,
+            duration: duration / 2,
             easing: Easing.inOut(Easing.ease),
             useNativeDriver: true,
           }),
         ]),
         Animated.sequence([
           Animated.timing(translateX, {
-            toValue: 20,
-            duration: duration * 1.3,
+            toValue: 30,
+            duration: duration / 2,
+            delay,
             easing: Easing.inOut(Easing.ease),
             useNativeDriver: true,
           }),
           Animated.timing(translateX, {
-            toValue: -20,
-            duration: duration * 1.3,
+            toValue: 0,
+            duration: duration / 2,
             easing: Easing.inOut(Easing.ease),
             useNativeDriver: true,
           }),
         ]),
-      ])
+        Animated.sequence([
+          Animated.timing(scale, {
+            toValue: 1.2,
+            duration: duration / 2,
+            delay,
+            easing: Easing.inOut(Easing.ease),
+            useNativeDriver: true,
+          }),
+          Animated.timing(scale, {
+            toValue: 0.8,
+            duration: duration / 2,
+            easing: Easing.inOut(Easing.ease),
+            useNativeDriver: true,
+          }),
+        ]),
+      ]),
     ).start();
   }, []);
 
@@ -110,16 +107,13 @@ function FloatingOrb({
           width: size,
           height: size,
           borderRadius: size / 2,
-          opacity,
-          transform: [{ translateX }, { translateY }, { scale }],
+          transform: [{ translateY }, { translateX }, { scale }],
         },
       ]}
     >
       <LinearGradient
         colors={[color, "transparent"]}
-        style={[styles.orbGradient, { borderRadius: size / 2 }]}
-        start={{ x: 0.5, y: 0 }}
-        end={{ x: 0.5, y: 1 }}
+        style={styles.orbGradient}
       />
     </Animated.View>
   );
@@ -127,40 +121,31 @@ function FloatingOrb({
 
 // Animated ring pulse
 function PulseRing({ delay, isDark }: { delay: number; isDark: boolean }) {
-  const scale = useRef(new Animated.Value(0.8)).current;
-  const opacity = useRef(new Animated.Value(0)).current;
+  const scale = useRef(new Animated.Value(1)).current;
+  const opacity = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
     Animated.loop(
-      Animated.sequence([
-        Animated.delay(delay),
-        Animated.parallel([
-          Animated.timing(scale, {
-            toValue: 2.5,
-            duration: 2000,
-            easing: Easing.out(Easing.ease),
-            useNativeDriver: true,
-          }),
-          Animated.sequence([
-            Animated.timing(opacity, {
-              toValue: 0.4,
-              duration: 200,
-              useNativeDriver: true,
-            }),
-            Animated.timing(opacity, {
-              toValue: 0,
-              duration: 1800,
-              useNativeDriver: true,
-            }),
-          ]),
-        ]),
+      Animated.parallel([
         Animated.timing(scale, {
-          toValue: 0.8,
-          duration: 0,
+          toValue: 1.8,
+          duration: 2000,
+          delay,
+          easing: Easing.out(Easing.ease),
           useNativeDriver: true,
         }),
-      ])
-    ).start();
+        Animated.timing(opacity, {
+          toValue: 0,
+          duration: 2000,
+          delay,
+          easing: Easing.out(Easing.ease),
+          useNativeDriver: true,
+        }),
+      ]),
+    ).start(() => {
+      scale.setValue(1);
+      opacity.setValue(1);
+    });
   }, []);
 
   return (
@@ -169,8 +154,8 @@ function PulseRing({ delay, isDark }: { delay: number; isDark: boolean }) {
         styles.pulseRing,
         {
           borderColor: isDark
-            ? "rgba(56, 178, 172, 0.5)"
-            : "rgba(56, 178, 172, 0.3)",
+            ? "rgba(56, 178, 172, 0.6)"
+            : "rgba(56, 178, 172, 0.4)",
           transform: [{ scale }],
           opacity,
         },
@@ -179,88 +164,17 @@ function PulseRing({ delay, isDark }: { delay: number; isDark: boolean }) {
   );
 }
 
-// Shimmer line component
-function ShimmerLine({ isDark }: { isDark: boolean }) {
-  const translateX = useRef(new Animated.Value(-100)).current;
-
-  useEffect(() => {
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(translateX, {
-          toValue: 100,
-          duration: 1500,
-          easing: Easing.inOut(Easing.ease),
-          useNativeDriver: true,
-        }),
-        Animated.delay(500),
-        Animated.timing(translateX, {
-          toValue: -100,
-          duration: 0,
-          useNativeDriver: true,
-        }),
-      ])
-    ).start();
-  }, []);
-
-  return (
-    <View style={styles.shimmerContainer}>
-      <Animated.View
-        style={[
-          styles.shimmerLine,
-          {
-            backgroundColor: isDark
-              ? "rgba(56, 178, 172, 0.3)"
-              : "rgba(56, 178, 172, 0.2)",
-            transform: [{ translateX }],
-          },
-        ]}
-      >
-        <LinearGradient
-          colors={[
-            "transparent",
-            isDark ? "rgba(56, 178, 172, 0.6)" : "rgba(56, 178, 172, 0.4)",
-            "transparent",
-          ]}
-          start={{ x: 0, y: 0.5 }}
-          end={{ x: 1, y: 0.5 }}
-          style={StyleSheet.absoluteFill}
-        />
-      </Animated.View>
-    </View>
-  );
-}
-
 // Progress bar component
 function ProgressBar({ isDark }: { isDark: boolean }) {
   const progress = useRef(new Animated.Value(0)).current;
-  const opacity = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    Animated.sequence([
-      Animated.delay(800),
-      Animated.timing(opacity, {
-        toValue: 1,
-        duration: 300,
-        useNativeDriver: false,
-      }),
-    ]).start();
-
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(progress, {
-          toValue: 1,
-          duration: 2000,
-          easing: Easing.inOut(Easing.ease),
-          useNativeDriver: false,
-        }),
-        Animated.timing(progress, {
-          toValue: 0,
-          duration: 0,
-          useNativeDriver: false,
-        }),
-        Animated.delay(300),
-      ])
-    ).start();
+    Animated.timing(progress, {
+      toValue: 1,
+      duration: 2000,
+      easing: Easing.inOut(Easing.ease),
+      useNativeDriver: false,
+    }).start();
   }, []);
 
   const progressWidth = progress.interpolate({
@@ -269,35 +183,26 @@ function ProgressBar({ isDark }: { isDark: boolean }) {
   });
 
   return (
-    <Animated.View style={[styles.progressContainer, { opacity }]}>
-      <View
+    <View
+      style={[
+        styles.progressContainer,
+        {
+          backgroundColor: isDark
+            ? "rgba(255,255,255,0.1)"
+            : "rgba(0,0,0,0.05)",
+        },
+      ]}
+    >
+      <Animated.View
         style={[
-          styles.progressTrack,
+          styles.progressBar,
           {
-            backgroundColor: isDark
-              ? "rgba(255, 255, 255, 0.1)"
-              : "rgba(0, 0, 0, 0.08)",
+            width: progressWidth,
+            backgroundColor: "#38B2AC",
           },
         ]}
-      >
-        <Animated.View style={[styles.progressBar, { width: progressWidth }]}>
-          <LinearGradient
-            colors={["#38B2AC", "#2DD4BF", "#38B2AC"]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            style={StyleSheet.absoluteFill}
-          />
-        </Animated.View>
-      </View>
-      <Animated.Text
-        style={[
-          styles.loadingText,
-          { color: isDark ? "rgba(255,255,255,0.5)" : "rgba(0,0,0,0.4)" },
-        ]}
-      >
-        Loading your experience...
-      </Animated.Text>
-    </Animated.View>
+      />
+    </View>
   );
 }
 
@@ -315,14 +220,10 @@ export function AnimatedSplash({
 
   // Logo animations
   const logoScale = useRef(new Animated.Value(0)).current;
-  const logoRotate = useRef(new Animated.Value(0)).current;
+  const logoOpacity = useRef(new Animated.Value(0)).current;
   const logoGlow = useRef(new Animated.Value(0)).current;
-  const iconBounce = useRef(new Animated.Value(0)).current;
 
   // Text animations
-  const titleOpacity = useRef(new Animated.Value(0)).current;
-  const titleTranslateY = useRef(new Animated.Value(30)).current;
-  const letterSpacing = useRef(new Animated.Value(20)).current;
   const taglineOpacity = useRef(new Animated.Value(0)).current;
   const taglineTranslateY = useRef(new Animated.Value(20)).current;
 
@@ -371,7 +272,7 @@ export function AnimatedSplash({
           easing: Easing.inOut(Easing.ease),
           useNativeDriver: true,
         }),
-      ])
+      ]),
     ).start();
 
     // Content fade in
@@ -399,10 +300,9 @@ export function AnimatedSplash({
           friction: 6,
           useNativeDriver: true,
         }),
-        Animated.timing(logoRotate, {
+        Animated.timing(logoOpacity, {
           toValue: 1,
-          duration: 800,
-          easing: Easing.out(Easing.back(1.5)),
+          duration: 600,
           useNativeDriver: true,
         }),
       ]),
@@ -423,52 +323,16 @@ export function AnimatedSplash({
           easing: Easing.inOut(Easing.ease),
           useNativeDriver: true,
         }),
-      ])
-    ).start();
-
-    // Icon bounce effect
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(iconBounce, {
-          toValue: -5,
-          duration: 600,
-          easing: Easing.inOut(Easing.ease),
-          useNativeDriver: true,
-        }),
-        Animated.timing(iconBounce, {
-          toValue: 0,
-          duration: 600,
-          easing: Easing.inOut(Easing.ease),
-          useNativeDriver: true,
-        }),
-      ])
-    ).start();
-
-    // Title entrance with letter spacing animation
-    Animated.sequence([
-      Animated.delay(400),
-      Animated.parallel([
-        Animated.timing(titleOpacity, {
-          toValue: 1,
-          duration: 500,
-          useNativeDriver: true,
-        }),
-        Animated.spring(titleTranslateY, {
-          toValue: 0,
-          tension: 50,
-          friction: 8,
-          useNativeDriver: true,
-        }),
       ]),
-    ]).start();
+    ).start();
 
     // Tagline entrance
     Animated.sequence([
-      Animated.delay(600),
+      Animated.delay(800),
       Animated.parallel([
         Animated.timing(taglineOpacity, {
           toValue: 1,
-          duration: 500,
+          duration: 600,
           useNativeDriver: true,
         }),
         Animated.spring(taglineTranslateY, {
@@ -486,24 +350,17 @@ export function AnimatedSplash({
       Animated.timing(fadeOut, {
         toValue: 0,
         duration: 500,
-        easing: Easing.in(Easing.ease),
         useNativeDriver: true,
       }),
       Animated.timing(contentScale, {
-        toValue: 1.15,
+        toValue: 1.1,
         duration: 500,
-        easing: Easing.in(Easing.ease),
         useNativeDriver: true,
       }),
     ]).start(() => {
       onAnimationComplete();
     });
   };
-
-  const logoRotateInterpolate = logoRotate.interpolate({
-    inputRange: [0, 1],
-    outputRange: ["-180deg", "0deg"],
-  });
 
   const glowOpacity = logoGlow.interpolate({
     inputRange: [0, 1],
@@ -551,25 +408,22 @@ export function AnimatedSplash({
       startX: width * 0.5,
       startY: height * 0.1,
       size: 60,
-      color: "rgba(56, 178, 172, 0.2)",
+      color: "rgba(56, 178, 172, 0.18)",
       duration: 3000,
     },
   ];
 
   return (
-    <Animated.View style={[styles.container, { opacity: fadeOut }]}>
-      {/* Background gradient */}
-      <LinearGradient
-        colors={
-          isDark
-            ? ["#0A1628", "#0D1B2A", "#1B263B", "#0D1B2A"]
-            : ["#FFFFFF", "#F0FDFA", "#CCFBF1", "#F0FDFA"]
-        }
-        locations={[0, 0.3, 0.7, 1]}
-        style={StyleSheet.absoluteFill}
-      />
-
-      {/* Animated background overlay */}
+    <Animated.View
+      style={[
+        styles.container,
+        {
+          opacity: fadeOut,
+          backgroundColor: isDark ? "#0A1929" : "#FFFFFF",
+        },
+      ]}
+    >
+      {/* Animated background gradient */}
       <Animated.View
         style={[
           styles.bgOverlay,
@@ -616,80 +470,46 @@ export function AnimatedSplash({
           },
         ]}
       >
-        {/* Pulse rings behind logo */}
-        <View style={styles.pulseContainer}>
-          <PulseRing delay={0} isDark={isDark} />
-          <PulseRing delay={700} isDark={isDark} />
-          <PulseRing delay={1400} isDark={isDark} />
-        </View>
-
-        {/* Logo container with glow */}
-        <Animated.View
-          style={[
-            styles.logoWrapper,
-            {
-              transform: [
-                { scale: logoScale },
-                { rotate: logoRotateInterpolate },
-              ],
-            },
-          ]}
-        >
-          {/* Outer glow */}
-          <Animated.View
-            style={[
-              styles.logoOuterGlow,
-              {
-                opacity: glowOpacity,
-                shadowOpacity: isDark ? 0.8 : 0.4,
-              },
-            ]}
-          />
-
-          {/* Logo background */}
-          <View style={styles.logoContainer}>
-            <LinearGradient
-              colors={["#38B2AC", "#2DD4BF", "#14B8A6"]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.logoGradient}
-            >
-              {/* Inner shine */}
-              <View style={styles.logoShine} />
-
-              {/* Lock icon with bounce */}
-              <Animated.View
-                style={[
-                  styles.iconContainer,
-                  { transform: [{ translateY: iconBounce }] },
-                ]}
-              >
-                <Ionicons name="lock-closed" size={52} color="#FFFFFF" />
-              </Animated.View>
-            </LinearGradient>
+        {/* Logo and pulse rings container */}
+        <View style={styles.logoSection}>
+          {/* Pulse rings */}
+          <View style={styles.pulseContainer}>
+            <PulseRing delay={0} isDark={isDark} />
+            <PulseRing delay={700} isDark={isDark} />
+            <PulseRing delay={1400} isDark={isDark} />
           </View>
 
-          {/* Shimmer effect on logo */}
-          <ShimmerLine isDark={isDark} />
-        </Animated.View>
-
-        {/* Brand name */}
-        <Animated.View
-          style={[
-            styles.titleContainer,
-            {
-              opacity: titleOpacity,
-              transform: [{ translateY: titleTranslateY }],
-            },
-          ]}
-        >
-          <Text
-            style={[styles.title, { color: isDark ? "#FFFFFF" : "#1B263B" }]}
+          {/* Logo container with glow */}
+          <Animated.View
+            style={[
+              styles.logoWrapper,
+              {
+                opacity: logoOpacity,
+                transform: [{ scale: logoScale }],
+              },
+            ]}
           >
-            Str
-            <Text style={styles.titleAccent}>ixt</Text>
-          </Text>
-        </Animated.View>
+            {/* Outer glow */}
+            <Animated.View
+              style={[
+                styles.logoOuterGlow,
+                {
+                  opacity: glowOpacity,
+                  shadowOpacity: isDark ? 0.8 : 0.4,
+                },
+              ]}
+            />
+
+            {/* Logo with name */}
+            <View style={styles.logoContainer}>
+              <Image
+                source={require("@/assets/images/Strixt-logo-bare.png")}
+                style={styles.logoImage}
+                resizeMode="contain"
+              />
+            </View>
+          </Animated.View>
+        </View>
 
         {/* Tagline */}
         <Animated.View
@@ -702,16 +522,6 @@ export function AnimatedSplash({
           ]}
         >
           <View style={styles.taglineWrapper}>
-            <View
-              style={[
-                styles.taglineLine,
-                {
-                  backgroundColor: isDark
-                    ? "rgba(56, 178, 172, 0.5)"
-                    : "rgba(56, 178, 172, 0.4)",
-                },
-              ]}
-            />
             <Text
               style={[
                 styles.tagline,
@@ -747,12 +557,9 @@ export function AnimatedSplash({
         ]}
       >
         <Text
-          style={[
-            styles.bottomText,
-            { color: isDark ? "rgba(255,255,255,0.3)" : "rgba(0,0,0,0.25)" },
-          ]}
+          style={[styles.bottomText, { color: isDark ? "#475569" : "#94A3B8" }]}
         >
-          Financial Discipline Made Simple
+          POWERED BY STRIXT
         </Text>
       </Animated.View>
     </Animated.View>
@@ -781,29 +588,34 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
+  logoSection: {
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 40,
+  },
   pulseContainer: {
     position: "absolute",
-    width: 120,
-    height: 120,
+    width: 280,
+    height: 280,
     alignItems: "center",
     justifyContent: "center",
   },
   pulseRing: {
     position: "absolute",
-    width: 120,
-    height: 120,
-    borderRadius: 60,
+    width: 280,
+    height: 280,
+    borderRadius: 140,
     borderWidth: 2,
   },
   logoWrapper: {
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: 32,
+    zIndex: 1,
   },
   logoOuterGlow: {
     position: "absolute",
-    width: 140,
-    height: 140,
+    width: 320,
+    height: 160,
     borderRadius: 40,
     backgroundColor: "transparent",
     shadowColor: "#38B2AC",
@@ -812,97 +624,44 @@ const styles = StyleSheet.create({
     elevation: 20,
   },
   logoContainer: {
-    width: 110,
-    height: 110,
-    borderRadius: 32,
-    overflow: "hidden",
-    shadowColor: "#38B2AC",
-    shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.5,
-    shadowRadius: 20,
-    elevation: 15,
+    width: 280,
+    height: 140,
+    alignItems: "center",
+    justifyContent: "center",
   },
-  logoGradient: {
+  logoImage: {
     width: "100%",
     height: "100%",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  logoShine: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    height: "50%",
-    backgroundColor: "rgba(255, 255, 255, 0.15)",
-    borderBottomLeftRadius: 100,
-    borderBottomRightRadius: 100,
-  },
-  iconContainer: {
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  shimmerContainer: {
-    position: "absolute",
-    width: 110,
-    height: 110,
-    borderRadius: 32,
-    overflow: "hidden",
-  },
-  shimmerLine: {
-    position: "absolute",
-    width: 60,
-    height: "100%",
-  },
-  titleContainer: {
-    marginBottom: 12,
-  },
-  title: {
-    fontSize: 42,
-    fontFamily: "Poppins_700Bold",
-    letterSpacing: -1,
-  },
-  titleAccent: {
-    color: "#38B2AC",
   },
   taglineContainer: {
-    marginBottom: 48,
+    alignItems: "center",
+    marginTop: 20,
   },
   taglineWrapper: {
-    flexDirection: "row",
     alignItems: "center",
-    gap: 12,
-  },
-  taglineLine: {
-    width: 24,
-    height: 2,
-    borderRadius: 1,
   },
   tagline: {
-    fontSize: 14,
-    fontFamily: "Poppins_500Medium",
+    fontSize: 15,
+    fontFamily: "Poppins_400Regular",
     letterSpacing: 0.5,
+    textAlign: "center",
+  },
+  taglineLine: {
+    width: 60,
+    height: 3,
+    borderRadius: 2,
+    marginTop: 12,
   },
   progressContainer: {
-    alignItems: "center",
-    width: width * 0.5,
-  },
-  progressTrack: {
-    width: "100%",
+    width: 200,
     height: 4,
     borderRadius: 2,
     overflow: "hidden",
+    marginTop: 40,
   },
   progressBar: {
     height: "100%",
     borderRadius: 2,
-    overflow: "hidden",
-  },
-  loadingText: {
-    marginTop: 12,
-    fontSize: 12,
-    fontFamily: "Poppins_400Regular",
-    letterSpacing: 0.3,
   },
   bottomBranding: {
     position: "absolute",

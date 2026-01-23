@@ -18,6 +18,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import {
   Animated,
+  Image,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -31,7 +32,7 @@ const schema = yup.object().shape({
     .string()
     .email("Please enter a valid email address")
     .test("is-valid-email", "Please enter a valid email address", (value) =>
-      /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/i.test(value || "")
+      /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/i.test(value || ""),
     )
     .required("Email is required"),
   password: yup.string().required("Password is required"),
@@ -144,22 +145,32 @@ export default function SignIn() {
           <Animated.View style={[authStyles.content, { opacity: fadeAnim }]}>
             {/* Logo */}
             <View style={authStyles.logoContainer}>
-              <LinearGradient
-                colors={[theme.colors.primary, theme.colors.primary]}
+              <View
                 style={[
                   authStyles.logoCircle,
-                  { shadowColor: theme.colors.primary },
+                  {
+                    backgroundColor: theme.colors.primary,
+                    shadowColor: theme.colors.primary,
+                  },
                 ]}
               >
-                <Ionicons name="lock-closed" size={40} color="#fff" />
-              </LinearGradient>
+                <Image
+                  source={require("@/assets/images/Strixt-logo-bare.png")}
+                  style={{ width: 40, height: 40 }}
+                  resizeMode="contain"
+                />
+              </View>
               <Text
                 style={[
                   authStyles.brandName,
-                  { color: isDark ? "#fff" : theme.colors.text },
+                  {
+                    color: isDark
+                      ? theme.colors.balanceText
+                      : theme.colors.text,
+                  },
                 ]}
               >
-                Strixt
+                Welcome Back
               </Text>
               <Text
                 style={[
@@ -167,11 +178,11 @@ export default function SignIn() {
                   {
                     color: isDark
                       ? theme.colors.balanceLabel
-                      : "rgba(27,38,59,0.75)",
+                      : theme.colors.muted,
                   },
                 ]}
               >
-                Financial Discipline Made Simple
+                Sign in to continue
               </Text>
             </View>
 
