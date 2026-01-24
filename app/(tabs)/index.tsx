@@ -149,11 +149,11 @@ export default function Index() {
     },
     {
       key: "spendByVendor",
-      label: "Spend by Vendor ID",
-      icon: "storefront" as const,
+      label: "View Analytics",
+      icon: "analytics" as const,
       iconBg: theme.colors.actionIconLockBg,
       iconColor: theme.colors.accent,
-      onPress: () => router.push("/spendByOrgId"),
+      onPress: () => router.push("/budgetAnalytics"),
     },
     {
       key: "profile",
