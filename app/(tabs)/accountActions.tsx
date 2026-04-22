@@ -43,6 +43,13 @@ const amountPinSchema = yup.object({
 
 type AmountPinForm = yup.InferType<typeof amountPinSchema>;
 
+function generateIdempotencyKey(prefix = "withdraw"): string {
+  const timestamp = Date.now().toString(36);
+  const random = Math.random().toString(36).slice(2, 12);
+
+  return `${prefix}-${timestamp}-${random}`;
+}
+
 export default function Profile() {
   const router = useRouter();
   const [withdrawModal, setWithdrawModal] = useState(false);
@@ -58,6 +65,9 @@ export default function Profile() {
   const [refreshKey, setRefreshKey] = useState(0);
 
   const [isWithdrawing, setIsWithdrawing] = useState(false);
+  const [withdrawIdempotencyKey, setWithdrawIdempotencyKey] = useState<string>(
+    () => generateIdempotencyKey(),
+  );
   const { theme, scheme } = useTheme();
   const isDark = scheme === "dark";
   const user = useAuthStore((state) => state.user);
@@ -68,7 +78,7 @@ export default function Profile() {
       `${user?.firstName?.charAt(0) ?? "U"}${
         user?.lastName?.charAt(0) ?? ""
       }`.toUpperCase(),
-    []
+    [],
   );
 
   const scrollRef = React.useRef<ScrollView | null>(null);
@@ -87,11 +97,17 @@ export default function Profile() {
   const handleWithdraw = async (data: AmountPinForm) => {
     setIsWithdrawing(true);
     try {
-      const response = await postWithdraw({
-        amount: String(data.amount),
-        pin: data.pin,
-      });
+      const response = await postWithdraw(
+        {
+          amount: String(data.amount),
+          pin: data.pin,
+        },
+        {
+          idempotencyKey: withdrawIdempotencyKey,
+        },
+      );
 
+      setWithdrawIdempotencyKey(generateIdempotencyKey());
       setWithdrawModal(false);
       Toast.show({
         type: "success",
@@ -145,7 +161,7 @@ export default function Profile() {
         [
           { text: "Cancel", style: "cancel" },
           { text: "Add BVN", onPress: () => router.push("/addBvn") },
-        ]
+        ],
       );
       return;
     }
@@ -156,7 +172,7 @@ export default function Profile() {
     if (!user?.bvn) {
       Alert.alert(
         "BVN required",
-        "Please add your BVN before creating bank transfer details."
+        "Please add your BVN before creating bank transfer details.",
       );
       router.push("/addBvn");
       return;
@@ -177,7 +193,7 @@ export default function Profile() {
     } catch (err: any) {
       Alert.alert(
         "Error",
-        err?.message ?? "Failed to create bank transfer details"
+        err?.message ?? "Failed to create bank transfer details",
       );
     } finally {
       setCreatingVirtual(false);

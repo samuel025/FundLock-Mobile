@@ -30,7 +30,7 @@ const schema = yup.object({
   amount: yup
     .number()
     .transform((value, original) =>
-      original === "" ? undefined : Number(original)
+      original === "" ? undefined : Number(original),
     )
     .typeError("Enter a valid amount")
     .positive("Amount must be greater than 0")
@@ -42,6 +42,13 @@ const schema = yup.object({
 });
 
 type FormData = yup.InferType<typeof schema>;
+
+function generateIdempotencyKey(prefix = "spend-org"): string {
+  const timestamp = Date.now().toString(36);
+  const random = Math.random().toString(36).slice(2, 12);
+
+  return `${prefix}-${timestamp}-${random}`;
+}
 
 // Moved outside the component to prevent re-creation on each render
 const GlassCard = ({
@@ -101,6 +108,9 @@ export default function SpendByOrgId() {
   const [outlet, setOutlet] = useState<OutletByOrgId | null>(null);
   const [loading, setLoading] = useState(false);
   const [showPin, setShowPin] = useState(false);
+  const [idempotencyKey, setIdempotencyKey] = useState<string>(() =>
+    generateIdempotencyKey(),
+  );
   const scrollRef = useRef<any>(null);
 
   const { control, handleSubmit, watch, formState, reset } = useForm<FormData>({
@@ -132,6 +142,7 @@ export default function SpendByOrgId() {
         position: "top",
         visibilityTime: 4000,
       });
+      setIdempotencyKey(generateIdempotencyKey());
       reset();
       setOutlet(null);
     }
@@ -156,8 +167,8 @@ export default function SpendByOrgId() {
     }
   };
 
-  const onSubmit = async (data: FormData) => {
-    await spendLockedFundsByOrgID(data);
+  const onSubmit = (data: FormData) => {
+    spendLockedFundsByOrgID(data, idempotencyKey);
   };
 
   const inputTheme = (error: boolean) => ({
@@ -167,8 +178,8 @@ export default function SpendByOrgId() {
       outline: error
         ? theme.colors.danger
         : isDark
-        ? "rgba(255,255,255,0.2)"
-        : theme.colors.border,
+          ? "rgba(255,255,255,0.2)"
+          : theme.colors.border,
       placeholder: isDark ? "rgba(255,255,255,0.5)" : theme.colors.muted,
       text: theme.colors.text,
       onSurfaceVariant: isDark ? "rgba(255,255,255,0.6)" : theme.colors.muted,
@@ -267,8 +278,8 @@ export default function SpendByOrgId() {
                       fieldState.error
                         ? theme.colors.danger
                         : isDark
-                        ? "rgba(255,255,255,0.2)"
-                        : theme.colors.border
+                          ? "rgba(255,255,255,0.2)"
+                          : theme.colors.border
                     }
                     activeOutlineColor={theme.colors.primary}
                     textColor={theme.colors.text}
@@ -475,8 +486,8 @@ export default function SpendByOrgId() {
                             fieldState.error
                               ? theme.colors.danger
                               : isDark
-                              ? "rgba(255,255,255,0.2)"
-                              : theme.colors.border
+                                ? "rgba(255,255,255,0.2)"
+                                : theme.colors.border
                           }
                           activeOutlineColor={theme.colors.primary}
                           textColor={theme.colors.text}
@@ -563,8 +574,8 @@ export default function SpendByOrgId() {
                             fieldState.error
                               ? theme.colors.danger
                               : isDark
-                              ? "rgba(255,255,255,0.2)"
-                              : theme.colors.border
+                                ? "rgba(255,255,255,0.2)"
+                                : theme.colors.border
                           }
                           activeOutlineColor={theme.colors.primary}
                           textColor={theme.colors.text}

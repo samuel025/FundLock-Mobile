@@ -2,13 +2,19 @@ import { SpendRequest, postSpend } from "@/services/spend";
 import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 
+type SpendPayload = {
+  data: SpendRequest;
+  idempotencyKey?: string;
+};
+
 export function useSpend() {
   const [isSpending, setIsSpending] = useState(false);
   const [spendError, setSpendError] = useState<string | null>(null);
   const [spendMessage, setSpendMessage] = useState<string | null>(null);
 
   const lockMutation = useMutation({
-    mutationFn: (data: SpendRequest) => postSpend(data),
+    mutationFn: ({ data, idempotencyKey }: SpendPayload) =>
+      postSpend(data, { idempotencyKey }),
     onMutate: () => {
       setIsSpending(true);
       setSpendError(null);
@@ -27,8 +33,8 @@ export function useSpend() {
     },
   });
 
-  function spendLockedFunds(data: SpendRequest) {
-    lockMutation.mutate(data);
+  function spendLockedFunds(data: SpendRequest, idempotencyKey?: string) {
+    lockMutation.mutate({ data, idempotencyKey });
   }
 
   return {

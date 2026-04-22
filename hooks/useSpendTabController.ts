@@ -10,11 +10,18 @@ import { useForm } from "react-hook-form";
 import Toast from "react-native-toast-message";
 import * as yup from "yup";
 
+function generateIdempotencyKey(prefix = "spend"): string {
+  const timestamp = Date.now().toString(36);
+  const random = Math.random().toString(36).slice(2, 12);
+
+  return `${prefix}-${timestamp}-${random}`;
+}
+
 const schema = yup.object({
   amount: yup
     .number()
     .transform((value, original) =>
-      original === "" ? undefined : Number(original)
+      original === "" ? undefined : Number(original),
     )
     .typeError("Enter a valid amount")
     .positive("Amount must be greater than 0")
@@ -28,9 +35,12 @@ const schema = yup.object({
 export type SpendTabFormData = yup.InferType<typeof schema>;
 
 export function useSpendTabController() {
-  const [allowDirectOutlet, setAllowDirectOutlet] = useState(true); 
+  const [allowDirectOutlet, setAllowDirectOutlet] = useState(true);
+  const [idempotencyKey, setIdempotencyKey] = useState<string>(() =>
+    generateIdempotencyKey(),
+  );
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(
-    null
+    null,
   );
   const [selectedCompany, setSelectedCompany] = useState<string | null>(null);
   const [selectedOutlet, setSelectedOutlet] = useState<string | null>(null);
@@ -52,7 +62,7 @@ export function useSpendTabController() {
       resolver: yupResolver(schema),
       defaultValues: { amount: undefined as any, pin: "" },
       mode: "onChange",
-    }
+    },
   );
 
   // Fetch companies when category changes
@@ -83,7 +93,7 @@ export function useSpendTabController() {
   useFocusEffect(
     useCallback(() => {
       fetchLocks();
-    }, [fetchLocks])
+    }, [fetchLocks]),
   );
 
   // Toasts + reset on success
@@ -108,6 +118,7 @@ export function useSpendTabController() {
       });
 
       setTimeout(() => {
+        setIdempotencyKey(generateIdempotencyKey());
         reset();
         setSelectedCategoryId(null);
         setSelectedCompany(null);
@@ -119,7 +130,7 @@ export function useSpendTabController() {
 
   const selectedCategory = useMemo(
     () => categories?.find((c) => c.id === selectedCategoryId) || null,
-    [selectedCategoryId, categories]
+    [selectedCategoryId, categories],
   );
 
   const isBillPaymentCategory = useMemo(() => {
@@ -134,8 +145,8 @@ export function useSpendTabController() {
       locksList.find(
         (l: any) =>
           String(l.categoryName).toLowerCase() ===
-          String(selectedCategory.name).toLowerCase()
-      )?.amount ?? 0
+          String(selectedCategory.name).toLowerCase(),
+      )?.amount ?? 0,
     );
   }, [locksList, selectedCategory]);
 
@@ -161,11 +172,14 @@ export function useSpendTabController() {
       return;
     }
 
-    spendLockedFunds({
-      amount: String(data.amount),
-      outletId: selectedOutlet,
-      pin: data.pin,
-    });
+    spendLockedFunds(
+      {
+        amount: String(data.amount),
+        outletId: selectedOutlet,
+        pin: data.pin,
+      },
+      idempotencyKey,
+    );
   });
 
   const handleBillPaymentComplete = () => {

@@ -1,5 +1,5 @@
 import { API } from "@/lib/api";
-import axios, { AxiosError } from "axios";
+import { AxiosError, isAxiosError } from "axios";
 import { ErrorResponse } from "./wallet";
 
 export interface WithdrawRequest {
@@ -13,22 +13,32 @@ export interface WithdrawResponse {
   data: {};
 }
 
+interface WithdrawRequestOptions {
+  idempotencyKey?: string;
+}
+
 export async function postWithdraw(
-  data: WithdrawRequest
+  data: WithdrawRequest,
+  options?: WithdrawRequestOptions,
 ): Promise<WithdrawResponse> {
   try {
     const response = await API.post<WithdrawResponse>(
       "/api/v1/fundlock/withdraw",
-      data
+      data,
+      {
+        headers: options?.idempotencyKey
+          ? { "Idempotency-Key": options.idempotencyKey }
+          : undefined,
+      },
     );
     return response.data;
   } catch (error) {
-    if (axios.isAxiosError(error)) {
+    if (isAxiosError(error)) {
       const axiosError = error as AxiosError<ErrorResponse>;
 
       if (!axiosError.response) {
         const customError: any = new Error(
-          "Network error. Please check your internet connection and try again."
+          "Network error. Please check your internet connection and try again.",
         );
         customError.status = 0;
         throw customError;

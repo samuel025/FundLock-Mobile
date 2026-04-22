@@ -2,13 +2,19 @@ import { SpendByOrgIdRequest, postSpendByOrgId } from "@/services/spend";
 import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 
+type SpendByOrgIdPayload = {
+  data: SpendByOrgIdRequest;
+  idempotencyKey?: string;
+};
+
 export function useSpendByOrgId() {
   const [isSpending, setIsSpending] = useState(false);
   const [spendError, setSpendError] = useState<string | null>(null);
   const [spendMessage, setSpendMessage] = useState<string | null>(null);
 
   const lockMutation = useMutation({
-    mutationFn: (data: SpendByOrgIdRequest) => postSpendByOrgId(data),
+    mutationFn: ({ data, idempotencyKey }: SpendByOrgIdPayload) =>
+      postSpendByOrgId(data, { idempotencyKey }),
     onMutate: () => {
       setIsSpending(true);
       setSpendError(null);
@@ -27,8 +33,11 @@ export function useSpendByOrgId() {
     },
   });
 
-  function spendLockedFundsByOrgID(data: SpendByOrgIdRequest) {
-    lockMutation.mutate(data);
+  function spendLockedFundsByOrgID(
+    data: SpendByOrgIdRequest,
+    idempotencyKey?: string,
+  ) {
+    lockMutation.mutate({ data, idempotencyKey });
   }
 
   return {
