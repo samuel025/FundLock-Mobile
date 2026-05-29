@@ -38,7 +38,7 @@ export const authActions = {
                 await SecureStore.setItemAsync(TOKEN_KEY, tokens.accessToken);
                 await SecureStore.setItemAsync(
                   REFRESH_TOKEN_KEY,
-                  tokens.refreshToken
+                  tokens.refreshToken,
                 );
                 setTokens(tokens.accessToken, tokens.refreshToken);
 
@@ -80,10 +80,13 @@ export const authActions = {
     }
   },
 
-  getUser: async () => {
+  getUser: async (options?: { silent?: boolean }) => {
     const { setUser, setIsLoadingUser } = useAuthStore.getState();
+    const shouldToggleLoading = !options?.silent;
     try {
-      setIsLoadingUser(true);
+      if (shouldToggleLoading) {
+        setIsLoadingUser(true);
+      }
       const response = await getProfile();
       const userData: User = {
         id: response.data.Profile.id, // was .toString()
@@ -102,7 +105,9 @@ export const authActions = {
       // console.error("Failed to fetch user:", error);
       return null;
     } finally {
-      setIsLoadingUser(false);
+      if (shouldToggleLoading) {
+        setIsLoadingUser(false);
+      }
     }
   },
 

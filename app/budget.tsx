@@ -1,3 +1,7 @@
+import {
+  VendorAccountRef,
+  VendorAccountSection,
+} from "@/components/budgets/VendorAccountSection";
 import { CategoryPicker } from "@/components/CategoryPicker";
 import { ExpireDatePicker } from "@/components/ExpireDatePicker";
 import { PinGuard } from "@/components/PinGuard";
@@ -6,6 +10,10 @@ import { useGetLocks } from "@/hooks/useGetLocks";
 import { useLock } from "@/hooks/useLock";
 import { useWallet } from "@/hooks/useWallet";
 import { walletStore } from "@/lib/walletStore";
+import {
+  createCustomCategory,
+  lockCustomFunds,
+} from "@/services/customCategory";
 import { useTheme } from "@/theme";
 import {
   Poppins_400Regular,
@@ -16,11 +24,11 @@ import {
 } from "@expo-google-fonts/poppins";
 import { Ionicons } from "@expo/vector-icons";
 import { yupResolver } from "@hookform/resolvers/yup";
-import BlurView from "expo-blur/build/BlurView";
+import { BlurView } from "expo-blur";
 import { LinearGradient } from "expo-linear-gradient";
 import { useFocusEffect, useRouter } from "expo-router";
 import { ScrollView } from "moti";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import {
   KeyboardAvoidingView,
@@ -32,14 +40,14 @@ import {
   View,
 } from "react-native";
 import { TextInput } from "react-native-paper";
-import Toast from "react-native-toast-message"; 
+import Toast from "react-native-toast-message";
 import * as yup from "yup";
 
 const schema = yup.object({
   amount: yup
     .number()
     .transform((value, original) =>
-      original === "" ? undefined : Number(original)
+      original === "" ? undefined : Number(original),
     )
     .typeError("Enter a valid amount")
     .positive("Amount must be greater than 0")
@@ -69,14 +77,18 @@ export default function Budget() {
   const isDark = scheme === "dark";
   const router = useRouter();
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(
-    null
+    null,
   );
+  const [customCategoryName, setCustomCategoryName] = useState("");
+  const [isCreatingCustom, setIsCreatingCustom] = useState(false);
   const [categoryModalVisible, setCategoryModalVisible] = useState(false);
 
   const { categories } = useCategory();
   const { isLocking, lockError, lockMessage, lockFunds } = useLock();
   const { fetchWalletData } = useWallet();
   const { locksList, fetchLocks } = useGetLocks();
+
+  const vendorRef = React.useRef<VendorAccountRef>(null);
 
   let [fontsLoaded] = useFonts({
     Poppins_400Regular,
@@ -88,20 +100,21 @@ export default function Budget() {
   useFocusEffect(
     useCallback(() => {
       fetchLocks();
-    }, [fetchLocks])
+    }, [fetchLocks]),
   );
 
-  const selectedCategory = useMemo(
-    () => categories?.find((c) => c.id === selectedCategoryId) || null,
-    [selectedCategoryId, categories]
-  );
+  const selectedCategory = useMemo(() => {
+    if (selectedCategoryId === "custom")
+      return { id: "custom", name: "Custom Category" };
+    return categories?.find((c) => c.id === selectedCategoryId) || null;
+  }, [selectedCategoryId, categories]);
 
   const existingBudget = useMemo(() => {
     if (!selectedCategory || !locksList) return null;
     return locksList.find(
       (lock: any) =>
         String(lock.categoryName).toLowerCase() ===
-        String(selectedCategory.name).toLowerCase()
+        String(selectedCategory.name).toLowerCase(),
     );
   }, [selectedCategory, locksList]);
 
@@ -134,13 +147,13 @@ export default function Budget() {
           keepTouched: false,
           keepIsValid: false,
           keepSubmitCount: false,
-        }
+        },
       );
       setTimeout(() => trigger(), 0);
     }
   }, [existingBudget, reset, trigger]);
 
-  const onSubmit = (data: FormData) => {
+  const onSubmit = async (data: FormData) => {
     if (!selectedCategory) {
       Toast.show({
         type: "error",
@@ -152,7 +165,6 @@ export default function Budget() {
       return;
     }
 
-    // Require expireAt only when creating a new budget
     if (!existingBudget && !data.expireAt) {
       Toast.show({
         type: "error",
@@ -176,17 +188,100 @@ export default function Budget() {
       return;
     }
 
+    let finalRecipients: any = undefined;
+
+    if (vendorRef.current) {
+      if (vendorRef.current.isVendorActiveAndIncomplete()) {
+        Toast.show({
+          type: "error",
+          text1: "Error",
+          text2:
+            "Please complete valid vendor account details or disable the switch.",
+          position: "top",
+          topOffset: 60,
+        });
+        return;
+      }
+
+      const vendors = vendorRef.current.getVendors();
+      if (vendors.length > 0) {
+        finalRecipients = vendors.map((v: any) => ({
+          vendorName: v.vendorName,
+          accountNumber: v.accountNumber,
+          bankCode: v.bankCode,
+        }));
+      }
+    }
+
     const expiresAtDate =
       data.expireAt ??
       (existingBudget ? new Date(existingBudget.expiresAt) : null);
 
+    const formattedExpireAt = expiresAtDate
+      ? expiresAtDate.toISOString().split("T")[0]
+      : (undefined as any);
+
+    if (selectedCategoryId === "custom") {
+      if (!customCategoryName.trim()) {
+        Toast.show({
+          type: "error",
+          text1: "Error",
+          text2: "Enter a custom category name",
+          position: "top",
+          topOffset: 60,
+        });
+        return;
+      }
+      setIsCreatingCustom(true);
+      try {
+        const customCat = await createCustomCategory(
+          customCategoryName,
+          finalRecipients,
+        );
+        const message = await lockCustomFunds({
+          customCategoryId: customCat.id,
+          amountLocked: String(data.amount),
+          expiresAt: formattedExpireAt,
+          pin: data.pin,
+          recipients: finalRecipients,
+        });
+        Toast.show({
+          type: "success",
+          text1: "Success",
+          text2: message,
+          position: "top",
+          topOffset:
+            Platform.OS === "ios" ? 60 : (StatusBar.currentHeight || 0) + 20,
+        });
+        reset();
+        setSelectedCategoryId(null);
+        setCustomCategoryName("");
+        if (vendorRef.current) {
+          vendorRef.current.reset();
+        }
+        fetchWalletData();
+        fetchLocks();
+      } catch (error: any) {
+        Toast.show({
+          type: "error",
+          text1: "Error",
+          text2: error.message || "Failed to create and lock custom category",
+          position: "top",
+          topOffset:
+            Platform.OS === "ios" ? 60 : (StatusBar.currentHeight || 0) + 20,
+        });
+      } finally {
+        setIsCreatingCustom(false);
+      }
+      return;
+    }
+
     lockFunds({
       amountLocked: String(data.amount),
       category_id: selectedCategory.id,
-      expiresAt: expiresAtDate
-        ? expiresAtDate.toISOString().split("T")[0]
-        : (undefined as any),
+      expiresAt: formattedExpireAt,
       pin: data.pin,
+      recipients: finalRecipients,
     });
   };
 
@@ -268,7 +363,7 @@ export default function Budget() {
             behavior={Platform.OS === "ios" ? "padding" : undefined}
             style={{ flex: 1 }}
             keyboardVerticalOffset={
-              Platform.OS === "ios" ? 0 : StatusBar.currentHeight ?? 0
+              Platform.OS === "ios" ? 0 : (StatusBar.currentHeight ?? 0)
             }
           >
             <ScrollView
@@ -365,6 +460,51 @@ export default function Budget() {
 
               {selectedCategory && (
                 <>
+                  {selectedCategoryId === "custom" && (
+                    <View style={styles.section}>
+                      <Text style={styles.sectionTitle}>
+                        Custom Category Name
+                      </Text>
+                      <View style={styles.inputCard}>
+                        <TextInput
+                          mode="outlined"
+                          label="Enter category name"
+                          value={customCategoryName}
+                          onChangeText={setCustomCategoryName}
+                          textColor={theme.colors.text}
+                          style={[
+                            styles.input,
+                            {
+                              backgroundColor: isDark
+                                ? "rgba(255, 255, 255, 0.08)"
+                                : theme.colors.surface,
+                            },
+                          ]}
+                          outlineColor={
+                            isDark
+                              ? "rgba(255,255,255,0.2)"
+                              : theme.colors.border
+                          }
+                          activeOutlineColor={theme.colors.primary}
+                          outlineStyle={{
+                            borderRadius: 12,
+                          }}
+                          theme={{
+                            fonts: {
+                              regular: { fontFamily: "Poppins_500Medium" },
+                            },
+                            colors: {
+                              text: theme.colors.text,
+                              background: isDark
+                                ? theme.colors.background
+                                : theme.colors.surface,
+                              onSurface: theme.colors.text,
+                            },
+                          }}
+                        />
+                      </View>
+                    </View>
+                  )}
                   {/* Show info banner if budget exists */}
                   {existingBudget && (
                     <View
@@ -404,7 +544,7 @@ export default function Budget() {
                           {"\n"}
                           Expires:{" "}
                           {new Date(
-                            existingBudget.expiresAt
+                            existingBudget.expiresAt,
                           ).toLocaleDateString("en-US", {
                             year: "numeric",
                             month: "short",
@@ -558,6 +698,8 @@ export default function Budget() {
                     </View>
                   )}
 
+                  <VendorAccountSection ref={vendorRef} />
+
                   <View style={styles.section}>
                     <Text style={styles.sectionTitle}>PIN</Text>
                     <View style={styles.inputCard}>
@@ -656,22 +798,24 @@ export default function Budget() {
                   <TouchableOpacity
                     style={[
                       styles.actionButton,
-                      (isLocking || !formState.isValid) &&
+                      (isLocking || isCreatingCustom || !formState.isValid) &&
                         styles.disabledButton,
                     ]}
                     onPress={handleSubmit(onSubmit)}
-                    disabled={isLocking || !formState.isValid}
+                    disabled={
+                      isLocking || isCreatingCustom || !formState.isValid
+                    }
                   >
                     <LinearGradient
                       colors={["#38B2AC", "#2C9A92"]}
                       style={styles.actionGradient}
                     >
                       <Text style={styles.actionText}>
-                        {isLocking
+                        {isLocking || isCreatingCustom
                           ? "Processing..."
                           : existingBudget
-                          ? "Top Up Budget"
-                          : "Budget Funds"}
+                            ? "Top Up Budget"
+                            : "Budget Funds"}
                       </Text>
                       <Ionicons name="lock-closed" size={18} color="#fff" />
                     </LinearGradient>
@@ -727,6 +871,23 @@ const styles = StyleSheet.create({
     fontFamily: "Poppins_600SemiBold",
     color: "#415A77",
     marginBottom: 8,
+  },
+  toggleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingVertical: 12,
+  },
+  toggleRowLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  vendorContainer: {
+    marginTop: 8,
+    paddingHorizontal: 8,
+    borderLeftWidth: 2,
+    borderLeftColor: "rgba(56, 178, 172, 0.3)",
+    marginBottom: 16,
   },
   pickerButton: {
     flexDirection: "row",

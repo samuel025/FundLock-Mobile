@@ -7,6 +7,11 @@ export interface LockRequest {
   category_id: string;
   expiresAt: string;
   pin: string;
+  recipients?: {
+    vendorName: string;
+    accountNumber: string;
+    bankCode: string;
+  }[];
 }
 
 export interface Lock {
@@ -24,7 +29,7 @@ export async function postLock(data: LockRequest): Promise<string> {
   try {
     const response = await API.post<LockResponse>(
       "/api/v1/fundlock/lockfunds",
-      data
+      data,
     );
     return response.data.message;
   } catch (error) {
@@ -33,7 +38,7 @@ export async function postLock(data: LockRequest): Promise<string> {
 
       if (!axiosError.response) {
         const customError: any = new Error(
-          "Network error. Please check your internet connection and try again."
+          "Network error. Please check your internet connection and try again.",
         );
         customError.status = 0;
         throw customError;
@@ -83,7 +88,7 @@ export async function getLocks(): Promise<Locks[]> {
 
       if (!axiosError.response) {
         const customError: any = new Error(
-          "Network error. Please check your internet connection and try again."
+          "Network error. Please check your internet connection and try again.",
         );
         customError.status = 0;
         throw customError;

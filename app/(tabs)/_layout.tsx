@@ -21,6 +21,7 @@ export default function RootLayout() {
           screenOptions={{
             tabBarActiveTintColor: theme.colors.primary,
             tabBarInactiveTintColor: theme.colors.muted,
+            sceneStyle: { backgroundColor: theme.colors.background },
             tabBarStyle: {
               backgroundColor: theme.colors.card,
               borderTopWidth: 0,

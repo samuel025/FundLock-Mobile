@@ -23,6 +23,25 @@ import {
 import { TextInput } from "react-native-paper";
 import * as yup from "yup";
 
+const normalizePhoneNumber = (value: string) => value.replace(/\D/g, "");
+
+const toLocalPhoneNumber = (value: string) => {
+  const digits = normalizePhoneNumber(value);
+
+  if (digits.startsWith("234") && digits.length === 13) {
+    return `0${digits.slice(3)}`;
+  }
+
+  return digits;
+};
+
+const isValidNigerianPhoneNumber = (value?: string) => {
+  if (!value) return false;
+  const digits = toLocalPhoneNumber(value);
+
+  return /^0[789]\d{9}$/.test(digits);
+};
+
 // Validation schema
 const schema = yup.object().shape({
   email: yup
@@ -50,9 +69,13 @@ const schema = yup.object().shape({
     .min(8, "Password must be at least 8 characters long"),
   phoneNumber: yup
     .string()
-    .matches(/^[0-9]{10,15}$/, "Please enter a valid phone number")
     .required("Phone number is required")
-    .min(11, "Phone number must contain 11 digits"),
+    .transform((value) => toLocalPhoneNumber(value || ""))
+    .test(
+      "valid-nigerian-phone",
+      "Enter a valid phone number (e.g. 08012345678)",
+      (value) => isValidNigerianPhoneNumber(value),
+    ),
 });
 
 export type signUpFormData = yup.InferType<typeof schema>;
@@ -93,7 +116,12 @@ export default function SignUp() {
 
   const onSubmit = async (data: signUpFormData) => {
     try {
-      await authActions.signUp(data);
+      const payload: signUpFormData = {
+        ...data,
+        phoneNumber: toLocalPhoneNumber(data.phoneNumber),
+      };
+
+      await authActions.signUp(payload);
       setPendingEmail(data.email);
       setShowOtpModal(true);
     } catch (error: any) {
@@ -335,7 +363,9 @@ export default function SignUp() {
                       placeholder="08012345678"
                       mode="outlined"
                       value={value}
-                      onChangeText={onChange}
+                      onChangeText={(text) =>
+                        onChange(toLocalPhoneNumber(text).slice(0, 11))
+                      }
                       onBlur={onBlur}
                       error={!!errors.phoneNumber}
                       left={

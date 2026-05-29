@@ -20,6 +20,7 @@ import {
   View,
 } from "react-native";
 import { TextInput } from "react-native-paper";
+import Toast from "react-native-toast-message";
 
 export default function AddBvn() {
   const { theme, scheme } = useTheme();
@@ -37,7 +38,7 @@ export default function AddBvn() {
       duration: 600,
       useNativeDriver: true,
     }).start();
-  }, []);
+  }, [fadeAnim]);
 
   const handleBvnChange = (text: string) => {
     const cleaned = text.replace(/[^0-9]/g, "").slice(0, 11);
@@ -61,15 +62,23 @@ export default function AddBvn() {
     if (!validateBvn()) return;
     setIsSubmitting(true);
     try {
-      await updateBvn(bvn);
+      const response = await updateBvn(bvn);
       // Refresh user data to get updated profile
-      await authActions.getUser();
-      Alert.alert("Success", "Your BVN has been added successfully", [
-        {
-          text: "OK",
-          onPress: () => router.replace("/(tabs)/accountActions"),
-        },
-      ]);
+      await authActions.getUser({ silent: true });
+
+      Toast.show({
+        type: "success",
+        text1: "Success",
+        text2: response.message || "Your BVN has been added successfully",
+        position: "top",
+        topOffset: 60,
+      });
+
+      if (router.canGoBack()) {
+        router.back();
+      } else {
+        router.replace("/(tabs)/accountActions");
+      }
     } catch (err: any) {
       Alert.alert("Error", err?.message || "Failed to update BVN");
     } finally {

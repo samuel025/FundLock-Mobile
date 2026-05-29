@@ -188,6 +188,25 @@ export function CategoryPicker({
               contentContainerStyle={{ paddingBottom: 18 }}
             />
             <TouchableOpacity
+              onPress={() => {
+                onSelect("custom");
+                onClose();
+              }}
+              style={[
+                styles.modalItem,
+                { marginTop: 8, justifyContent: "center" },
+              ]}
+            >
+              <Text
+                style={{
+                  fontFamily: "Poppins_600SemiBold",
+                  color: theme.colors.primary,
+                }}
+              >
+                + Create Custom Category
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
               onPress={onClose}
               style={styles.modalClose}
               accessibilityLabel="Close category picker"

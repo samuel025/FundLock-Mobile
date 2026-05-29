@@ -28,6 +28,7 @@ import Toast from "react-native-toast-message";
 SplashScreen.preventAutoHideAsync();
 
 function RootLayoutContent() {
+  const { theme } = useTheme();
   const [appIsReady, setAppIsReady] = useState(false);
   const [splashComplete, setSplashComplete] = useState(false);
   const isLoadingUser = useAuthStore((s) => s.isLoadingUser);
@@ -92,7 +93,14 @@ function RootLayoutContent() {
 
   if (splashComplete && isLoadingUser) {
     return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+      <View
+        style={{
+          flex: 1,
+          justifyContent: "center",
+          alignItems: "center",
+          backgroundColor: theme.colors.background,
+        }}
+      >
         <ActivityIndicator size="large" color="#09A674" />
       </View>
     );
@@ -107,10 +115,17 @@ function RootLayoutContent() {
           onAnimationComplete={handleSplashComplete}
         />
       )}
-      <GestureHandlerRootView style={{ flex: 1 }}>
-        <View style={{ flex: 1 }}>
+      <GestureHandlerRootView
+        style={{ flex: 1, backgroundColor: theme.colors.background }}
+      >
+        <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
           <OfflineBanner />
-          <Stack screenOptions={{ headerShown: false }}>
+          <Stack
+            screenOptions={{
+              headerShown: false,
+              contentStyle: { backgroundColor: theme.colors.background },
+            }}
+          >
             <Stack.Screen name="signUp" />
             <Stack.Screen name="signIn" />
             <Stack.Screen name="index" />
