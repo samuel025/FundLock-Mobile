@@ -4,9 +4,17 @@ import { ErrorResponse } from "./wallet";
 
 export interface LockRequest {
   amountLocked: string;
-  category_id: string;
   expiresAt: string;
   pin: string;
+
+  // For existing categories
+  category_id?: string;
+  categoryType?: "SYSTEM" | "CUSTOM";
+
+  // For creating a NEW custom category on the fly
+  customCategoryName?: string;
+
+  // Optional list of recipients to add
   recipients?: {
     vendorName: string;
     accountNumber: string;

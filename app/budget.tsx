@@ -10,10 +10,6 @@ import { useGetLocks } from "@/hooks/useGetLocks";
 import { useLock } from "@/hooks/useLock";
 import { useWallet } from "@/hooks/useWallet";
 import { walletStore } from "@/lib/walletStore";
-import {
-  createCustomCategory,
-  lockCustomFunds,
-} from "@/services/customCategory";
 import { useTheme } from "@/theme";
 import {
   Poppins_400Regular,
@@ -80,7 +76,6 @@ export default function Budget() {
     null,
   );
   const [customCategoryName, setCustomCategoryName] = useState("");
-  const [isCreatingCustom, setIsCreatingCustom] = useState(false);
   const [categoryModalVisible, setCategoryModalVisible] = useState(false);
 
   const { categories } = useCategory();
@@ -232,53 +227,21 @@ export default function Budget() {
         });
         return;
       }
-      setIsCreatingCustom(true);
-      try {
-        const customCat = await createCustomCategory(
-          customCategoryName,
-          finalRecipients,
-        );
-        const message = await lockCustomFunds({
-          customCategoryId: customCat.id,
-          amountLocked: String(data.amount),
-          expiresAt: formattedExpireAt,
-          pin: data.pin,
-          recipients: finalRecipients,
-        });
-        Toast.show({
-          type: "success",
-          text1: "Success",
-          text2: message,
-          position: "top",
-          topOffset:
-            Platform.OS === "ios" ? 60 : (StatusBar.currentHeight || 0) + 20,
-        });
-        reset();
-        setSelectedCategoryId(null);
-        setCustomCategoryName("");
-        if (vendorRef.current) {
-          vendorRef.current.reset();
-        }
-        fetchWalletData();
-        fetchLocks();
-      } catch (error: any) {
-        Toast.show({
-          type: "error",
-          text1: "Error",
-          text2: error.message || "Failed to create and lock custom category",
-          position: "top",
-          topOffset:
-            Platform.OS === "ios" ? 60 : (StatusBar.currentHeight || 0) + 20,
-        });
-      } finally {
-        setIsCreatingCustom(false);
-      }
+      lockFunds({
+        amountLocked: String(data.amount),
+        categoryType: "CUSTOM",
+        customCategoryName: customCategoryName,
+        expiresAt: formattedExpireAt,
+        pin: data.pin,
+        recipients: finalRecipients,
+      });
       return;
     }
 
     lockFunds({
       amountLocked: String(data.amount),
       category_id: selectedCategory.id,
+      categoryType: "SYSTEM",
       expiresAt: formattedExpireAt,
       pin: data.pin,
       recipients: finalRecipients,
@@ -798,20 +761,18 @@ export default function Budget() {
                   <TouchableOpacity
                     style={[
                       styles.actionButton,
-                      (isLocking || isCreatingCustom || !formState.isValid) &&
+                      (isLocking || !formState.isValid) &&
                         styles.disabledButton,
                     ]}
                     onPress={handleSubmit(onSubmit)}
-                    disabled={
-                      isLocking || isCreatingCustom || !formState.isValid
-                    }
+                    disabled={isLocking || !formState.isValid}
                   >
                     <LinearGradient
                       colors={["#38B2AC", "#2C9A92"]}
                       style={styles.actionGradient}
                     >
                       <Text style={styles.actionText}>
-                        {isLocking || isCreatingCustom
+                        {isLocking
                           ? "Processing..."
                           : existingBudget
                             ? "Top Up Budget"
