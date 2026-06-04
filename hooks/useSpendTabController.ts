@@ -2,6 +2,7 @@ import { useCategory } from "@/hooks/useCategory";
 import { useCompany } from "@/hooks/useCompany";
 import { useGetLocks } from "@/hooks/useGetLocks";
 import { useOutlet } from "@/hooks/useOutlet";
+import { useRecipients } from "@/hooks/useRecipients";
 import { useSpend } from "@/hooks/useSpend";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { useFocusEffect } from "expo-router";
@@ -9,6 +10,20 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import Toast from "react-native-toast-message";
 import * as yup from "yup";
+
+/** Parse a composite key like "SYSTEM-1" or "CUSTOM-5" */
+function parseCompositeKey(key: string | null): {
+  rawId: string;
+  type: "SYSTEM" | "CUSTOM";
+} | null {
+  if (!key) return null;
+  const idx = key.indexOf("-");
+  if (idx === -1) return { rawId: key, type: "SYSTEM" };
+  return {
+    type: key.substring(0, idx) as "SYSTEM" | "CUSTOM",
+    rawId: key.substring(idx + 1),
+  };
+}
 
 function generateIdempotencyKey(prefix = "spend"): string {
   const timestamp = Date.now().toString(36);
@@ -34,8 +49,10 @@ const schema = yup.object({
 
 export type SpendTabFormData = yup.InferType<typeof schema>;
 
+export type SpendMode = "direct" | "company" | "recipient";
+
 export function useSpendTabController() {
-  const [allowDirectOutlet, setAllowDirectOutlet] = useState(true);
+  const [spendMode, setSpendMode] = useState<SpendMode>("direct");
   const [idempotencyKey, setIdempotencyKey] = useState<string>(() =>
     generateIdempotencyKey(),
   );
@@ -44,8 +61,11 @@ export function useSpendTabController() {
   );
   const [selectedCompany, setSelectedCompany] = useState<string | null>(null);
   const [selectedOutlet, setSelectedOutlet] = useState<string | null>(null);
+  const [selectedRecipientId, setSelectedRecipientId] = useState<number | null>(
+    null,
+  );
 
-  const { isCategoryLoading, categories } = useCategory();
+  const { isCategoryLoading, categories, fetchCategories } = useCategory();
   const { isCompanyLoading, companies, fetchCompanies } = useCompany();
   const {
     isOutletLoading,
@@ -54,8 +74,20 @@ export function useSpendTabController() {
     fetchAllOutlets,
     clearOutlets,
   } = useOutlet();
-  const { spendLockedFunds, spendError, spendMessage, isSpending } = useSpend();
+  const { spendLockedFunds, spendError, spendMessage, isSpending } =
+    useSpend();
   const { locksList, fetchLocks } = useGetLocks();
+  const {
+    recipients,
+    isRecipientsLoading,
+    fetchRecipients,
+    clearRecipients,
+    isRedeeming,
+    redeemError,
+    redeemMessage,
+    redeem,
+    clearRedeemState,
+  } = useRecipients();
 
   const { control, handleSubmit, formState, reset } = useForm<SpendTabFormData>(
     {
@@ -65,22 +97,64 @@ export function useSpendTabController() {
     },
   );
 
-  // Fetch companies when category changes
-  useEffect(() => {
-    if (!selectedCategoryId) return;
-    setSelectedCompany(null);
-    setSelectedOutlet(null);
-    fetchCompanies(selectedCategoryId);
-    clearOutlets();
-  }, [selectedCategoryId, fetchCompanies, clearOutlets]);
+  // Derive the selected category's type
+  const parsed = useMemo(
+    () => parseCompositeKey(selectedCategoryId),
+    [selectedCategoryId],
+  );
+  const rawCategoryId = parsed?.rawId ?? null;
+  const selectedCategoryType = parsed?.type ?? "SYSTEM";
+  const isCustomCategory = selectedCategoryType === "CUSTOM";
 
-  // Fetch outlets directly (all outlets) when mode enabled
+  const selectedCategory = useMemo(
+    () =>
+      categories?.find(
+        (c) => `${c.type}-${c.id}` === selectedCategoryId,
+      ) || null,
+    [selectedCategoryId, categories],
+  );
+
+  // When category changes: reset downstream selections and set mode
   useEffect(() => {
-    if (!allowDirectOutlet) return;
+    if (!selectedCategoryId || !rawCategoryId) return;
     setSelectedCompany(null);
     setSelectedOutlet(null);
-    fetchAllOutlets(selectedCategoryId ?? "");
-  }, [allowDirectOutlet, fetchAllOutlets, selectedCategoryId]);
+    setSelectedRecipientId(null);
+    clearRecipients();
+    clearOutlets();
+
+    if (isCustomCategory) {
+      // Custom categories only support recipients
+      setSpendMode("recipient");
+      fetchRecipients(rawCategoryId, "CUSTOM");
+    } else {
+      // System categories default to direct outlet mode
+      setSpendMode("direct");
+      fetchAllOutlets(rawCategoryId);
+    }
+  }, [selectedCategoryId, rawCategoryId, isCustomCategory, clearOutlets, clearRecipients, fetchRecipients, fetchAllOutlets]);
+
+  // When spend mode changes within a system category
+  useEffect(() => {
+    if (!rawCategoryId || isCustomCategory) return;
+
+    setSelectedOutlet(null);
+    setSelectedCompany(null);
+    setSelectedRecipientId(null);
+
+    if (spendMode === "direct") {
+      clearRecipients();
+      fetchAllOutlets(rawCategoryId);
+    } else if (spendMode === "company") {
+      clearRecipients();
+      clearOutlets();
+      fetchCompanies(rawCategoryId);
+    } else {
+      // recipient
+      clearOutlets();
+      fetchRecipients(rawCategoryId, "SYSTEM");
+    }
+  }, [spendMode, rawCategoryId, isCustomCategory, fetchAllOutlets, fetchCompanies, clearRecipients, clearOutlets, fetchRecipients]);
 
   // Fetch outlets by company
   useEffect(() => {
@@ -96,7 +170,7 @@ export function useSpendTabController() {
     }, [fetchLocks]),
   );
 
-  // Toasts + reset on success
+  // Toasts + reset on outlet spend success
   useEffect(() => {
     if (spendError) {
       Toast.show({
@@ -123,15 +197,45 @@ export function useSpendTabController() {
         setSelectedCategoryId(null);
         setSelectedCompany(null);
         setSelectedOutlet(null);
+        setSelectedRecipientId(null);
         fetchLocks();
       }, 100);
     }
   }, [spendError, spendMessage, reset, fetchLocks]);
 
-  const selectedCategory = useMemo(
-    () => categories?.find((c) => c.id === selectedCategoryId) || null,
-    [selectedCategoryId, categories],
-  );
+  // Toasts + reset on recipient redeem success
+  useEffect(() => {
+    if (redeemError) {
+      Toast.show({
+        type: "error",
+        text1: "Error",
+        text2: redeemError,
+        position: "top",
+        topOffset: 60,
+      });
+      clearRedeemState();
+    }
+
+    if (redeemMessage) {
+      Toast.show({
+        type: "success",
+        text1: "Success",
+        text2: redeemMessage,
+        position: "top",
+        topOffset: 60,
+      });
+
+      setTimeout(() => {
+        clearRedeemState();
+        reset();
+        setSelectedCategoryId(null);
+        setSelectedCompany(null);
+        setSelectedOutlet(null);
+        setSelectedRecipientId(null);
+        fetchLocks();
+      }, 100);
+    }
+  }, [redeemError, redeemMessage, reset, fetchLocks, clearRedeemState]);
 
   const isBillPaymentCategory = useMemo(() => {
     if (!selectedCategory) return false;
@@ -150,7 +254,8 @@ export function useSpendTabController() {
     );
   }, [locksList, selectedCategory]);
 
-  const submit = handleSubmit((data) => {
+  // Submit for outlet mode (direct or company)
+  const submitOutlet = handleSubmit((data) => {
     if (!selectedCategoryId) {
       Toast.show({
         type: "error",
@@ -182,6 +287,38 @@ export function useSpendTabController() {
     );
   });
 
+  // Submit for recipient mode
+  const submitRecipient = handleSubmit((data) => {
+    if (!selectedCategoryId) {
+      Toast.show({
+        type: "error",
+        text1: "Error",
+        text2: "Select a category",
+        position: "top",
+        topOffset: 60,
+      });
+      return;
+    }
+    if (!selectedRecipientId) {
+      Toast.show({
+        type: "error",
+        text1: "Error",
+        text2: "Select a Recipient",
+        position: "top",
+        topOffset: 60,
+      });
+      return;
+    }
+
+    redeem({
+      recipientId: selectedRecipientId,
+      amount: data.amount,
+      pin: data.pin,
+    });
+  });
+
+  const submit = spendMode === "recipient" ? submitRecipient : submitOutlet;
+
   const handleBillPaymentComplete = () => {
     reset();
     setSelectedCategoryId(null);
@@ -198,6 +335,11 @@ export function useSpendTabController() {
     setSelectedOutlet(null);
   };
 
+  const handleModeChange = (mode: SpendMode) => {
+    setSpendMode(mode);
+    reset();
+  };
+
   return {
     isCategoryLoading,
     categories,
@@ -205,11 +347,9 @@ export function useSpendTabController() {
     companies,
     isOutletLoading,
     outlets,
-    isSpending,
+    isSpending: isSpending || isRedeeming,
 
     // selections + setters
-    allowDirectOutlet,
-    setAllowDirectOutlet,
     selectedCategoryId,
     selectedCompany,
     selectedOutlet,
@@ -217,10 +357,24 @@ export function useSpendTabController() {
     selectCompany,
     setSelectedOutlet,
 
+    // spend mode
+    spendMode,
+    handleModeChange,
+
+    // recipient selections
+    selectedRecipientId,
+    setSelectedRecipientId,
+    recipients,
+    isRecipientsLoading,
+    isRedeeming,
+
     // derived
     selectedCategory,
+    selectedCategoryType,
+    isCustomCategory,
     isBillPaymentCategory,
     availableLocked,
+    rawCategoryId,
 
     // form
     control,

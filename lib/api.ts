@@ -8,6 +8,7 @@ const REFRESH_TOKEN_KEY = "refresh_token";
 
 export const API = axios.create({
   baseURL: process.env.EXPO_PUBLIC_BASE_URL,
+  timeout: 15000,
 });
 
 // Track if we're currently refreshing to prevent multiple refreshes
@@ -99,7 +100,7 @@ API.interceptors.response.use(
 
       // Retry the original request
       return API(originalRequest);
-    } catch (refreshError) {
+    } catch (refreshError: any) {
       // console.error("Token refresh failed:", refreshError);
 
       // Reject all queued requests
@@ -108,21 +109,33 @@ API.interceptors.response.use(
       });
       failedQueue = [];
 
-      // Clear tokens and redirect to sign in
-      const { setUser, setTokens } = useAuthStore.getState();
-      setUser(null);
-      setTokens(null, null);
+      // Determine if this is a network error vs genuine auth failure
+      const isNetworkError =
+        !refreshError?.response &&
+        (refreshError?.code === "ECONNABORTED" ||
+          refreshError?.code === "ERR_NETWORK" ||
+          refreshError?.message?.includes("timeout") ||
+          refreshError?.message?.includes("Network Error"));
 
-      try {
-        await SecureStore.deleteItemAsync("auth_token");
-        await SecureStore.deleteItemAsync("refresh_token");
-        await SecureStore.deleteItemAsync("user_data");
-      } catch (storageError) {
-        // console.error("Failed to clear storage:", storageError);
+      if (!isNetworkError) {
+        // Genuine auth failure — clear tokens and redirect to sign in
+        const { setUser, setTokens } = useAuthStore.getState();
+        setUser(null);
+        setTokens(null, null);
+
+        try {
+          await SecureStore.deleteItemAsync("auth_token");
+          await SecureStore.deleteItemAsync("refresh_token");
+          await SecureStore.deleteItemAsync("user_data");
+        } catch (storageError) {
+          // console.error("Failed to clear storage:", storageError);
+        }
+
+        // Redirect to sign in page
+        router.replace("/signIn");
       }
-
-      // Redirect to sign in page
-      router.replace("/signIn");
+      // On network errors: don't sign out. Let the error propagate
+      // so hooks can show appropriate "connection issue" feedback.
 
       return Promise.reject(refreshError);
     } finally {

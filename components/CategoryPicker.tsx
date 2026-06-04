@@ -1,6 +1,6 @@
 import { useTheme } from "@/theme";
 import { Ionicons } from "@expo/vector-icons";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   Animated,
   FlatList,
@@ -23,7 +23,7 @@ export function CategoryPicker({
   onClose,
 }: {
   visible: boolean;
-  categories: { id: string; name: string }[];
+  categories: { id: string; name: string; type?: "SYSTEM" | "CUSTOM" }[];
   selectedCategoryId: string | null;
   onSelect: (id: string) => void;
   onClose: () => void;
@@ -34,6 +34,30 @@ export function CategoryPicker({
   const [renderModal, setRenderModal] = useState(false);
   const overlayOpacity = useRef(new Animated.Value(0)).current;
   const sheetTranslate = useRef(new Animated.Value(40)).current;
+
+  // Separate system and custom categories
+  const systemCats = useMemo(
+    () => (categories ?? []).filter((c) => !c.type || c.type === "SYSTEM"),
+    [categories],
+  );
+  const customCats = useMemo(
+    () => (categories ?? []).filter((c) => c.type === "CUSTOM"),
+    [categories],
+  );
+
+  // Build flat list with section headers
+  const flatData = useMemo(() => {
+    const items: any[] = [];
+    if (systemCats.length > 0) {
+      items.push({ __type: "header", label: "System Categories" });
+      items.push(...systemCats);
+    }
+    if (customCats.length > 0) {
+      items.push({ __type: "header", label: "Your Custom Categories" });
+      items.push(...customCats);
+    }
+    return items;
+  }, [systemCats, customCats]);
 
   useEffect(() => {
     if (visible) {
@@ -120,26 +144,38 @@ export function CategoryPicker({
               Select Category
             </Text>
             <FlatList
-              data={categories}
-              keyExtractor={(i) => i.id}
-              ItemSeparatorComponent={() => (
-                <View
-                  style={[
-                    styles.itemSeparator,
-                    {
-                      backgroundColor: isDark
-                        ? "rgba(255,255,255,0.08)"
-                        : "#F1F5F9",
-                    },
-                  ]}
-                />
-              )}
-              renderItem={({ item }) => {
-                const active = selectedCategoryId === item.id;
+              data={flatData}
+              keyExtractor={(i: any, idx) =>
+                i.__type === "header"
+                  ? `header-${idx}`
+                  : `${i.type || "SYSTEM"}-${i.id}`
+              }
+              contentContainerStyle={{ paddingBottom: 18 }}
+              renderItem={({ item }: { item: any }) => {
+                // Section header
+                if (item.__type === "header") {
+                  return (
+                    <View style={styles.sectionHeader}>
+                      <Text
+                        style={[
+                          styles.sectionHeaderText,
+                          { color: theme.colors.muted },
+                        ]}
+                      >
+                        {item.label}
+                      </Text>
+                    </View>
+                  );
+                }
+
+                const isCust = item.type === "CUSTOM";
+                const compositeKey = `${item.type || "SYSTEM"}-${item.id}`;
+                const active = selectedCategoryId === compositeKey;
+
                 return (
                   <Pressable
                     onPress={() => {
-                      onSelect(item.id);
+                      onSelect(compositeKey);
                       onClose();
                     }}
                     style={({ pressed }) => [
@@ -155,22 +191,45 @@ export function CategoryPicker({
                       style={[
                         styles.categoryIcon,
                         {
-                          backgroundColor: isDark
-                            ? "rgba(56,178,172,0.18)"
-                            : "#E7F6F2",
+                          backgroundColor: active
+                            ? isCust
+                              ? "#8B5CF6"
+                              : theme.colors.primary
+                            : isDark
+                              ? isCust
+                                ? "rgba(167,139,250,0.18)"
+                                : "rgba(56,178,172,0.18)"
+                              : isCust
+                                ? "#F3F0FF"
+                                : "#E7F6F2",
                         },
                       ]}
                     >
                       <Ionicons
-                        name="pricetag-outline"
+                        name={isCust ? "create-outline" : "pricetag-outline"}
                         size={18}
-                        color={theme.colors.primary}
+                        color={
+                          active
+                            ? "#fff"
+                            : isCust
+                              ? "#8B5CF6"
+                              : theme.colors.primary
+                        }
                       />
                     </View>
                     <Text
                       style={[
                         styles.modalItemText,
-                        { color: theme.colors.text },
+                        {
+                          color: active
+                            ? isCust
+                              ? "#8B5CF6"
+                              : theme.colors.primary
+                            : theme.colors.text,
+                          fontFamily: active
+                            ? "Poppins_600SemiBold"
+                            : "Poppins_500Medium",
+                        },
                       ]}
                     >
                       {item.name}
@@ -179,31 +238,34 @@ export function CategoryPicker({
                       <Ionicons
                         name="checkmark"
                         size={18}
-                        color={theme.colors.primary}
+                        color={isCust ? "#8B5CF6" : theme.colors.primary}
                       />
                     )}
                   </Pressable>
                 );
               }}
-              contentContainerStyle={{ paddingBottom: 18 }}
             />
+            {/* Create new custom category button */}
             <TouchableOpacity
               onPress={() => {
                 onSelect("custom");
                 onClose();
               }}
               style={[
-                styles.modalItem,
-                { marginTop: 8, justifyContent: "center" },
+                styles.createCustomButton,
+                {
+                  borderColor: isDark
+                    ? "rgba(139,92,246,0.3)"
+                    : "rgba(139,92,246,0.2)",
+                  backgroundColor: isDark
+                    ? "rgba(139,92,246,0.08)"
+                    : "#FAFAFF",
+                },
               ]}
             >
-              <Text
-                style={{
-                  fontFamily: "Poppins_600SemiBold",
-                  color: theme.colors.primary,
-                }}
-              >
-                + Create Custom Category
+              <Ionicons name="add-circle-outline" size={20} color="#8B5CF6" />
+              <Text style={styles.createCustomText}>
+                Create New Custom Category
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
@@ -230,7 +292,7 @@ const styles = StyleSheet.create({
     justifyContent: "flex-end",
   },
   modal: {
-    maxHeight: "60%",
+    maxHeight: "70%",
     borderTopLeftRadius: 16,
     borderTopRightRadius: 16,
     paddingHorizontal: 16,
@@ -249,10 +311,21 @@ const styles = StyleSheet.create({
     fontFamily: "Poppins_600SemiBold",
     marginBottom: 8,
   },
+  sectionHeader: {
+    paddingHorizontal: 4,
+    paddingTop: 12,
+    paddingBottom: 6,
+  },
+  sectionHeaderText: {
+    fontSize: 12,
+    fontFamily: "Poppins_600SemiBold",
+    textTransform: "uppercase",
+    letterSpacing: 0.8,
+  },
   modalItem: {
     flexDirection: "row",
     alignItems: "center",
-    paddingVertical: 6,
+    paddingVertical: 8,
     paddingHorizontal: 4,
     borderRadius: 10,
   },
@@ -274,5 +347,21 @@ const styles = StyleSheet.create({
   itemSeparator: {
     height: 1,
     marginLeft: 52,
+  },
+  createCustomButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    marginTop: 8,
+    paddingVertical: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderStyle: "dashed",
+  },
+  createCustomText: {
+    fontFamily: "Poppins_600SemiBold",
+    color: "#8B5CF6",
+    fontSize: 14,
   },
 });

@@ -18,7 +18,8 @@ export async function refreshAccessToken(refreshToken: string): Promise<{
   try {
     const response = await axios.post<RefreshTokenResponse>(
       `${process.env.EXPO_PUBLIC_BASE_URL}/api/v1/fundlock/refresh-token`,
-      { refreshToken }
+      { refreshToken },
+      { timeout: 15000 }
     );
     return response.data.data.tokens;
   } catch (error) {

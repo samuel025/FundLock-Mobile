@@ -4,6 +4,7 @@ import { ProfileHeader } from "@/components/profileComponents/ProfileHeader";
 import { VirtualAccountModal } from "@/components/profileComponents/VirtualAccountModal";
 import { WithdrawModal } from "@/components/profileComponents/WithdrawModal";
 import { useWallet } from "@/hooks/useWallet";
+import { OfflineBanner } from "@/components/OfflineBanner";
 import { authActions } from "@/lib/authContext";
 import { useAuthStore } from "@/lib/useAuthStore";
 import {
@@ -223,6 +224,7 @@ export default function Profile() {
         colors={[theme.colors.gradientStart, theme.colors.gradientEnd]}
         style={[styles.container, { backgroundColor: theme.colors.background }]}
       >
+        <OfflineBanner />
         <ScrollView
           ref={scrollRef}
           contentContainerStyle={[

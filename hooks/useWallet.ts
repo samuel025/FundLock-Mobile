@@ -100,11 +100,14 @@ export function useWallet() {
 
       setUnknownError("An error occured, try again later");
 
-      const { setBalance, setTotalLockedAmount, setTotalRedeemedAmount } =
-        walletStore.getState();
-      setBalance("0.00");
-      setTotalLockedAmount("0.00");
-      setTotalRedeemedAmount("0.00");
+      // Only reset to zeroes if we don't have existing data
+      if (!balance || balance === "0.00") {
+        const { setBalance, setTotalLockedAmount, setTotalRedeemedAmount } =
+          walletStore.getState();
+        setBalance("0.00");
+        setTotalLockedAmount("0.00");
+        setTotalRedeemedAmount("0.00");
+      }
     },
     onSettled: () => {
       setIsLoading(false);
@@ -115,7 +118,12 @@ export function useWallet() {
 
   const transactionsMutation = useMutation({
     mutationFn: (opts: page) => getWalletTransactions(opts.page ?? undefined),
-    onMutate: () => setIsLoadingTransactions(true),
+    onMutate: () => {
+      // Only show loading spinner on initial load (no existing data)
+      if (transactions.length === 0 && !walletData) {
+        setIsLoadingTransactions(true);
+      }
+    },
     onSuccess: (data) => {
       setWalletData(data);
       setTransactions(data.transactions);
@@ -131,7 +139,7 @@ export function useWallet() {
 
       setUnknownError("An error occured, try again later");
 
-      setTransactions([]);
+      // Don't clear existing transactions — keep stale data visible
     },
     onSettled: () => setIsLoadingTransactions(false),
   });
@@ -153,7 +161,10 @@ export function useWallet() {
 
       setUnknownError("An error occured, try again later");
 
-      setInsights({ spentThisWeek: "0", receivedThisWeek: "0" });
+      // Only reset if we don't already have cached insights
+      if (insights.spentThisWeek === "0" && insights.receivedThisWeek === "0") {
+        setInsights({ spentThisWeek: "0", receivedThisWeek: "0" });
+      }
       setIsLoadingInsights(false);
     },
     onSettled: () => setIsLoadingInsights(false),
@@ -266,7 +277,7 @@ export function useWallet() {
     balance,
     totalLockedAmount,
     totalRedeemedAmount,
-    isLoadingWallet,
+    isLoadingWallet: isLoadingWallet || balance === null,
     transactions,
     isLoadingTransactions,
     isLoadingInsights,

@@ -98,11 +98,30 @@ export default function Budget() {
     }, [fetchLocks]),
   );
 
+  // Parse composite key like "SYSTEM-1" or "CUSTOM-5"
+  const parsedCategory = useMemo(() => {
+    if (!selectedCategoryId || selectedCategoryId === "custom") return null;
+    const idx = selectedCategoryId.indexOf("-");
+    if (idx === -1) return null;
+    return {
+      type: selectedCategoryId.substring(0, idx) as "SYSTEM" | "CUSTOM",
+      rawId: selectedCategoryId.substring(idx + 1),
+    };
+  }, [selectedCategoryId]);
+
+  const isNewCustom = selectedCategoryId === "custom";
+  const isExistingCustom = parsedCategory?.type === "CUSTOM";
+
   const selectedCategory = useMemo(() => {
-    if (selectedCategoryId === "custom")
-      return { id: "custom", name: "Custom Category" };
-    return categories?.find((c) => c.id === selectedCategoryId) || null;
-  }, [selectedCategoryId, categories]);
+    if (isNewCustom)
+      return { id: "custom", name: "Custom Category", type: "CUSTOM" as const };
+    if (!parsedCategory) return null;
+    return (
+      categories?.find(
+        (c) => `${c.type}-${c.id}` === selectedCategoryId,
+      ) || null
+    );
+  }, [selectedCategoryId, categories, parsedCategory, isNewCustom]);
 
   const existingBudget = useMemo(() => {
     if (!selectedCategory || !locksList) return null;
@@ -216,7 +235,7 @@ export default function Budget() {
       ? expiresAtDate.toISOString().split("T")[0]
       : (undefined as any);
 
-    if (selectedCategoryId === "custom") {
+    if (isNewCustom) {
       if (!customCategoryName.trim()) {
         Toast.show({
           type: "error",
@@ -238,9 +257,23 @@ export default function Budget() {
       return;
     }
 
+    if (isExistingCustom && parsedCategory) {
+      // Top up or lock into an existing custom category
+      lockFunds({
+        amountLocked: String(data.amount),
+        category_id: parsedCategory.rawId,
+        categoryType: "CUSTOM",
+        expiresAt: formattedExpireAt,
+        pin: data.pin,
+        recipients: finalRecipients,
+      });
+      return;
+    }
+
+    // System category
     lockFunds({
       amountLocked: String(data.amount),
-      category_id: selectedCategory.id,
+      category_id: parsedCategory?.rawId ?? selectedCategory!.id,
       categoryType: "SYSTEM",
       expiresAt: formattedExpireAt,
       pin: data.pin,
@@ -423,7 +456,7 @@ export default function Budget() {
 
               {selectedCategory && (
                 <>
-                  {selectedCategoryId === "custom" && (
+                  {isNewCustom && (
                     <View style={styles.section}>
                       <Text style={styles.sectionTitle}>
                         Custom Category Name

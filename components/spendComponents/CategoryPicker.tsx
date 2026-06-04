@@ -1,3 +1,4 @@
+import { UnifiedCategory } from "@/lib/categoryStore";
 import { useTheme } from "@/theme";
 import { Ionicons } from "@expo/vector-icons";
 import React, { useMemo, useRef, useState } from "react";
@@ -20,7 +21,7 @@ export default function CategoryPicker({
   onSelect,
   styles,
 }: {
-  categories: { id: string; name: string }[] | undefined;
+  categories: UnifiedCategory[] | undefined;
   selected: string | null;
   onSelect: (id: string) => void;
   styles: any;
@@ -70,8 +71,20 @@ export default function CategoryPicker({
 
   const selectedItem = useMemo(() => {
     if (!categories || !selected) return null;
-    return categories.find((c) => c.id === selected);
+    return categories.find((c) => `${c.type}-${c.id}` === selected);
   }, [categories, selected]);
+
+  // Separate system and custom for rendering with section headers
+  const systemCats = useMemo(
+    () => (categories ?? []).filter((c) => c.type === "SYSTEM"),
+    [categories],
+  );
+  const customCats = useMemo(
+    () => (categories ?? []).filter((c) => c.type === "CUSTOM"),
+    [categories],
+  );
+
+  const isCustom = selectedItem?.type === "CUSTOM";
 
   return (
     <View style={styles.section}>
@@ -82,16 +95,38 @@ export default function CategoryPicker({
             styles.catIcon,
             {
               backgroundColor: isDark
-                ? "rgba(56,178,172,0.15)"
-                : theme.colors.actionIconLockBg,
+                ? isCustom
+                  ? "rgba(167,139,250,0.15)"
+                  : "rgba(56,178,172,0.15)"
+                : isCustom
+                  ? "#F3F0FF"
+                  : theme.colors.actionIconLockBg,
             },
           ]}
         >
-          <Ionicons name="pricetag" size={16} color={theme.colors.primary} />
+          <Ionicons
+            name={isCustom ? "create" : "pricetag"}
+            size={16}
+            color={isCustom ? "#8B5CF6" : theme.colors.primary}
+          />
         </View>
         <Text style={styles.pickerText}>
           {selectedItem?.name ?? "Select category"}
         </Text>
+        {selectedItem?.type === "CUSTOM" && (
+          <View
+            style={[
+              localStyles.badge,
+              {
+                backgroundColor: isDark
+                  ? "rgba(167,139,250,0.2)"
+                  : "#F3F0FF",
+              },
+            ]}
+          >
+            <Text style={localStyles.badgeText}>Custom</Text>
+          </View>
+        )}
         <Ionicons
           name="chevron-down"
           size={20}
@@ -107,7 +142,9 @@ export default function CategoryPicker({
               localStyles.modalOverlay,
               {
                 opacity: overlayOpacity,
-                backgroundColor: isDark ? "rgba(0,0,0,0.6)" : "rgba(0,0,0,0.4)",
+                backgroundColor: isDark
+                  ? "rgba(0,0,0,0.6)"
+                  : "rgba(0,0,0,0.4)",
               },
             ]}
           >
@@ -138,32 +175,57 @@ export default function CategoryPicker({
                   ]}
                 />
                 <Text
-                  style={[localStyles.modalTitle, { color: theme.colors.text }]}
+                  style={[
+                    localStyles.modalTitle,
+                    { color: theme.colors.text },
+                  ]}
                 >
                   Select Category
                 </Text>
+
                 <FlatList
-                  data={categories}
-                  keyExtractor={(i) => i.id}
-                  ItemSeparatorComponent={() => (
-                    <View
-                      style={[
-                        localStyles.separator,
-                        {
-                          backgroundColor: isDark
-                            ? "rgba(255,255,255,0.08)"
-                            : "#F1F5F9",
-                        },
-                      ]}
-                    />
-                  )}
+                  data={[
+                    ...(systemCats.length > 0
+                      ? [
+                          { __type: "header", label: "System Categories" },
+                          ...systemCats,
+                        ]
+                      : []),
+                    ...(customCats.length > 0
+                      ? [
+                          { __type: "header", label: "Custom Categories" },
+                          ...customCats,
+                        ]
+                      : []),
+                  ]}
+                  keyExtractor={(i: any, idx) =>
+                    i.__type === "header" ? `header-${idx}` : `${i.type}-${i.id}`
+                  }
                   contentContainerStyle={{ paddingBottom: 24 }}
-                  renderItem={({ item }) => {
-                    const active = selected === item.id;
+                  renderItem={({ item }: { item: any }) => {
+                    // Section header
+                    if (item.__type === "header") {
+                      return (
+                        <View style={localStyles.sectionHeader}>
+                          <Text
+                            style={[
+                              localStyles.sectionHeaderText,
+                              { color: theme.colors.muted },
+                            ]}
+                          >
+                            {item.label}
+                          </Text>
+                        </View>
+                      );
+                    }
+
+                    const compositeKey = `${item.type}-${item.id}`;
+                    const active = selected === compositeKey;
+                    const isCust = item.type === "CUSTOM";
                     return (
                       <Pressable
                         onPress={() => {
-                          onSelect(item.id);
+                          onSelect(compositeKey);
                           close();
                         }}
                         style={({ pressed }) => [
@@ -180,17 +242,27 @@ export default function CategoryPicker({
                             localStyles.itemIcon,
                             {
                               backgroundColor: active
-                                ? theme.colors.primary
+                                ? isCust
+                                  ? "#8B5CF6"
+                                  : theme.colors.primary
                                 : isDark
                                   ? "rgba(255,255,255,0.08)"
-                                  : "#F1F5F9",
+                                  : isCust
+                                    ? "#F3F0FF"
+                                    : "#F1F5F9",
                             },
                           ]}
                         >
                           <Ionicons
-                            name="pricetag"
+                            name={isCust ? "create" : "pricetag"}
                             size={18}
-                            color={active ? "#fff" : theme.colors.primary}
+                            color={
+                              active
+                                ? "#fff"
+                                : isCust
+                                  ? "#8B5CF6"
+                                  : theme.colors.primary
+                            }
                           />
                         </View>
                         <Text
@@ -198,7 +270,9 @@ export default function CategoryPicker({
                             localStyles.itemText,
                             {
                               color: active
-                                ? theme.colors.primary
+                                ? isCust
+                                  ? "#8B5CF6"
+                                  : theme.colors.primary
                                 : theme.colors.text,
                               fontFamily: active
                                 ? "Poppins_600SemiBold"
@@ -212,7 +286,9 @@ export default function CategoryPicker({
                           <Ionicons
                             name="checkmark-circle"
                             size={20}
-                            color={theme.colors.primary}
+                            color={
+                              isCust ? "#8B5CF6" : theme.colors.primary
+                            }
                             style={{ marginLeft: "auto" }}
                           />
                         )}
@@ -269,9 +345,16 @@ const localStyles = StyleSheet.create({
     marginBottom: 16,
     paddingHorizontal: 4,
   },
-  separator: {
-    height: 1,
-    marginHorizontal: 20,
+  sectionHeader: {
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    paddingBottom: 6,
+  },
+  sectionHeaderText: {
+    fontSize: 12,
+    fontFamily: "Poppins_600SemiBold",
+    textTransform: "uppercase",
+    letterSpacing: 0.8,
   },
   item: {
     flexDirection: "row",
@@ -291,6 +374,17 @@ const localStyles = StyleSheet.create({
   itemText: {
     fontSize: 15,
     flex: 1,
+  },
+  badge: {
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 6,
+    marginLeft: 8,
+  },
+  badgeText: {
+    fontSize: 11,
+    fontFamily: "Poppins_500Medium",
+    color: "#8B5CF6",
   },
   closeButton: {
     marginTop: 12,

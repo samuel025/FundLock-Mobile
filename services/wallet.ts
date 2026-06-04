@@ -61,6 +61,8 @@ export interface Transaction {
   recipientName: string;
   entryType: string;
   status: string;
+  destinationBank?: string;
+  destinationAccount?: string;
 }
 
 export interface WalletData {
@@ -159,6 +161,8 @@ export interface TransactionDetails {
   status: string;
   fee: number;
   name: string;
+  destinationBank?: string;
+  destinationAccount?: string;
 }
 
 export interface TransactionDetailsResponse {

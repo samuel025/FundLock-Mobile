@@ -2,13 +2,14 @@ import { BudgetCard } from "@/components/budgets/BudgetCard";
 import { BudgetSummaryCard } from "@/components/budgets/BudgetSummaryCard";
 import { CreateBudgetCTA } from "@/components/budgets/CreateBudgetCTA";
 import { EmptyBudgets } from "@/components/budgets/EmptyBudgets";
+import { OfflineBanner } from "@/components/OfflineBanner";
 import { useGetLocks } from "@/hooks/useGetLocks";
 import { useTheme } from "@/theme";
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
-import React, { useCallback, useMemo, useRef } from "react";
+import React, { useCallback, useMemo, useRef, useState } from "react";
 import {
   FlatList,
   Platform,
@@ -28,6 +29,7 @@ export default function BudgetsPage() {
   const flatListRef = useRef<FlatList>(null);
 
   const { isLocksLoading, locksList, fetchLocks } = useGetLocks();
+  const [refreshing, setRefreshing] = useState(false);
 
   const totalBudgeted = useMemo(() => {
     return locksList.reduce(
@@ -36,8 +38,10 @@ export default function BudgetsPage() {
     );
   }, [locksList]);
 
-  const onRefresh = useCallback(() => {
-    fetchLocks();
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await fetchLocks();
+    setRefreshing(false);
     setTimeout(() => {
       if (locksList.length > 0) {
         flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
@@ -59,6 +63,7 @@ export default function BudgetsPage() {
       colors={[theme.colors.gradientStart, theme.colors.gradientEnd]}
       style={styles.container}
     >
+      <OfflineBanner />
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerLeft}>
@@ -132,7 +137,7 @@ export default function BudgetsPage() {
           keyExtractor={(item, index) => `${item.categoryName ?? index}`}
           refreshControl={
             <RefreshControl
-              refreshing={isLocksLoading}
+              refreshing={refreshing}
               onRefresh={onRefresh}
               colors={[theme.colors.primary]}
               tintColor={theme.colors.primary}
@@ -142,7 +147,7 @@ export default function BudgetsPage() {
           contentContainerStyle={
             locksList.length ? styles.listContent : styles.emptyContent
           }
-          ListEmptyComponent={<EmptyBudgets />}
+          ListEmptyComponent={isLocksLoading ? null : <EmptyBudgets />}
           renderItem={({ item, index }) => (
             <BudgetCard
               category={item.categoryName}

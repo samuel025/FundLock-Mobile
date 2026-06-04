@@ -1,10 +1,15 @@
-import { Categories } from "@/services/category";
 import { create } from "zustand";
 
+export interface UnifiedCategory {
+  id: string;
+  name: string;
+  type: "SYSTEM" | "CUSTOM";
+}
+
 export interface CategoryState {
-  categories: Categories[] | null;
+  categories: UnifiedCategory[] | null;
   isLoadingCategory: boolean;
-  setCategories: (categories: Categories[] | null) => void;
+  setCategories: (categories: UnifiedCategory[] | null) => void;
   setIsLoadingCategory: (loading: boolean) => void;
 }
 

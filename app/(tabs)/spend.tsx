@@ -2,9 +2,12 @@ import { PinGuard } from "@/components/PinGuard";
 import BillPaymentSection from "@/components/spendComponents/BillPaymentSection";
 import CategoryPicker from "@/components/spendComponents/CategoryPicker";
 import LoadingRow from "@/components/spendComponents/LoadingRow";
+import ModeSwitch from "@/components/spendComponents/ModeSwitch";
 import SpendHeader from "@/components/spendComponents/SpendHeader";
 import SpendOutletFlow from "@/components/spendComponents/SpendOutletFlow";
+import SpendRecipientFlow from "@/components/spendComponents/SpendRecipientFlow";
 import VendorIdShortcut from "@/components/spendComponents/VendorIdShortcut";
+import { OfflineBanner } from "@/components/OfflineBanner";
 import { useSpendTabController } from "@/hooks/useSpendTabController";
 import { useTheme } from "@/theme";
 import { LinearGradient } from "expo-linear-gradient";
@@ -30,8 +33,6 @@ export default function Spend() {
     outlets,
     isSpending,
 
-    allowDirectOutlet,
-    setAllowDirectOutlet,
     selectedCategoryId,
     selectedCompany,
     selectedOutlet,
@@ -39,9 +40,22 @@ export default function Spend() {
     selectCompany,
     setSelectedOutlet,
 
+    // spend mode
+    spendMode,
+    handleModeChange,
+
+    // recipient state
+    selectedRecipientId,
+    setSelectedRecipientId,
+    recipients,
+    isRecipientsLoading,
+    isRedeeming,
+
     selectedCategory,
+    isCustomCategory,
     isBillPaymentCategory,
     availableLocked,
+    rawCategoryId,
 
     control,
     formState,
@@ -74,7 +88,7 @@ export default function Spend() {
       theme.colors.border,
       theme.colors.card,
       theme.colors.text,
-    ]
+    ],
   );
 
   return (
@@ -83,6 +97,7 @@ export default function Spend() {
         colors={[theme.colors.gradientStart, theme.colors.gradientEnd]}
         style={spendStyles.container}
       >
+        <OfflineBanner />
         <KeyboardAvoidingView
           style={{ flex: 1, justifyContent: "flex-end" }}
           behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -128,27 +143,63 @@ export default function Spend() {
                   styles={spendStyles}
                 />
               ) : (
-                <SpendOutletFlow
-                  theme={theme}
-                  isDark={isDark}
-                  styles={spendStyles}
-                  pickerStyles={pickerStyles}
-                  allowDirectOutlet={allowDirectOutlet}
-                  onModeChange={setAllowDirectOutlet}
-                  isCompanyLoading={isCompanyLoading}
-                  companies={companies}
-                  selectedCompany={selectedCompany}
-                  onSelectCompany={selectCompany}
-                  isOutletLoading={isOutletLoading}
-                  outlets={outlets}
-                  selectedOutlet={selectedOutlet}
-                  onSelectOutlet={setSelectedOutlet}
-                  control={control}
-                  availableLocked={availableLocked}
-                  isSpending={isSpending}
-                  isFormValid={formState.isValid}
-                  onSubmit={submit}
-                />
+                <>
+                  {/* Single mode switch — only for system categories */}
+                  {!isCustomCategory && (
+                    <ModeSwitch
+                      theme={theme}
+                      isDark={isDark}
+                      styles={spendStyles}
+                      spendMode={spendMode}
+                      onModeChange={handleModeChange}
+                    />
+                  )}
+
+                  {/* Outlet flow — for "direct" and "company" modes */}
+                  {(spendMode === "direct" || spendMode === "company") &&
+                    !isCustomCategory && (
+                      <SpendOutletFlow
+                        theme={theme}
+                        isDark={isDark}
+                        styles={spendStyles}
+                        pickerStyles={pickerStyles}
+                        spendMode={spendMode}
+                        isCompanyLoading={isCompanyLoading}
+                        companies={companies}
+                        selectedCompany={selectedCompany}
+                        onSelectCompany={selectCompany}
+                        isOutletLoading={isOutletLoading}
+                        outlets={outlets}
+                        selectedOutlet={selectedOutlet}
+                        onSelectOutlet={setSelectedOutlet}
+                        control={control}
+                        availableLocked={availableLocked}
+                        isSpending={isSpending}
+                        isFormValid={formState.isValid}
+                        onSubmit={submit}
+                        categoryId={rawCategoryId ?? undefined}
+                      />
+                    )}
+
+                  {/* Recipient flow — for "recipient" mode or custom categories */}
+                  {(spendMode === "recipient" || isCustomCategory) && (
+                    <SpendRecipientFlow
+                      theme={theme}
+                      isDark={isDark}
+                      styles={spendStyles}
+                      pickerStyles={pickerStyles}
+                      isRecipientsLoading={isRecipientsLoading}
+                      recipients={recipients}
+                      selectedRecipientId={selectedRecipientId}
+                      onSelectRecipient={setSelectedRecipientId}
+                      control={control}
+                      availableLocked={availableLocked}
+                      isRedeeming={isRedeeming}
+                      isFormValid={formState.isValid}
+                      onSubmit={submit}
+                    />
+                  )}
+                </>
               ))}
           </ScrollView>
         </KeyboardAvoidingView>

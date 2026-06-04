@@ -1,21 +1,25 @@
 import AmountSection from "@/components/spendComponents/AmountSection";
 import CompanyPicker from "@/components/spendComponents/CompanyPicker";
 import LoadingRow from "@/components/spendComponents/LoadingRow";
-import ModeSwitch from "@/components/spendComponents/ModeSwitch";
 import OutletPicker from "@/components/spendComponents/OutletPicker";
 import PinSection from "@/components/spendComponents/PinSection";
+import { SpendMode } from "@/hooks/useSpendTabController";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import React from "react";
-import { ActivityIndicator, Text, TouchableOpacity, View } from "react-native";
+import {
+  ActivityIndicator,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
 type SpendOutletFlowProps = {
   theme: any;
   isDark: boolean;
   styles: any;
-
-  allowDirectOutlet: boolean;
-  onModeChange: (next: boolean) => void;
+  pickerStyles: any;
+  spendMode: SpendMode; // "direct" or "company"
 
   isCompanyLoading: boolean;
   companies: any;
@@ -34,16 +38,15 @@ type SpendOutletFlowProps = {
   isFormValid: boolean;
   onSubmit: () => void;
 
-  pickerStyles: any;
+  categoryId?: string;
 };
 
 export default function SpendOutletFlow({
   theme,
   isDark,
   styles,
-
-  allowDirectOutlet,
-  onModeChange,
+  pickerStyles,
+  spendMode,
 
   isCompanyLoading,
   companies,
@@ -62,39 +65,29 @@ export default function SpendOutletFlow({
   isFormValid,
   onSubmit,
 
-  pickerStyles,
   categoryId,
-}: SpendOutletFlowProps & { categoryId?: string }) {
+}: SpendOutletFlowProps) {
   const disableAction = isSpending || !isFormValid;
 
   const pickedOutlet = selectedOutlet
     ? outlets?.find(
         (o: any) =>
-          String(o.id) === String(selectedOutlet) || o.id === selectedOutlet
+          String(o.id) === String(selectedOutlet) || o.id === selectedOutlet,
       )
     : null;
 
   return (
     <>
-      {/* Mode Switch */}
-      <ModeSwitch
-        theme={theme}
-        isDark={isDark}
-        styles={styles}
-        allowDirectOutlet={allowDirectOutlet}
-        onModeChange={onModeChange}
-      />
-
       <Text style={[styles.helperText, { color: theme.colors.muted }]}>
-        {allowDirectOutlet
+        {spendMode === "direct"
           ? "Select an outlet directly to make payment."
           : selectedCompany
-          ? "Showing outlets for the selected company."
-          : "Pick a company first to see its outlets."}
+            ? "Showing outlets for the selected company."
+            : "Pick a company first to see its outlets."}
       </Text>
 
-      {/* Direct Outlet Mode - Show outlets directly (NOW FIRST/DEFAULT) */}
-      {allowDirectOutlet && (
+      {/* Direct Outlet Mode */}
+      {spendMode === "direct" && (
         <>
           {isOutletLoading ? (
             <LoadingRow
@@ -115,8 +108,8 @@ export default function SpendOutletFlow({
         </>
       )}
 
-      {/* Company Mode - Show company picker first, then outlets */}
-      {!allowDirectOutlet && (
+      {/* Company Mode */}
+      {spendMode === "company" && (
         <>
           {isCompanyLoading ? (
             <LoadingRow
@@ -135,7 +128,6 @@ export default function SpendOutletFlow({
             />
           )}
 
-          {/* Add spacing between company and outlet pickers */}
           {selectedCompany && (
             <View style={{ marginTop: 25 }}>
               {isOutletLoading ? (
@@ -177,7 +169,7 @@ export default function SpendOutletFlow({
         </View>
       )}
 
-      {/* Amount & PIN sections - only show after outlet selected */}
+      {/* Amount & PIN sections */}
       {selectedOutlet && (
         <>
           <AmountSection

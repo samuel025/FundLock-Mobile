@@ -1,8 +1,47 @@
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
-import React from "react";
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import React, { useEffect, useRef } from "react";
+import { Animated, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useTheme } from "@/theme";
+
+function ShimmerBlock({ width, height, style }: { width: number; height: number; style?: any }) {
+  const { theme } = useTheme();
+  const opacity = useRef(new Animated.Value(0.3)).current;
+
+  useEffect(() => {
+    const animation = Animated.loop(
+      Animated.sequence([
+        Animated.timing(opacity, {
+          toValue: 0.7,
+          duration: 800,
+          useNativeDriver: true,
+        }),
+        Animated.timing(opacity, {
+          toValue: 0.3,
+          duration: 800,
+          useNativeDriver: true,
+        }),
+      ])
+    );
+    animation.start();
+    return () => animation.stop();
+  }, [opacity]);
+
+  return (
+    <Animated.View
+      style={[
+        {
+          width,
+          height,
+          borderRadius: height / 2,
+          backgroundColor: theme.colors.statBackground,
+          opacity,
+        },
+        style,
+      ]}
+    />
+  );
+}
 
 interface WalletBalanceCardProps {
   balance: string;
@@ -42,12 +81,7 @@ export default function WalletBalanceCard({
               Total Balance
             </Text>
             {isLoading ? (
-              <View
-                style={[
-                  styles.loadingPlaceholder,
-                  { backgroundColor: theme.colors.statBackground },
-                ]}
-              />
+              <ShimmerBlock width={180} height={36} style={{ marginTop: 4 }} />
             ) : (
               <Text
                 style={[
@@ -85,11 +119,15 @@ export default function WalletBalanceCard({
             >
               Budgeted
             </Text>
+            {isLoading ? (
+              <ShimmerBlock width={80} height={18} style={{ marginTop: 2 }} />
+            ) : (
             <Text
               style={[styles.statValue, { color: theme.colors.balanceText }]}
             >
               {showBalance ? `₦${totalLocked}` : "••••••"}
             </Text>
+            )}
           </View>
           <View
             style={[
@@ -103,11 +141,15 @@ export default function WalletBalanceCard({
             >
               Redeemed
             </Text>
+            {isLoading ? (
+              <ShimmerBlock width={80} height={18} style={{ marginTop: 2 }} />
+            ) : (
             <Text
               style={[styles.statValue, { color: theme.colors.balanceText }]}
             >
               {showBalance ? `₦${totalRedeemed}` : "••••••"}
             </Text>
+            )}
           </View>
         </View>
       </LinearGradient>

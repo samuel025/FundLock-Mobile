@@ -46,6 +46,7 @@ export default function Index() {
     balance,
     totalLockedAmount,
     totalRedeemedAmount,
+    isLoadingWallet,
     transactions,
     fetchWalletData,
     insights,
@@ -199,6 +200,7 @@ export default function Index() {
             totalRedeemedAmount={totalRedeemedAmount}
             showBalance={showBalance}
             onToggleShowBalance={() => setShowBalance((s) => !s)}
+            isLoading={isLoadingWallet}
           />
 
           <QuickActionsGrid actions={actions} />
