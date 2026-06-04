@@ -4,6 +4,7 @@ import { CreateBudgetCTA } from "@/components/budgets/CreateBudgetCTA";
 import { EmptyBudgets } from "@/components/budgets/EmptyBudgets";
 import { OfflineBanner } from "@/components/OfflineBanner";
 import { useGetLocks } from "@/hooks/useGetLocks";
+import { useReconnectRefresh } from "@/hooks/useReconnectRefresh";
 import { useTheme } from "@/theme";
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect } from "@react-navigation/native";
@@ -30,6 +31,9 @@ export default function BudgetsPage() {
 
   const { isLocksLoading, locksList, fetchLocks } = useGetLocks();
   const [refreshing, setRefreshing] = useState(false);
+
+  // Auto-refresh when connectivity is restored
+  useReconnectRefresh(() => fetchLocks());
 
   const totalBudgeted = useMemo(() => {
     return locksList.reduce(

@@ -7,6 +7,7 @@ import { NetworkError } from "@/components/NetworkError";
 import { OfflineBanner } from "@/components/OfflineBanner";
 import SpendingInsights from "@/components/SpendingInsights";
 import { useNetworkStatus } from "@/hooks/useNetworkStatus";
+import { useReconnectRefresh } from "@/hooks/useReconnectRefresh";
 import { useWallet } from "@/hooks/useWallet";
 import { authActions } from "@/lib/authContext";
 import { useAuthStore } from "@/lib/useAuthStore";
@@ -78,6 +79,12 @@ export default function Index() {
       setRefreshing(false);
     }
   };
+
+  // Auto-refresh when connectivity is restored
+  useReconnectRefresh(() => {
+    setHasNetworkError(false);
+    fetchWalletData();
+  });
 
   const handleRetry = async () => {
     setHasNetworkError(false);

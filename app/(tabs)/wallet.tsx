@@ -6,6 +6,7 @@ import QuickActions from "@/components/QuickActions";
 import RecentStatistics from "@/components/RecentStatistics";
 import WalletBalanceCard from "@/components/WalletBalanceCard";
 import { useNetworkStatus } from "@/hooks/useNetworkStatus";
+import { useReconnectRefresh } from "@/hooks/useReconnectRefresh";
 import { useWallet } from "@/hooks/useWallet";
 import { useAuthStore } from "@/lib/useAuthStore";
 import { useTheme } from "@/theme";
@@ -85,6 +86,12 @@ export default function Wallet() {
   const handleWithdraw = () => {
     console.log("Withdraw pressed");
   };
+
+  // Auto-refresh when connectivity is restored
+  useReconnectRefresh(() => {
+    setHasNetworkError(false);
+    fetchWalletData();
+  });
 
   const onRefresh = async () => {
     setRefreshing(true);

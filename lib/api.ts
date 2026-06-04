@@ -11,16 +11,35 @@ export const API = axios.create({
   timeout: 15000,
 });
 
-// Track if we're currently refreshing to prevent multiple refreshes
+const MAX_RETRIES = 3;
+const RETRY_DELAYS_MS = [1000, 3000, 8000];
+
+function isRetryableError(error: any): boolean {
+
+  const method = (error?.config?.method ?? "").toUpperCase();
+  if (method !== "GET") return false;
+
+  if (error?.response?.status === 401) return false;
+  if (error?.response?.status && error.response.status < 500 && error.response.status !== 408) return false;
+  return (
+    !error.response ||
+    error?.code === "ECONNABORTED" ||
+    error?.code === "ERR_NETWORK" ||
+    error?.response?.status >= 500
+  );
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 let isRefreshing = false;
-// Store pending requests that should be retried after token refresh
 let failedQueue: {
   resolve: (value: AxiosResponse) => void;
   reject: (reason?: any) => void;
   config: any;
 }[] = [];
 
-// Request interceptor - add auth token
 API.interceptors.request.use(
   (config) => {
     const state = useAuthStore.getState();
@@ -37,19 +56,35 @@ API.interceptors.request.use(
   }
 );
 
-// Response interceptor - handle token refresh
+API.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const config = error.config;
+    if (!config || !isRetryableError(error)) {
+      return Promise.reject(error);
+    }
+
+    config._retryCount = config._retryCount ?? 0;
+    if (config._retryCount >= MAX_RETRIES) {
+      return Promise.reject(error);
+    }
+
+    config._retryCount += 1;
+    const delay = RETRY_DELAYS_MS[config._retryCount - 1] ?? 8000;
+    await sleep(delay);
+    return API(config);
+  }
+);
+
 API.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
-
-    // If error is not 401 or request has already been retried, reject
     if (error.response?.status !== 401 || originalRequest._retry) {
       return Promise.reject(error);
     }
 
     if (isRefreshing) {
-      // If we're already refreshing, add this request to queue
       return new Promise<AxiosResponse>((resolve, reject) => {
         failedQueue.push({
           resolve,
@@ -63,31 +98,22 @@ API.interceptors.response.use(
     isRefreshing = true;
 
     try {
-      // Get current refresh token
       const refreshToken = await SecureStore.getItemAsync(REFRESH_TOKEN_KEY);
-
       if (!refreshToken) {
         throw new Error("No refresh token available");
       }
-
-      // Attempt to refresh the token
       const tokens = await refreshAccessToken(refreshToken);
-
-      // Update tokens in secure storage and state
       await SecureStore.setItemAsync("auth_token", tokens.accessToken);
       await SecureStore.setItemAsync("refresh_token", tokens.refreshToken);
 
       const { setTokens } = useAuthStore.getState();
       setTokens(tokens.accessToken, tokens.refreshToken);
 
-      // Update authorization header for the original request
       originalRequest.headers.Authorization = `Bearer ${tokens.accessToken}`;
 
-      // Process all queued requests with the new token
       const queueToProcess = [...failedQueue];
-      failedQueue = []; // Clear queue immediately
+      failedQueue = [];
 
-      // Retry all queued requests
       queueToProcess.forEach(async (queuedRequest) => {
         try {
           queuedRequest.config.headers.Authorization = `Bearer ${tokens.accessToken}`;
@@ -97,28 +123,20 @@ API.interceptors.response.use(
           queuedRequest.reject(retryError);
         }
       });
-
-      // Retry the original request
       return API(originalRequest);
     } catch (refreshError: any) {
-      // console.error("Token refresh failed:", refreshError);
-
-      // Reject all queued requests
       failedQueue.forEach((queuedRequest) => {
         queuedRequest.reject(new Error("Token refresh failed"));
       });
       failedQueue = [];
 
-      // Determine if this is a network error vs genuine auth failure
       const isNetworkError =
         !refreshError?.response &&
         (refreshError?.code === "ECONNABORTED" ||
           refreshError?.code === "ERR_NETWORK" ||
           refreshError?.message?.includes("timeout") ||
           refreshError?.message?.includes("Network Error"));
-
       if (!isNetworkError) {
-        // Genuine auth failure — clear tokens and redirect to sign in
         const { setUser, setTokens } = useAuthStore.getState();
         setUser(null);
         setTokens(null, null);
@@ -128,15 +146,10 @@ API.interceptors.response.use(
           await SecureStore.deleteItemAsync("refresh_token");
           await SecureStore.deleteItemAsync("user_data");
         } catch (storageError) {
-          // console.error("Failed to clear storage:", storageError);
         }
 
-        // Redirect to sign in page
         router.replace("/signIn");
       }
-      // On network errors: don't sign out. Let the error propagate
-      // so hooks can show appropriate "connection issue" feedback.
-
       return Promise.reject(refreshError);
     } finally {
       isRefreshing = false;
